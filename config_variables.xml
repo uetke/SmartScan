@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Variables>
+<Par Name='Par' Description='Par names of the adwin' 
+Num_devs='71'
+Dev_type='72'
+Output_value='73'
+Port='74'
+Input_value='75'
+Num_ticks='78'
+Pix_done='79' 
+Case='80'
+/>
+<FPar Name='FPar' Description='FPar names of the adwin' 
+/>
+<Data Name='Data' Description='Data array names of the adwin'
+dev_params = '198'
+Scan_params = '199'
+/>
+<Fifo Name='Fifo' Description='Fifo array names of the adwin'
+Counter1='178'
+Counter2='179'
+Counter3='180'
+Counter4='181'
+Analog1='182'
+Analog2='183'
+Analog3='184'
+Analog4='185'
+Analog5='186'
+Analog6='187'
+Analog7='188'
+Analog8='189'
+Analog9='190'
+Analog10='191'
+Analog11='192'
+Analog12='193'
+Analog13='194'
+Analog14='195'
+Analog15='196'
+Analog16='197'
+Scan_data='200'
+/>
+</Variables>
