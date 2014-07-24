@@ -291,9 +291,10 @@ class MplCanvas(QtGui.QGraphicsObject):
                 pass
             else:
                 self.pos = np.array(self.center)-0.5*np.array(self.dims)
-                self.imv[i].setImage(self.data[i].T, pos=self.pos, scale=self.accuracy, autoLevels=False)
-                data_wol = self.reject_outliers(temp[i][~np.isnan(temp[i])].flatten())
-                self.imv[i].setLevels(np.nanmin(data_wol), np.nanmax(data_wol))
+                self.imv[i].setImage(np.nan_to_num(self.data[i].T), pos=self.pos, scale=self.accuracy, autoLevels=True)
+                #data_wol = self.reject_outliers(temp[i][~np.isnan(temp[i])].flatten())
+                #self.imv[i].setLevels(np.nanmin(data_wol), np.nanmax(data_wol))
+                
     
     
     def monitor(self):
