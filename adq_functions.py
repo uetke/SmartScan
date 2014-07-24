@@ -16,7 +16,7 @@ import copy
 	
 class adq(ADwin):
 	def __init__(self, process):
-		DEVICENUMBER = 336 # By default this is the number
+		DEVICENUMBER = 1 # By default this is the number
 		RAISE_EXCEPTIONS = 1
 		self.adw = ADwin(DEVICENUMBER, RAISE_EXCEPTIONS)
 		self.proc = process
