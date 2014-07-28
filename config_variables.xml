@@ -9,6 +9,7 @@ Input_value='75'
 Num_ticks='78'
 Pix_done='79' 
 Case='80'
+Delay='70'
 />
 <FPar Name='FPar' Description='FPar names of the adwin' 
 />
