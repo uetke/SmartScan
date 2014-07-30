@@ -612,7 +612,7 @@ class adq(ADwin):
  
 		return np.array([x, y, flux, sharpness, roundness])
 	
-	def focus_full(self, detect, devs, center, dims_default, accuracy_default, rate=1, steps=3, speed=50):
+	def focus_full(self, detect, devs, center, dims_default, accuracy_default, rate=2, steps=3, speed=50):
 		self.logger = logging.getLogger(get_all_caller())
 		devs = np.array(devs)
 		center = np.array(center)
