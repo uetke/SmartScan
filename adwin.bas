@@ -38,6 +38,7 @@ Function input(dev_type,port) as long
 EndFunction
 
 init:
+  Conf_DIO(1100b)
   reset_event
   FIFO_Clear(200)
   i = 1

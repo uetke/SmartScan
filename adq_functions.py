@@ -612,7 +612,7 @@ class adq(ADwin):
  
 		return np.array([x, y, flux, sharpness, roundness])
 	
-	def focus_full(self, detect, devs, center, dims_default, accuracy_default, rate=2, steps=3, speed=50):
+	def focus_full(self, detect, devs, center, dims_default, accuracy_default, rate=1, steps=3, speed=50):
 		self.logger = logging.getLogger(get_all_caller())
 		devs = np.array(devs)
 		center = np.array(center)
@@ -688,11 +688,11 @@ class inter_add_remove():
 				self.particles_x = np.delete(self.particles_x,index_min)
 				self.particles_y = np.delete(self.particles_y,index_min)
 				self.logger.debug('A particle was removed')
-		elif event.button==1 and event.key=='b' and event.dblclick==True:
+		elif event.button==1 and event.key=='alt+b' and event.dblclick==True:
 			self.back_x = np.append(self.back_x,event.xdata)
 			self.back_y = np.append(self.back_y,event.ydata)
 			self.logger.debug('Added a background')
-		elif event.button==3 and event.key=='b' and event.dblclick==True:
+		elif event.button==3 and event.key=='alt+b' and event.dblclick==True:
 			if (((self.back_x-event.xdata)**2+(self.back_y-event.ydata)**2)<25).any():
 				index_min = ((self.back_x-event.xdata)**2+(self.back_y-event.ydata)**2).argmin()
 				self.back_x = np.delete(self.back_x,index_min)

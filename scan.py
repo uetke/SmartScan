@@ -84,6 +84,7 @@ if __name__ == '__main__':
         logger.warning('no patrticles found')
         plot_parti, = ax.plot([], [],markeredgecolor = 'g' ,marker='$\circ$',markersize=10,markeredgewidth=2.0,linestyle="")
         inter=inter_add_remove(plot_parti,plot_backg)
+        
     ax.set_xlim(0,len(image[0,:]))
     ax.set_ylim(0,len(image[:,0]))
     plt.show()

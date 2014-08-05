@@ -49,8 +49,8 @@
 <Device Name='AOM' Type='analog' Description='Controling Laser Power'>
 <Output>
 <Calibration Init="1.25" Unit="V" Slope="0.00030518" Offset="-10"/>
-<Limits Step="1" Min="32000" Max="48000"/>
-<Hardware PortID="1"/>
+<Limits Step="1" Min="32000" Max="49151"/>
+<Hardware PortID="3"/>
 </Output>
 </Device>
 </Adwin>
