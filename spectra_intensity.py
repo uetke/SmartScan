@@ -53,49 +53,88 @@ if __name__ == '__main__':
     zpiezo = device('z piezo')
     counter = device('APD 1')
     aom = device('AOM')
-    
-    number_of_spectra = 20
+    xcenter = 50.31 #In um
+    ycenter = 44.53
+    zcenter = 49.45
+    devs = [xpiezo,ypiezo,zpiezo]
+    #parameters for the refocusing on the particles
+    dims = [0.4,0.4,0.8]
+    accuracy = [0.05,0.05,0.1]
+    center = [xcenter, ycenter, zcenter]
+    number_of_spectra = 30
  #   adw.clear_digout(0)
  #   adw.go_to_position([aom],[1])
     
     #Newport Power Meter
     pmeter = pp(0)
     pmeter.initialize()
-    pmeter.wavelength = 532
+    pmeter.wavelength = 633
     pmeter.attenuator = True
     pmeter.filter = 'Medium' 
     pmeter.go = True
     pmeter.units = 'Watts' 
-    
-    print('Spectra taken with long pass filter')
-    pressing = input('Press enter when ready')
-    data = np.zeros([number_of_spectra+1,1])
-    
-     
-    power_aom = 1.5
-    adw.go_to_position([aom],[power_aom])   
-    adw.set_digout(0)           
-    time.sleep(0.5)    
-    adw.clear_digout(0)
-    time.sleep(1)
-    try:
-        power = pmeter.data*1000000
-    except:
-        power = 0
-    while adw.get_digin(1):
-        if msvcrt.kbhit():
-            key = msvcrt.getch()
-            if ord(key) == 113:
-                abort(filename + '_inter')
-        time.sleep(0.1)    
-    print('Acquired spectra of particle with %i uW'%(power))
-    data[0]=str(power)
-    
-    pressing = input('Done with particle. Move to shortpass filter and press enter.')
+    data = np.zeros([number_of_spectra*2,1])
+    #print('Spectra taken with long pass filter')
+    #pressing = input('Press enter when ready')
+    #data = np.zeros([number_of_spectra+1,1])
+    #
+    # 
+    #power_aom = 1.5
+    #adw.go_to_position([aom],[power_aom])   
+    #adw.set_digout(0)           
+    #time.sleep(0.5)    
+    #adw.clear_digout(0)
+    #time.sleep(1)
+    #try:
+    #    power = pmeter.data*1000000
+    #except:
+    #    power = 0
+    #while adw.get_digin(1):
+    #    if msvcrt.kbhit():
+    #        key = msvcrt.getch()
+    #        if ord(key) == 113:
+    #            abort(filename + '_inter')
+    #    time.sleep(0.1)    
+    #print('Acquired spectra of particle with %i uW'%(power))
+    #data[0]=str(power)
+    #
+    #pressing = input('Done with particle. Move to shortpass filter and press enter.')
     
     #make spectra with the shortpass
+    #for m in range(number_of_spectra):
+    #    # Focus on the particle with an average power
+    #    power_aom = 1
+    #    adw.go_to_position([aom],[power_aom])
+    #    center = adw.focus_full(counter,devs,center,dims,accuracy).astype('str')
+    #    print(center)
+    #    center = center.astype('float')
+    #    print(center)
+    #    # Now take spectra with a variable power
+    #    power_aom = 2-m*2/number_of_spectra
+    #    adw.go_to_position([aom],[power_aom])   
+    #    adw.set_digout(0)           
+    #    time.sleep(0.5)    
+    #    adw.clear_digout(0)
+    #    
+    #    while adw.get_digin(1):
+    #        if msvcrt.kbhit():
+    #            key = msvcrt.getch()
+    #            if ord(key) == 113:
+    #                 abort(filename + '_inter')
+    #        time.sleep(0.1)
+    #    try:
+    #        power = pmeter.data*1000000 # Power in uW
+    #    except:
+    #        power = 0
+    #    print('Acquired spectra of particle %i with %i uW'%(i,power))
+    #    data[m] = (str(power))
+    #
+    #print('Done with particle. Move to background (1um away from particle).')
+    #center[1] = center[1]+1
+    #adw.go_to_position(devs,center)
+    
     for m in range(number_of_spectra):
-        power_aom = 1.5-m*1.5/number_of_spectra
+        power_aom = 2-m*2/number_of_spectra
         adw.go_to_position([aom],[power_aom])   
         adw.set_digout(0)           
         time.sleep(0.5)    
@@ -111,32 +150,10 @@ if __name__ == '__main__':
             power = pmeter.data*1000000
         except:
             power = 0
-        print('Acquired spectra of particle %i with %i uW'%(i,power))
-        data[m+1] = (str(power))
+        print('Acquired background %i with %i uW'%(i,power))
+        data[number_of_spectra+m] = (str(power))
     
-    #pressing = input('Done with particle. Move to background and press enter.')
-    #
-    #for m in range(number_of_spectra):
-    #    power_aom = 1.5-m*1.5/number_of_spectra
-    #    adw.go_to_position([aom],[power_aom])   
-    #    adw.set_digout(0)           
-    #    time.sleep(0.5)    
-    #    adw.clear_digout(0)
-    #    
-    #    while adw.get_digin(1):
-    #        if msvcrt.kbhit():
-    #            key = msvcrt.getch()
-    #            if ord(key) == 113:
-    #                 abort(filename + '_inter')
-    #        time.sleep(0.1)
-    #    try:
-    #        power = pmeter.data*1000000
-    #    except:
-    #        power = 0
-    #    print('Acquired background %i with %i uW'%(i,power))
-    #    data[number_of_spectra*2+m] = (str(power))
-    #
-    #pressing = input('Done with Shortpass background. Put longpass and press enter.')
+    print('Done with Shortpass background.')
     #
     #for m in range(number_of_spectra):
     #    power_aom = 1.5-m*1.5/number_of_spectra

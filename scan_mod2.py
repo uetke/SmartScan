@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from adq_mod import *
 from xml2dict import device,variables
 from datetime import datetime
+from tkinter.filedialog import askopenfilename
 import msvcrt
 import sys
 import os
@@ -39,7 +40,7 @@ if __name__ == '__main__':
     if not os.path.exists(savedir):
         os.makedirs(savedir)
     i=1
-    filename = name    
+    filename = name
     while os.path.exists(savedir+filename+"_532_raw_image.txt"):
         filename = '%s_%s' %(name,i)
         i += 1
@@ -73,7 +74,7 @@ if __name__ == '__main__':
     yacc = 0.2
     devs = [xpiezo,ypiezo,zpiezo]
     #parameters for the refocusing on the particles
-    dims = [0.3,0.3,0.3]
+    dims = [0.3,0.3,0.6]
     accuracy = [0.05,0.05,0.1]
     adw.go_to_position(devs[:3],[xcenter,ycenter,zcenter])
     
@@ -82,6 +83,7 @@ if __name__ == '__main__':
     
     pressing = input('First let\'s do a scan with the 532nm laser. Enter when ready\n')
     
+    filename = askopenfilename()
     image = np.array(adw.scan_static(counter,[xpiezo,ypiezo],[xcenter,ycenter],[xdim,ydim],[xacc,yacc]))
     image = np.squeeze(image)
     
@@ -163,7 +165,7 @@ if __name__ == '__main__':
                 if ord(key) == 113:
                      abort(filename+'_init')
             time.sleep(0.1)
-        print('Done with background %i of %i'%(i+1,len(particles[0,:])))
+        print('Done with background %i of %i'%(i+1,len(background[0,:])))
         
     
     header = "type,x-pos,y-pos,z-pos,first scan time" + ",time_%s"*(len(data[0,:])-5) %tuple(range((len(data[0,:])-5)))
