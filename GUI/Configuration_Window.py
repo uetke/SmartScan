@@ -75,7 +75,7 @@ class Ui_MainWindow(object):
         self.Par_conf_label.setText(_translate("MainWindow", "Parameter names configuration file", None))
         self.label.setText(_translate("MainWindow", "Configuration files", None))
         self.Dev_conf_label.setText(_translate("MainWindow", "Device configuration file", None))
-        self.Dev_conf_Edit.setPlainText(_translate("MainWindow", "config_devices.xml", None))
+        self.Dev_conf_Edit.setPlainText(_translate("MainWindow", "config/config_devices.xml", None))
         self.pushButton.setText(_translate("MainWindow", "Start", None))
-        self.Par_conf_Edit.setPlainText(_translate("MainWindow", "config_variables.xml", None))
+        self.Par_conf_Edit.setPlainText(_translate("MainWindow", "config/config_variables.xml", None))
 

@@ -44,7 +44,7 @@ if __name__ == '__main__':
     logger.info('%s\\%s.log' %(savedir,filename))
     
     #init the Adwin programm and also loading the configuration file for the devices
-    adw = adq('adwin.T99') 
+    adw = adq('lib/adbasic/adwin.T99') 
     xpiezo = device('x piezo')
     ypiezo = device('y piezo')
     zpiezo = device('z piezo')

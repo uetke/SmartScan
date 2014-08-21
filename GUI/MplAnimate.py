@@ -17,7 +17,7 @@ import numpy as np
 from math import pi, cos, sin
 
 from Monitor import Ui_MainWindow
-from adq_functions import *
+from lib.adq_functions import *
 from xml2dict import device,variables
 
 
@@ -67,19 +67,19 @@ class MplAnimate(QtGui.QMainWindow):
         
     def keyPressEvent(self, event):
         if type(event) == QtGui.QKeyEvent:
-             self.key = event.key()
-             event.accept()
+            self.key = event.key()
+            event.accept()
         else:
-             self.key = None
-             event.ignore()
+            self.key = None
+            event.ignore()
     
     def keyReleaseEvent(self, event):
         if type(event) == QtGui.QKeyEvent:
-             self.key = None
-             event.accept()
+            self.key = None
+            event.accept()
         else:
-             self.key = None
-             event.ignore()
+            self.key = None
+            event.ignore()
              
     def isRunning(self):
         return self._running
@@ -142,7 +142,7 @@ class MplCanvas(QtGui.QGraphicsObject):
         self.fifo = variables('Fifo')
         self.par = variables('Par')
         if MplAnimate.option[0]=='Monitor':
-            self.adw=adq('monitor.T90') 
+            self.adw=adq('lib/adbasic/monitor.T90') 
             self.delay=400*0.1e-3
             self.detector = [device(parent.main.Monitor_comboBox.currentText())]
             self.fifo_name = '%s%i' %(self.detector[0].properties['Type'],self.detector[0].properties['Input']['Hardware']['PortID'])
@@ -154,7 +154,7 @@ class MplCanvas(QtGui.QGraphicsObject):
             self.adw.start()
             
         else:
-            self.adw = adq('adwin.T99') 
+            self.adw = adq('lib/adbasic/adwin.T99') 
             self.adw.load()
             if not self.parent.main.Scan_Dropdown.button.isEnabled():
                 self.detector = [device(self.parent.main.Scan_Detector_comboBox.currentText())]

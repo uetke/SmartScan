@@ -3,7 +3,7 @@ import logging
 from logger import get_all_caller
 
 class device():
-    def __init__(self,name=None,type='Adwin',filename='config_devices.xml'):
+    def __init__(self,name=None,type='Adwin',filename='config/config_devices.xml'):
         self.logger = logging.getLogger(get_all_caller())
         tree = ET.ElementTree(file=filename)
         root = tree.getroot()
@@ -46,7 +46,7 @@ class device():
         return xmltodict_handler(element,result)
 
 class variables():
-    def __init__(self,name=None, filename='config_variables.xml'):
+    def __init__(self,name=None, filename='config/config_variables.xml'):
         var=device(name,'',filename)
         self.properties=var.properties
         for i in self.properties.keys():

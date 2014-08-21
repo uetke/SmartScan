@@ -10,7 +10,7 @@ import ctypes
 import psutil
 from xml2dict import device,variables
 import logging
-from logger import get_all_caller
+from lib.logger import get_all_caller
 import copy
 	
 """initialize the variable names"""		

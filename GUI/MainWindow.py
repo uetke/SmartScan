@@ -7,9 +7,9 @@ from PyQt4.Qt import QMainWindow,QApplication,SIGNAL,QStandardItem
 from MplAnimate import MplAnimate
 from Configuration_Window import Ui_MainWindow as Configuration_Window
 from MainWindowGui import Ui_MainWindow
-from xml2dict import device,variables
+from lib.xml2dict import device,variables
 import numpy as np
-from adq_functions import adq,inter_add_remove
+from lib.adq_functions import adq,inter_add_remove
 from logger import get_all_caller,logger
 import codecs
 
@@ -81,7 +81,7 @@ class MainWindow(QMainWindow):
 		self.devices = {}
 		for name in self.device_names.properties:
 			self.devices[name] = device(type='Adwin',name=name,filename=self.dev_conf)
-		self.adw = adq('adwin.T99') 
+		self.adw = adq('lib/adbasic/adwin.T99') 
 		self.adw.load()
 		self.scanwindows = {}
 		self.scanindex = 0

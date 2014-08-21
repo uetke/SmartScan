@@ -10,7 +10,7 @@ import ctypes
 import psutil
 from xml2dict import device,variables
 import logging
-from logger import get_all_caller
+from lib.logger import get_all_caller
 import copy
 	
 	
@@ -724,7 +724,7 @@ for i in proc:
 		pass
 	
 if name==None:
-	init_port7=adq('init_port7.T99')
+	init_port7=adq('lib/adbasic/init_port7.T99')
 	init_port7.boot()
 	init_port7.load()
 	init_port7.start()
@@ -733,7 +733,7 @@ if name==None:
 	   
 
 if __name__ == '__main__':
-	adq=adq('adwin.T99') 
+	adq=adq('lib/adbasic/adwin.T99') 
 	print(par.properties)
 	import matplotlib.image as mpimg
 	img=mpimg.imread('find_test.png')
