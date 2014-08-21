@@ -2,6 +2,7 @@
 #-*- coding: utf-8 -*-
 
 import sys
+import os
 from PyQt4 import QtCore, QtGui
 from PyQt4.Qt import QMainWindow,QApplication,SIGNAL,QStandardItem,QFileDialog
 from GUI.MplAnimate import MplAnimate
@@ -12,7 +13,7 @@ from lib.xml2dict import device
 import numpy as np
 from lib.adq_functions import adq
 from lib.logger import logger
-
+from datetime import datetime
 
 
 def _fromUtf8(s):
@@ -47,9 +48,28 @@ class InitWindow(QMainWindow):
 		self.dev_conf = 'config/config_devices.xml'
 		self.par_conf = 'config/config_variables.xml'
 		
+		# Select the default saving folder
+		self.init.save_directory.setText('D:/Data/'+str(datetime.now().date())+'/')
+		
+		
 	def MainWindow(self):
 		self.directory = self.init.save_directory.text()
 		self.description = self.init.experiment_description.toPlainText()
+		# Create the directory before starting the program
+		if not os.path.exists(self.directory):
+			os.makedirs(self.directory)
+		i=1
+		filename = 'logbook'    
+		name = filename
+		while os.path.exists(self.directory+name+'.txt'):
+			name = '%s_%s' %(filename,i)
+			i += 1
+		filename = name + '.txt'
+		
+		f = open(self.directory+filename,'w')
+		f.write(self.description)
+		f.close()
+		
 		self.main = MainWindow(self.dev_conf,self.par_conf,self.directory,self.description)
 		self.main.setWindowTitle('Main')
 		self.main.show()
@@ -60,7 +80,7 @@ class InitWindow(QMainWindow):
 		
 	def search_directory(self):
 		self.save_dir = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
-		self.init.save_directory.setText(self.save_dir)
+		self.init.save_directory.setText(self.save_dir+str(datetime.now().date())+'/')
 		
 		
 	def fileQuit(self):
@@ -92,7 +112,11 @@ class MainWindow(QMainWindow):
 		self.devices = {}
 		for name in self.device_names.properties:
 			self.devices[name] = device(type='Adwin',name=name,filename=self.dev_conf)
-		self.adw = adq('lib/adbasic/adwin.T99') 
+		
+		self.adw = adq('lib/adbasic/adwin.T99')
+		if self.adw.adw.Test_Version() != 0:
+			self.adw.boot()
+			print('Booting the ADwin...')
 		self.adw.load()
 		self.scanwindows = {}
 		self.scanindex = 0
@@ -325,7 +349,7 @@ class MainWindow(QMainWindow):
 		self.monitor[option].show()
 		
 	def fileQuit(self):
-		reply = QtGui.QMessageBox.question(self, 'Message',"Are you sure to quit?", 
+		reply = QtGui.QMessageBox.question(self, 'Message',"Are you sure you want to quit?", 
 										QtGui.QMessageBox.Yes | QtGui.QMessageBox.No, QtGui.QMessageBox.No)
 
 		if reply == QtGui.QMessageBox.Yes:

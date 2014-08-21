@@ -8,11 +8,14 @@ import math as m
 from sys import stdout
 import ctypes
 import psutil
-from xml2dict import device,variables
+from lib.xml2dict import device,variables
 import logging
 from lib.logger import get_all_caller
 import copy
-	
+
+
+logger = logging.getLogger(get_all_caller())
+
 	
 class adq(ADwin):
 	def __init__(self, process):
@@ -651,6 +654,12 @@ class adq(ADwin):
 		else:
 			self.logger.error('Dimensions of the arrays do not match')
 			
+"""initialize the variable names"""		
+par=variables('Par')
+fpar=variables('FPar')
+data=variables('Data')
+fifo=variables('Fifo')	
+
 class inter_add_remove():
 	def __init__(self,plot_parti,plot_backg,particles=None):
 		self.logger = logging.getLogger(get_all_caller())
@@ -703,50 +712,25 @@ class inter_add_remove():
 		self.plot_parti.set_data(self.particles_x, self.particles_y)
 		self.plot_parti.figure.canvas.draw()
 
-
-logger = logging.getLogger(get_all_caller())
-"""initialize the variable names"""		
-par=variables('Par')
-fpar=variables('FPar')
-data=variables('Data')
-fifo=variables('Fifo')
-
-"""This couple of lines are for checking if LabView (Uberscan) is running 
-if not then we need to initialize port 7. Otherwise port 7 will change its output
-to ~ -1.7V as soon as we set a other port."""
-proc = psutil.process_iter()
-name=None
-for i in proc:
-	try:
-		if i.name == 'LabVIEW.exe':
-			name = 'LabVIEW'
-	except:
-		pass
-	
-if name==None:
-	init_port7=adq('lib/adbasic/init_port7.T99')
-	init_port7.boot()
-	init_port7.load()
-	init_port7.start()
-	init_port7.wait()
-	logger.info('initialized port 7 to 0V')
-	   
-
-if __name__ == '__main__':
-	adq=adq('lib/adbasic/adwin.T99') 
-	print(par.properties)
-	import matplotlib.image as mpimg
-	img=mpimg.imread('find_test.png')
-	img = np.array(img)[65:540,115:600,0]
-	std = np.std(img)
-	median = np.median(img)
-	print(median+3* std)
-	[x, y, flux, sharpness, roundness] = adq.find(img,40)
-	print(x,y)
-	print(sharpness,roundness)
-	print(len(x))
-	plt.set_cmap('gnuplot')
-	plt.imshow(img,interpolation='none')
-	plt.colorbar()
-	plt.scatter(x, y, s=40**2, facecolor='none', edgecolor='r')
-	plt.show()
+def init_port7():
+	"""This couple of lines are for checking if LabView (Uberscan) is running 
+	if not then we need to initialize port 7. Otherwise port 7 will change its output
+	to ~ -1.7V as soon as we set a other port."""
+	proc = psutil.process_iter()
+	name=None
+	for i in proc:
+		try:
+			if i.name == 'LabVIEW.exe':
+				name = 'LabVIEW'
+		except:
+			pass
+		
+	if name==None:
+		init_port7=adq('lib/adbasic/init_port7.T99')
+		if init_port7.adw.Test_Version() != 0:
+			init_port7.boot()
+			print('Booting the ADwin...')
+		init_port7.load()
+		init_port7.start()
+		init_port7.wait()
+		logger.info('initialized port 7 to 0V')

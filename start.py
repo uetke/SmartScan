@@ -1,11 +1,5 @@
 import sys, os, inspect
 
-
-def main(args):
-	global app
-	app = App(args)
-	app.exec_()
-	
 def adding_to_path(folder):
 	""" Simple function for adding a folder to the path of Python in order to have available for import.
 	Each folder needs an __init__.py file to be considered as a module.
@@ -34,4 +28,6 @@ def adding_to_path(folder):
 if __name__ == "__main__":
 	adding_to_path(['GUI', 'lib'])
 	from GUI.MainWindow import App
-	main(sys.argv)
+	global app
+	app = App(sys.argv)
+	app.exec_()

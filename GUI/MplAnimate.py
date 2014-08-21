@@ -4,26 +4,20 @@ from PyQt4.Qt import QGridLayout
 
 import matplotlib
 import matplotlib.pyplot as plt
-from matplotlib.figure import Figure
-import matplotlib.animation as animation
+#from matplotlib.figure import Figure
+#import matplotlib.animation as animation
 import pyqtgraph as pg
 
-# import the Qt4Agg FigureCanvas object, that binds Figure to
-# Qt4Agg backend. It also inherits from QWidget
-from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt4agg import NavigationToolbar2QTAgg as NavigationToolbar
 
 import numpy as np
-from math import pi, cos, sin
 
-from Monitor import Ui_MainWindow
-from lib.adq_functions import *
-from xml2dict import device,variables
+from lib.adq_functions import adq
+from lib.xml2dict import device,variables
 
 
 # specify the use of PyQt
 matplotlib.rcParams['backend.qt4'] = "PyQt4"
-import time 
+#import time 
 import copy
 import codecs
 
