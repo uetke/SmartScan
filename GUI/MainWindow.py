@@ -3,15 +3,16 @@
 
 import sys
 from PyQt4 import QtCore, QtGui
-from PyQt4.Qt import QMainWindow,QApplication,SIGNAL,QStandardItem
-from MplAnimate import MplAnimate
-from Configuration_Window import Ui_MainWindow as Configuration_Window
-from MainWindowGui import Ui_MainWindow
-from lib.xml2dict import device,variables
+from PyQt4.Qt import QMainWindow,QApplication,SIGNAL,QStandardItem,QFileDialog
+from GUI.MplAnimate import MplAnimate
+# from Configuration_Window import Ui_MainWindow as Configuration_Window
+from GUI.starting_window import Ui_MainWindow as Configuration_Window
+from GUI.MainWindowGui import Ui_MainWindow
+from lib.xml2dict import device
 import numpy as np
-from lib.adq_functions import adq,inter_add_remove
-from logger import get_all_caller,logger
-import codecs
+from lib.adq_functions import adq
+from lib.logger import logger
+
 
 
 def _fromUtf8(s):
@@ -41,12 +42,15 @@ class InitWindow(QMainWindow):
 
 		self.help_menu.addAction('&About', self.about)
 		self.connect(self.init.pushButton, SIGNAL("clicked()"), self.start)
+		self.connect(self.init.search_directory, SIGNAL("clicked()"), self.search_directory)
 		self.logger=logger(filelevel=20)
+		self.dev_conf = 'config/config_devices.xml'
+		self.par_conf = 'config/config_variables.xml'
 		
 	def MainWindow(self):
-		self.dev_conf = self.init.Dev_conf_Edit.toPlainText()
-		self.par_conf = self.init.Par_conf_Edit.toPlainText()
-		self.main = MainWindow(self.dev_conf,self.par_conf)
+		self.directory = self.init.save_directory.text()
+		self.description = self.init.experiment_description.toPlainText()
+		self.main = MainWindow(self.dev_conf,self.par_conf,self.directory,self.description)
 		self.main.setWindowTitle('Main')
 		self.main.show()
 		
@@ -54,17 +58,24 @@ class InitWindow(QMainWindow):
 		self.MainWindow()
 		self.fileQuit()
 		
+	def search_directory(self):
+		self.save_dir = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
+		self.init.save_directory.setText(self.save_dir)
+		
+		
 	def fileQuit(self):
 		self.close()
 	
 	def about(self):
-		QtGui.QMessageBox.about(self, "About","""In this window the user has to give the configuration files""")
+		QtGui.QMessageBox.about(self, "About","""Scan 2.0 was developed in MoNOS""")
 
 			
 class MainWindow(QMainWindow):
-	def __init__(self,dev_conf,par_conf, *args):
+	def __init__(self,dev_conf,par_conf,directory,description,*args):
 		self.dev_conf = dev_conf
 		self.par_conf = par_conf
+		self.directory = directory
+		self.description = description
 		QMainWindow.__init__(self, *args)
 		self.main = Ui_MainWindow()
 		self.main.setupUi(self)
@@ -201,10 +212,10 @@ class MainWindow(QMainWindow):
 			option += ' and on the y-axes the %s.' %self.main.Scan_2nd_comboBox.currentText()
 		if self.main.Scan_1st_comboBox.currentText()=='Time':
 			timeindex = 'Timetrace%s' %self.scanindex
-			self.scan = MplAnimate(self,option,['Scan','Line'],timeindex)
+			self.scan = MplAnimate(self,option,['Scan','Line'],timeindex,directory=self.directory)
 			self.scanwindows[timeindex] = self.scan
 		else:
-			self.scan = MplAnimate(self,option,['Scan','Imshow'],self.scanindex)
+			self.scan = MplAnimate(self,option,['Scan','Imshow'],self.scanindex,directory=self.directory)
 			self.main.Controler_Select_scan.addItem(_translate("MainWindow", 'Window %s'%self.scanindex, None))
 			self.scanwindows[self.scanindex] = self.scan
 		self.scan.setWindowTitle("Window %s: Scan with the %s Detector with on the x-axes %s" %(tuple([self.scanindex])+tuple(option.split(';'))))
@@ -309,7 +320,7 @@ class MainWindow(QMainWindow):
 		if option in self.monitor.keys():
 			if self.monitor[option].isRunning():
 				self.monitor[option].fileQuit()
-		self.monitor[option]=MplAnimate(self,option,['Monitor','Line'])
+		self.monitor[option]=MplAnimate(self,option,['Monitor','Line'],directory=self.directory)
 		self.monitor[option].setWindowTitle(option)
 		self.monitor[option].show()
 		

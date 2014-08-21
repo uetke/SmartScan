@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'P:\My Documents\bachelor_project\bitbucket\workspace\Adwin basics\MainWindowGui.ui'
+# Form implementation generated from reading ui file '.\MainWindowGui.ui'
 #
-# Created: Mon Jun 23 14:46:16 2014
-#      by: PyQt4 UI code generator 4.9.6
+# Created: Thu Aug 21 15:17:18 2014
+#      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -27,12 +27,12 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
         MainWindow.setEnabled(True)
-        MainWindow.resize(800, 600)
+        MainWindow.resize(536, 534)
         MainWindow.setWindowOpacity(1.0)
         self.centralwidget = QtGui.QWidget(MainWindow)
         self.centralwidget.setObjectName(_fromUtf8("centralwidget"))
         self.frame = QtGui.QFrame(self.centralwidget)
-        self.frame.setGeometry(QtCore.QRect(100, 40, 391, 271))
+        self.frame.setGeometry(QtCore.QRect(0, 0, 391, 271))
         self.frame.setFrameShape(QtGui.QFrame.Box)
         self.frame.setFrameShadow(QtGui.QFrame.Raised)
         self.frame.setLineWidth(3)
@@ -166,12 +166,12 @@ class Ui_MainWindow(object):
         self.Scan_Mult_Detector_comboBox = QtGui.QCheckBox(self.gridLayoutWidget_3)
         self.Scan_Mult_Detector_comboBox.setObjectName(_fromUtf8("Scan_Mult_Detector_comboBox"))
         self.Scan_gridLayout.addWidget(self.Scan_Mult_Detector_comboBox, 3, 2, 1, 1)
-        self.Scan_Dropdown = dropdown(self.gridLayoutWidget_3,MainWindow)
+        self.Scan_Dropdown = dropdown(self.gridLayoutWidget_3)
         self.Scan_Dropdown.setMinimumSize(QtCore.QSize(75, 0))
         self.Scan_Dropdown.setObjectName(_fromUtf8("Scan_Dropdown"))
         self.Scan_gridLayout.addWidget(self.Scan_Dropdown, 3, 3, 1, 1)
         self.frame_2 = QtGui.QFrame(self.centralwidget)
-        self.frame_2.setGeometry(QtCore.QRect(490, 40, 141, 271))
+        self.frame_2.setGeometry(QtCore.QRect(390, 0, 141, 271))
         self.frame_2.setFrameShape(QtGui.QFrame.Box)
         self.frame_2.setFrameShadow(QtGui.QFrame.Raised)
         self.frame_2.setLineWidth(3)
@@ -199,7 +199,7 @@ class Ui_MainWindow(object):
         self.Monitor_pushButton.setObjectName(_fromUtf8("Monitor_pushButton"))
         self.Monitor_gridLayout.addWidget(self.Monitor_pushButton, 2, 0, 1, 1)
         self.frame_3 = QtGui.QFrame(self.centralwidget)
-        self.frame_3.setGeometry(QtCore.QRect(100, 310, 531, 221))
+        self.frame_3.setGeometry(QtCore.QRect(0, 270, 531, 221))
         self.frame_3.setFrameShape(QtGui.QFrame.Box)
         self.frame_3.setFrameShadow(QtGui.QFrame.Raised)
         self.frame_3.setLineWidth(3)
@@ -273,7 +273,7 @@ class Ui_MainWindow(object):
         self.Controler_gridLayout.addWidget(self.label_3, 3, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 21))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 536, 21))
         self.menubar.setObjectName(_fromUtf8("menubar"))
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QtGui.QStatusBar(MainWindow)

@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>600</height>
+    <width>536</width>
+    <height>534</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -23,8 +23,8 @@
    <widget class="QFrame" name="frame">
     <property name="geometry">
      <rect>
-      <x>100</x>
-      <y>40</y>
+      <x>0</x>
+      <y>0</y>
       <width>391</width>
       <height>271</height>
      </rect>
@@ -336,8 +336,8 @@
    <widget class="QFrame" name="frame_2">
     <property name="geometry">
      <rect>
-      <x>490</x>
-      <y>40</y>
+      <x>390</x>
+      <y>0</y>
       <width>141</width>
       <height>271</height>
      </rect>
@@ -396,8 +396,8 @@
    <widget class="QFrame" name="frame_3">
     <property name="geometry">
      <rect>
-      <x>100</x>
-      <y>310</y>
+      <x>0</x>
+      <y>270</y>
       <width>531</width>
       <height>221</height>
      </rect>
@@ -553,7 +553,7 @@ font: 14pt &quot;MS Shell Dlg 2&quot;;</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>800</width>
+     <width>536</width>
      <height>21</height>
     </rect>
    </property>

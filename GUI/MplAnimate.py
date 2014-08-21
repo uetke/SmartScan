@@ -28,13 +28,14 @@ import copy
 import codecs
 
 class MplAnimate(QtGui.QMainWindow):
-    def __init__(self, MainWindow, name, option, scanindex=-1, parent=None):
+    def __init__(self, MainWindow, name, option, scanindex=-1, parent=None, directory='.'):
         super(MplAnimate, self).__init__(parent)
         #self.ui = Ui_MainWindow()
         #QtGui.QGraphicsObject.__init__(self)
         self.MainWindow = MainWindow
         self.name = name
         self.option = option
+        self.directory = directory
         self.scanindex = scanindex
         self.widget = MplCanvas(self,MainWindow)
         self.resize(700,450)
@@ -85,7 +86,7 @@ class MplAnimate(QtGui.QMainWindow):
         return self._running
     
     def saveDialog(self):
-        filename = QtGui.QFileDialog.getSaveFileName(self, 'Save File', '.')
+        filename = QtGui.QFileDialog.getSaveFileName(self, 'Save File', self.directory)
         if self.option[1]=='Imshow':
             data = self.widget.data[0]
             header = '#The detector is %s\n#Format 2d array of image\n#x-axis %s (%s ), y-axis %s (%s )\n#center %s, dims %s, accuracy %s, delay %s\n' %(self.widget.detector[0].properties['Name'],self.widget.xlabel,self.widget.xunit,self.widget.ylabel,self.widget.yunit,self.widget.center,self.widget.dims,self.widget.accuracy,self.widget.delay)

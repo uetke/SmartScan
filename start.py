@@ -11,7 +11,7 @@ def adding_to_path(folder):
 	Each folder needs an __init__.py file to be considered as a module.
 	"""
 
-	# realpath() with make your script run, even if you symlink it :)
+	# realpath() will make your script run, even if you symlink it :)
 	# Adds the current folder to the path
 	cmd_folder = os.path.realpath(os.path.abspath(os.path.split(inspect.getfile(inspect.currentframe()))[0]))
 	if cmd_folder not in sys.path:
