@@ -3,3 +3,4 @@
 .pyc
 .settings/
 .log
+__pycache__/
