@@ -41,7 +41,7 @@ if __name__ == '__main__':
 
     print('Data will be saved in %s'%(savedir))
     #init the Adwin programm and also loading the configuration file for the devices
-    adw = adq('adwin.T99') 
+    adw = adq('lib/adbasic/adwin.T99') 
     adw.load()
     xpiezo = device('x piezo')
     ypiezo = device('y piezo')
