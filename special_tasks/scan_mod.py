@@ -2,15 +2,17 @@ from __future__ import division
 import numpy as np
 import time
 import matplotlib.pyplot as plt
-from adq_mod import *
-from xml2dict import device,variables
+from lib.adq_mod import *
+from lib.xml2dict import device,variables
 from datetime import datetime
 import msvcrt
 import sys
 import os
-from logger import get_all_caller,logger
-from powermeter1830c import powermeter1830c as pp
+from lib.logger import get_all_caller,logger
+from devices.powermeter1830c import powermeter1830c as pp
+from start import adding_to_path
 
+adding_to_path('lib')
 logger=logger(filelevel=20)
 
 cwd = os.getcwd()
@@ -66,9 +68,9 @@ if __name__ == '__main__':
     #making a 2d scan of the sample and trying to find particles
     xcenter = 50.0 #In um
     ycenter = 50.0
-    zcenter = 49.3
-    xdim = 40    #In um
-    ydim = 40
+    zcenter = 48.4
+    xdim = 30    #In um
+    ydim = 30
     xacc = 0.2   #In um
     yacc = 0.2
     devs = [xpiezo,ypiezo,zpiezo]
@@ -170,90 +172,90 @@ if __name__ == '__main__':
     np.savetxt("%s%s_init.txt" %(savedir,filename), data,fmt='%s', delimiter=",", header=header)   
     logger.info('Initial file saved as %s%s_init.txt' %(savedir,filename))
     
-    print('Now is time to do a scan changing the intensity of the 633 laser\n')
-    pressing = input('Please save the file with particle coordinates as %s%s_good.txt and pres enter to coninue'%(savedir, filename))
-    
-    
-    data = np.loadtxt('%s%s_good.txt' %(savedir, filename),dtype='bytes',delimiter =',').astype('str')#strange b in front of strings 
-    num_particles = sum(data[:,0]=='particle')
-    num_background = sum(data[:,0]=='background')
-    
-    pmeter.wavelength = 633
-
-    print('Acquiring the image (just for reference)')
-    image = np.array(adw.scan_static(counter,[xpiezo,ypiezo],[xcenter,ycenter],[xdim,ydim],[xacc,yacc]))
-    image = np.squeeze(image)
-    
-    try:
-        power = pmeter.data*1000000
-    except:
-        power = 0
-    
-    header = 'center = [%s,%s,%s], dim = [%s,%s], acc = [%s,%s], laser = %s uW' %(xcenter,ycenter,zcenter,xdim,ydim,xacc,yacc,power)
-    np.savetxt(savedir + "%s_633_raw_image.txt" %(filename),image,fmt='%s',delimiter=',',header=header)
-    
-    for i in range(num_particles):
-        center = data[i,1:4].astype('float')
-        adw.go_to_position(devs,center)
-        for m in range(20):
-            if m==0: # If it's the first time that is running
-                print('Focusing on particle %i'%(i+1))
-                adw.go_to_position([aom],[1]) # Go to a reasonable intensity
-                data[i,1:4] = adw.focus_full(counter,devs,center,dims,accuracy).astype('str')
-                
-            power_aom = 1.5-m*1.5/20
-            adw.go_to_position([aom],[power_aom])   
-            adw.set_digout(0)           
-            time.sleep(0.5)    
-            adw.clear_digout(0)
-            while adw.get_digin(1):
-                if msvcrt.kbhit():
-                    key = msvcrt.getch()
-                    if ord(key) == 113:
-                        abort(filename + '_inter')
-                time.sleep(0.1)
-            try:
-                power = pmeter.data*1000000
-            except:
-                power = 0
-                
-            print('Acquired spectra of particle %i with %i uW'%(i,power))
-            try:
-                data[i,m+4]=str(power)
-            except:
-                data = np.append(data,np.zeros([len(data),1]).astype('str'),1)
-                data[i,m+4]=str(power)
-        print('Done with %s of %s particles' %(i+1, num_particles))
-    #make a spectra of the selected backgrounds
-    
-    for i in range(num_background):
-        center = np.append(background[:2,i],np.mean(data[:len(particles[0,:]),3].astype('float')))
-        adw.go_to_position(devs,center)
-        for m in range(20):
-            power_aom = 1.5-m*1.5/20
-            adw.go_to_position([aom],[power_aom])   
-            adw.set_digout(0)           
-            time.sleep(0.5)    
-            adw.clear_digout(0)
-            
-            while adw.get_digin(1):
-                if msvcrt.kbhit():
-                    key = msvcrt.getch()
-                    if ord(key) == 113:
-                         abort(filename + '_inter')
-                time.sleep(0.1)
-            try:
-                power = pmeter.data*1000000
-            except:
-                power = 0
-            print('Acquired background %i with %i uW'%(i,power))
-            data[i-num_background,m+4]=str(power)   
-        print('Done with %s of %s backgrounds'%(i,num_background))
-    
-    header = "type,x-pos,y-pos,z-pos,laser power"
-    np.savetxt("%s%s_final.txt" %(savedir,filename), data,fmt='%s', delimiter=",", header=header)
-    logger.info('Final file saved as %s%s_final.txt' %(savedir,filename))
-    logger.info('633 completed')
-    
-    print('Done with the 633')
+    #print('Now is time to do a scan changing the intensity of the 633 laser\n')
+    #pressing = input('Please save the file with particle coordinates as %s%s_good.txt and pres enter to coninue'%(savedir, filename))
+    #
+    #
+    #data = np.loadtxt('%s%s_good.txt' %(savedir, filename),dtype='bytes',delimiter =',').astype('str')#strange b in front of strings 
+    #num_particles = sum(data[:,0]=='particle')
+    #num_background = sum(data[:,0]=='background')
+    #
+    #pmeter.wavelength = 633
+    #
+    #print('Acquiring the image (just for reference)')
+    #image = np.array(adw.scan_static(counter,[xpiezo,ypiezo],[xcenter,ycenter],[xdim,ydim],[xacc,yacc]))
+    #image = np.squeeze(image)
+    #
+    #try:
+    #    power = pmeter.data*1000000
+    #except:
+    #    power = 0
+    #
+    #header = 'center = [%s,%s,%s], dim = [%s,%s], acc = [%s,%s], laser = %s uW' %(xcenter,ycenter,zcenter,xdim,ydim,xacc,yacc,power)
+    #np.savetxt(savedir + "%s_633_raw_image.txt" %(filename),image,fmt='%s',delimiter=',',header=header)
+    #
+    #for i in range(num_particles):
+    #    center = data[i,1:4].astype('float')
+    #    adw.go_to_position(devs,center)
+    #    for m in range(20):
+    #        if m==0: # If it's the first time that is running
+    #            print('Focusing on particle %i'%(i+1))
+    #            adw.go_to_position([aom],[1]) # Go to a reasonable intensity
+    #            data[i,1:4] = adw.focus_full(counter,devs,center,dims,accuracy).astype('str')
+    #            
+    #        power_aom = 1.5-m*1.5/20
+    #        adw.go_to_position([aom],[power_aom])   
+    #        adw.set_digout(0)           
+    #        time.sleep(0.5)    
+    #        adw.clear_digout(0)
+    #        while adw.get_digin(1):
+    #            if msvcrt.kbhit():
+    #                key = msvcrt.getch()
+    #                if ord(key) == 113:
+    #                    abort(filename + '_inter')
+    #            time.sleep(0.1)
+    #        try:
+    #            power = pmeter.data*1000000
+    #        except:
+    #            power = 0
+    #            
+    #        print('Acquired spectra of particle %i with %i uW'%(i,power))
+    #        try:
+    #            data[i,m+4]=str(power)
+    #        except:
+    #            data = np.append(data,np.zeros([len(data),1]).astype('str'),1)
+    #            data[i,m+4]=str(power)
+    #    print('Done with %s of %s particles' %(i+1, num_particles))
+    ##make a spectra of the selected backgrounds
+    #
+    #for i in range(num_background):
+    #    center = np.append(background[:2,i],np.mean(data[:len(particles[0,:]),3].astype('float')))
+    #    adw.go_to_position(devs,center)
+    #    for m in range(20):
+    #        power_aom = 1.5-m*1.5/20
+    #        adw.go_to_position([aom],[power_aom])   
+    #        adw.set_digout(0)           
+    #        time.sleep(0.5)    
+    #        adw.clear_digout(0)
+    #        
+    #        while adw.get_digin(1):
+    #            if msvcrt.kbhit():
+    #                key = msvcrt.getch()
+    #                if ord(key) == 113:
+    #                     abort(filename + '_inter')
+    #            time.sleep(0.1)
+    #        try:
+    #            power = pmeter.data*1000000
+    #        except:
+    #            power = 0
+    #        print('Acquired background %i with %i uW'%(i,power))
+    #        data[i-num_background,m+4]=str(power)   
+    #    print('Done with %s of %s backgrounds'%(i,num_background))
+    #
+    #header = "type,x-pos,y-pos,z-pos,laser power"
+    #np.savetxt("%s%s_final.txt" %(savedir,filename), data,fmt='%s', delimiter=",", header=header)
+    #logger.info('Final file saved as %s%s_final.txt' %(savedir,filename))
+    #logger.info('633 completed')
+    #
+    #print('Done with the 633')
     print('Program finish')

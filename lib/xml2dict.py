@@ -1,6 +1,6 @@
 import xml.etree.cElementTree as ET
 import logging
-from logger import get_all_caller
+from lib.logger import get_all_caller
 
 class device():
     def __init__(self,name=None,type='Adwin',filename='config/config_devices.xml'):

@@ -314,7 +314,7 @@ class MainWindow(QMainWindow):
 		self.monitor[option].show()
 		
 	def fileQuit(self):
-		reply = QtGui.QMessageBox.question(self, 'Message',"Are you sure to quit?", 
+		reply = QtGui.QMessageBox.question(self, 'Message',"Are you sure you want to quit?", 
 										QtGui.QMessageBox.Yes | QtGui.QMessageBox.No, QtGui.QMessageBox.No)
 
 		if reply == QtGui.QMessageBox.Yes:

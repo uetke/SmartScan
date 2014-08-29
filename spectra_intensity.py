@@ -10,7 +10,7 @@ from datetime import datetime
 import msvcrt
 import sys
 import os
-from logger import get_all_caller,logger
+from lib.logger import get_all_caller,logger
 from devices.powermeter1830c import powermeter1830c as pp
 
 logger=logger(filelevel=20)
@@ -61,7 +61,7 @@ if __name__ == '__main__':
     dims = [0.4,0.4,0.8]
     accuracy = [0.05,0.05,0.1]
     center = [xcenter, ycenter, zcenter]
-    number_of_spectra = 30
+    number_of_spectra = 20
  #   adw.clear_digout(0)
  #   adw.go_to_position([aom],[1])
     
