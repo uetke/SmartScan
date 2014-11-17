@@ -1,5 +1,3 @@
-# Script for acquiring spectra vs intensity of the selected particle
-
 from __future__ import division
 import numpy as np
 import time
@@ -7,6 +5,7 @@ import matplotlib.pyplot as plt
 from lib.adq_mod import *
 from lib.xml2dict import device,variables
 from datetime import datetime
+from tkinter.filedialog import askopenfilename
 import msvcrt
 import sys
 import os
@@ -23,6 +22,8 @@ fpar=variables('FPar')
 data=variables('Data')
 fifo=variables('Fifo')
 
+
+
 def abort(filename):
     logger = logging.getLogger(get_all_caller())
     logger.critical('You quit!')
@@ -33,15 +34,16 @@ def abort(filename):
         
 if __name__ == '__main__': 
     #initialize the adwin and the devices   
-    name = 'spectra_power'
+    name = input('Give the name of the sample: ')
+    cwd = os.getcwd()
     savedir = 'D:\\Data\\' + str(datetime.now().date()) + '\\'
     if not os.path.exists(savedir):
         os.makedirs(savedir)
     i=1
-    filename = '%s_%s.dat'%(name,i)
-    while os.path.exists(savedir+filename):
+    filename = name
+    while os.path.exists(savedir+filename+"_line_scan.txt"):
+        filename = '%s_%s' %(name,i)
         i += 1
-        filename = '%s_%s.dat' %(name,i)
     logger.info('%s\\%s.log' %(savedir,filename))
     print('Data will be saved in %s'%(savedir+filename))
     #init the Adwin programm and also loading the configuration file for the devices
@@ -51,17 +53,7 @@ if __name__ == '__main__':
     zpiezo = device('z piezo')
     counter = device('APD 1')
     aom = device('AOM')
-    xcenter = 50.31 #In um
-    ycenter = 44.53
-    zcenter = 49.45
-    devs = [xpiezo,ypiezo,zpiezo]
-    #parameters for the refocusing on the particles
-    dims = [0.4,0.4,0.8]
-    accuracy = [0.05,0.05,0.1]
-    center = [xcenter, ycenter, zcenter]
-    number_of_spectra = 10
- #   adw.clear_digout(0)
- #   adw.go_to_position([aom],[1])
+    adw.go_to_position([aom],[1.5])
     
     #Newport Power Meter
     pmeter = pp(0)
@@ -71,32 +63,25 @@ if __name__ == '__main__':
     pmeter.filter = 'Medium' 
     pmeter.go = True
     pmeter.units = 'Watts' 
-    data = np.zeros([number_of_spectra,1])
     
-    for m in range(number_of_spectra):
-        power_aom = 2-m*2/number_of_spectra
-        adw.go_to_position([aom],[power_aom])   
-        adw.set_digout(0)           
-        time.sleep(0.5)    
-        adw.clear_digout(0)
-        while adw.get_digin(1):
-            if msvcrt.kbhit():
-                key = msvcrt.getch()
-                if ord(key) == 113:
-                     abort(filename + '_inter')
-            time.sleep(0.1)
-        try:
-            power = pmeter.data*1000000
-        except:
-            power = 0
-        print('Acquired background %i with %i uW'%(i,power))
-        data[m] = (str(power))
+    #making a 2d scan of the sample and trying to find particles
+    xcenter = 51.0 #In um
+    ycenter = 50.0
+    zcenter = 49.0
+    xdim = 1    #In um
+    ydim = 20
+    xacc = 0.01   #In um
+    yacc = 0.2
+    devs = [xpiezo,ypiezo,zpiezo]
     
-    print('Done acquiring spectra.')
 
-    header = "Power in uW"
-    np.savetxt("%s%s" %(savedir,filename), data,fmt='%s', delimiter=",", header=header)
-    logger.info('Final file saved as %s%s' %(savedir,filename))
-    logger.info('Finished acquiring several sepctra completed')
     
-    print('Program finish')
+    pressing = input('Let\'s do a scan with the 633nm laser. Enter when ready\n')
+    
+    scan = np.array(adw.scan_static(counter,[xpiezo],[xcenter],[xdim],[xacc],speed=100))
+    scan = np.squeeze(scan)
+    plt.plot(scan)
+    plt.plot(scan)
+    plt.show()
+    
+    np.savetxt(savedir + "%s_line_scan.txt" %(filename),scan,fmt='%s',delimiter=',')

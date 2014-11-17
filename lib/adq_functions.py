@@ -8,7 +8,7 @@ import math as m
 from sys import stdout
 import ctypes
 import psutil
-from xml2dict import device,variables
+from lib.xml2dict import device,variables
 import logging
 from lib.logger import get_all_caller
 import copy

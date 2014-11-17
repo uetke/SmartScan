@@ -16,6 +16,7 @@ Delay='70'
 <Data Name='Data' Description='Data array names of the adwin'
 dev_params = '198'
 Scan_params = '199'
+Timetrace = '177'
 />
 <Fifo Name='Fifo' Description='Fifo array names of the adwin'
 Counter1='178'

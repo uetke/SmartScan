@@ -1,5 +1,3 @@
-# Script for acquiring spectra vs intensity of the selected particle
-
 from __future__ import division
 import numpy as np
 import time
@@ -7,6 +5,7 @@ import matplotlib.pyplot as plt
 from lib.adq_mod import *
 from lib.xml2dict import device,variables
 from datetime import datetime
+from tkinter.filedialog import askopenfilename
 import msvcrt
 import sys
 import os
@@ -22,6 +21,8 @@ par=variables('Par')
 fpar=variables('FPar')
 data=variables('Data')
 fifo=variables('Fifo')
+
+
 
 def abort(filename):
     logger = logging.getLogger(get_all_caller())
@@ -51,25 +52,45 @@ if __name__ == '__main__':
     ypiezo = device('y piezo')
     zpiezo = device('z piezo')
     counter = device('APD 1')
-    aom = device('AOM')
-    adw.go_to_position([aom],[1])
-
-    #making a 2d scan of the sample and trying to find particles
-    xcenter = 44.0 #In um
-    ycenter = 59.0
-    zcenter = 50.4
-    xdim = 5    #In um
-    ydim = 5
-    xacc = 0.2   #In um
-    yacc = 0.2
+    lockin = device('Lock-in')
+    
+    #Newport Power Meter
+    pmeter = pp(0)
+    pmeter.initialize()
+    pmeter.wavelength = 633
+    pmeter.attenuator = True
+    pmeter.filter = 'Medium' 
+    pmeter.go = True
+    pmeter.units = 'Watts' 
+    
+    #Using bright particle to focus
+    init_xcenter = 50.9 #In um
+    init_ycenter = 52.32
+    init_zcenter = 54.20
+    init_center = [init_xcenter, init_ycenter, init_zcenter]
     devs = [xpiezo,ypiezo,zpiezo]
-    # Number of different intensities to acquire time_traces
-    number_of_intensities = 10
+    timetrace_time = 5 # In seconds
+    integration_time = .02 # In seconds
+    number_elements = int(timetrace_time/integration_time)
+    
     #parameters for the refocusing on the particles
     dims = [0.3,0.3,0.6]
     accuracy = [0.05,0.05,0.1]
-    adw.go_to_position(devs[:3],[xcenter,ycenter,zcenter])
+    [init_xcenter, init_ycenter, init_zcenter] = adw.focus_full(lockin,devs,init_center,dims,accuracy,rate=1,speed=50)
+    zcenter = init_zcenter
+    init_center = [init_xcenter, init_ycenter, init_zcenter] 
+    xcenter = 50
+    ycenter = 50
     
+    # Dimension of the scan
+    xdim = 20    #In um
+    ydim = 20
+    xacc = 0.1   #In um
+    yacc = 0.1
+
+    adw.go_to_position(devs[:3],[xcenter,ycenter,zcenter])
+       
+    print('First let\'s do a scan with the 633nm laser and PhotoThermal')
     
     image = np.array(adw.scan_static(counter,[xpiezo,ypiezo],[xcenter,ycenter],[xdim,ydim],[xacc,yacc]))
     image = np.squeeze(image)
@@ -88,10 +109,10 @@ if __name__ == '__main__':
         power = 0
         
     header = 'center = [%s,%s,%s], dim = [%s,%s], acc = [%s,%s], laser = %s uW' %(xcenter,ycenter,zcenter,xdim,ydim,xacc,yacc,power)
-    np.savetxt(savedir + "%s_532_raw_image.txt" %(filename),image,fmt='%s',delimiter=',',header=header)
+    np.savetxt(savedir + "%s_633_raw_image.txt" %(filename),image,fmt='%s',delimiter=',',header=header)
     imshow=ax.imshow(image, interpolation='none', cmap='gnuplot')
     plt.colorbar(imshow)
-    plt.savefig(savedir + "%s_532_scan" %(filename))
+    plt.savefig(savedir + "%s_633_scan" %(filename))
 
     plot_backg, = ax.plot([], [],markeredgecolor = 'w' ,marker='$\circ$',markersize=10,markeredgewidth=2.0,linestyle="")      
     try:
@@ -111,86 +132,105 @@ if __name__ == '__main__':
     particles = (inter.particles.T*accuracy_scan+start_scan).T
     background = (inter.background.T*accuracy_scan+start_scan).T
     
-    # First make an initial spectra of all the particles
-    pressing = input('Enter when spectrometer ready')
+    # First take time-traces with the lockin
+    
+    print('Starting to take timetraces with the lock-in')
     global data 
     data = (np.hstack((particles,background)).T).astype('str')
     data = np.append(np.zeros([len(data),1]).astype('str'),data,1)
     data[:,0] = 'background'
     data[:len(particles[0,:]),0] = 'particle'
     data = np.append(data,np.zeros([len(data),2]).astype('str'),1) 
+    time_traces = np.zeros([len(data),number_elements])
+    
     
     for i in range(len(particles[0,:])):
-        power_aom = 1
-        adw.go_to_position([aom],[power_aom]) 
         center = data[i,1:4].astype('float')
         center[2] = zcenter
         adw.go_to_position(devs,center)
         data[i,1:4] = adw.focus_full(counter,devs,center,dims,accuracy,rate=1,speed=50)
         adw.set_digout(0)           
         time.sleep(0.5)    
+        adw.clear_digout(0)               
+        dd,ii = adw.get_timetrace_static([lockin],duration=timetrace_time,acc=integration_time)
+        while adw.get_digin(1):
+            if msvcrt.kbhit():
+                key = msvcrt.getch()
+                if ord(key) == 113:
+                    abort(filename + '_inter')
+            time.sleep(0.1)
+        time_traces[i,:] = np.array(dd)
+        print('Done with particle %i of %i'%(i+1,len(particles[0,:])))
+    print('633 PhotoThermal time Traces taken')
+    
+    #make timetraces of the selected background
+    for i in range(len(background[0,:])):
+        center = np.append(background[:2,i],np.mean(data[:len(particles[0,:]),3].astype('float')))
+        adw.go_to_position(devs,center)
+        adw.set_digout(0)           
+        time.sleep(0.5)    
+        adw.clear_digout(0)               
+        dd,ii = adw.get_timetrace_static([lockin],duration=timetrace_time,acc=integration_time)
+        while adw.get_digin(1):
+            if msvcrt.kbhit():
+                key = msvcrt.getch()
+                if ord(key) == 113:
+                    abort(filename + '_inter')
+            time.sleep(0.1)        
+        time_traces[i+len(particles[0,:]),:] = np.array(dd)
+        print('Done with background %i of %i'%(i+1,len(background[0,:])))
+
+        
+    header = "Time Traces with Lock-In. Duration = %s seconds. Integration time = %s seconds"%(timetrace_time,integration_time)
+    np.savetxt("%s%s_time_trace.txt" %(savedir,filename), time_traces,fmt='%s', delimiter=",", header=header)   
+    logger.info('Time traces file saved as %s%s_time_trace.txt' %(savedir,filename))
+
+    header = "Coordinate of the particles"
+    np.savetxt("%s%s_coordinates.txt" %(savedir,filename), data,fmt='%s', delimiter=",", header=header)   
+    
+    print('Now is time to acquire spectra with the 532nm laser')
+    print('Change to 532nm notch before the spectrometer and APD')
+    print('Remove 633nm filters')
+    pressing = input('Setup the spectrometer and press enter when ready')
+    
+    
+    [init_xcenter, init_ycenter, init_zcenter] = adw.focus_full(lockin,devs,init_center,dims,accuracy,rate=1,speed=50)
+    z_center = init_zcenter
+    
+    
+    num_particles = sum(data[:,0]=='particle')
+    num_background = sum(data[:,0]=='background')
+    
+
+    
+    for i in range(num_particles):
+        center = data[i,1:4].astype('float')
+        center[2] = zcenter
+        adw.go_to_position(devs,center)
+        adw.focus_full(counter,devs,center,dims,accuracy).astype('str')
+        adw.set_digout(0)           
+        time.sleep(0.5)    
         adw.clear_digout(0)
         while adw.get_digin(1):
             if msvcrt.kbhit():
                 key = msvcrt.getch()
-                if ord(key) == 113: #113 is ascii for letter q
-                     abort(filename+'_init')
-            time.sleep(0.1)
-        print('Done with particle %i of %i'%(i+1,len(particles[0,:])))
-        for m in range(number_of_intensities):
-            power_aom = 1.5-m*1.5/number_of_intensities
-            adw.go_to_position([aom],[power_aom])   
-            dd,ii = adw.get_timetrace_static([counter],duration=1,acc=None)
-            try:
-                power = pmeter.data*1000000
-            except:
-                power = 0          
-            try:
-                data[i,m+4]=str(power)
-                data[i,m+5]=np.sum(dd)
-            except:
-                data = np.append(data,np.zeros([len(data),1]).astype('str'),1)
-                data = np.append(data,np.zeros([len(data),1]).astype('str'),1)
-                data[i,m+4]=str(power)
-                data[i,m+5]=np.sum(dd)   
-            print('Done with %i'%(m))
-            
-    #make a spectra of the selected background
-    for i in range(len(background[0,:])):
+                if ord(key) == 113:
+                    abort(filename + '_inter')
+            time.sleep(0.1)               
+        print('Acquired spectra of particle %i'%(i))
+    
+    for i in range(num_background):
         center = np.append(background[:2,i],np.mean(data[:len(particles[0,:]),3].astype('float')))
-        adw.go_to_position(devs,center)
-        data[i-len(background[0,:]),3]=str(np.mean(data[:len(particles[0,:]),3].astype('float')))
-        data[i-len(background[0,:]),4]=str(datetime.now().time())
-        adw.set_digout(0)
+        adw.go_to_position(devs,center)  
+        adw.set_digout(0)           
         time.sleep(0.5)    
-        adw.clear_digout(0)
+        adw.clear_digout(0)        
         while adw.get_digin(1):
-            if msvcrt.kbhit(): # <--------
+            if msvcrt.kbhit():
                 key = msvcrt.getch()
                 if ord(key) == 113:
-                     abort(filename+'_init')
+                     abort(filename + '_inter')
             time.sleep(0.1)
-        print('Done with background %i of %i'%(i+1,len(background[0,:])))
-        for m in range(number_of_intensities):
-            power_aom = 1.5-m*1.5/number_of_intensities
-            adw.go_to_position([aom],[power_aom])   
-            dd,ii = adw.get_timetrace_static([counter],duration=1,acc=None)
-            try:
-                power = pmeter.data*1000000
-            except:
-                power = 0          
-            try:
-                data[i,m+4]=str(power)
-                data[i,m+5]=np.sum(dd)
-            except:
-                data = np.append(data,np.zeros([len(data),1]).astype('str'),1)
-                data = np.append(data,np.zeros([len(data),1]).astype('str'),1)
-                data[i,m+4]=str(power)
-                data[i,m+5]=np.sum(dd)   
-            print('Done with %i'%(m))
-    
-    header = "type,x-pos,y-pos,z-pos,first scan time" + ",time_%s"*(len(data[0,:])-5) %tuple(range((len(data[0,:])-5)))
-    np.savetxt("%s%s_init.txt" %(savedir,filename), data,fmt='%s', delimiter=",", header=header)   
-    logger.info('Initial file saved as %s%s_init.txt' %(savedir,filename))
-   
-    print('Program finished')
+        print('Acquired background %i'%(i))  
+    print('Done with the 532')
+    print('Program finish')
