@@ -33,15 +33,17 @@ def abort(filename):
         
 if __name__ == '__main__': 
     #initialize the adwin and the devices   
-    name = 'spectra_power'
+    name = 'power_intensity'
     savedir = 'D:\\Data\\' + str(datetime.now().date()) + '\\'
     if not os.path.exists(savedir):
         os.makedirs(savedir)
+    
     i=1
     filename = '%s_%s.dat'%(name,i)
     while os.path.exists(savedir+filename):
         i += 1
         filename = '%s_%s.dat' %(name,i)
+        
     logger.info('%s\\%s.log' %(savedir,filename))
     print('Data will be saved in %s'%(savedir+filename))
     #init the Adwin programm and also loading the configuration file for the devices
@@ -51,17 +53,9 @@ if __name__ == '__main__':
     zpiezo = device('z piezo')
     counter = device('APD 1')
     aom = device('AOM')
-    xcenter = 50.31 #In um
-    ycenter = 44.53
-    zcenter = 49.45
+
     devs = [xpiezo,ypiezo,zpiezo]
-    #parameters for the refocusing on the particles
-    dims = [0.4,0.4,0.8]
-    accuracy = [0.05,0.05,0.1]
-    center = [xcenter, ycenter, zcenter]
     number_of_spectra = 10
- #   adw.clear_digout(0)
- #   adw.go_to_position([aom],[1])
     
     #Newport Power Meter
     pmeter = pp(0)
@@ -71,30 +65,31 @@ if __name__ == '__main__':
     pmeter.filter = 'Medium' 
     pmeter.go = True
     pmeter.units = 'Watts' 
-    data = np.zeros([number_of_spectra,1])
     
+    timetrace_time = 2 # In seconds
+    integration_time = .01 # In seconds
+    number_elements = int(timetrace_time/integration_time)
+    
+    data = np.zeros([number_of_spectra,number_elements+1]) # The first element will be the power
+
     for m in range(number_of_spectra):
-        power_aom = 2-m*2/number_of_spectra
+        power_aom = 1.5-m*1.5/number_of_spectra
         adw.go_to_position([aom],[power_aom])   
-        adw.set_digout(0)           
-        time.sleep(0.5)    
-        adw.clear_digout(0)
-        while adw.get_digin(1):
-            if msvcrt.kbhit():
-                key = msvcrt.getch()
-                if ord(key) == 113:
-                     abort(filename + '_inter')
-            time.sleep(0.1)
+        dd,ii = adw.get_timetrace_static([counter],duration=timetrace_time,acc=integration_time)
+        if m==0:
+            time.sleep(1)
         try:
             power = pmeter.data*1000000
         except:
             power = 0
-        print('Acquired background %i with %i uW'%(i,power))
-        data[m] = (str(power))
-    
-    print('Done acquiring spectra.')
+        data[m,0] = (str(power))
+        data[m,1:] = np.array(dd)
+        print('Power %s uW'%(str(power)))
+        print('Done with %i'%(m))
+        
 
-    header = "Power in uW"
+        
+    header = "(Power in uW,timetrace) integration time: %f seconds"%(integration_time)
     np.savetxt("%s%s" %(savedir,filename), data,fmt='%s', delimiter=",", header=header)
     logger.info('Final file saved as %s%s' %(savedir,filename))
     logger.info('Finished acquiring several sepctra completed')

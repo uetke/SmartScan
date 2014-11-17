@@ -10,12 +10,9 @@
 ' Optimize_Level                 = 1
 ' Info_Last_Save                 = MEETPC113  MEETPC113\LION
 '<Header End>
-
 #include c:\adwin\adbasic\inc\adwgcnt.inc
-
-
 dim new_timer as integer
-dim data_200[50000] as long as FIFO
+dim data_200[500000] as long as FIFO
 dim data_198[1000] as long
 dim value, free, garbage as long
 dim i,j,dev_type, port, m, k as integer
