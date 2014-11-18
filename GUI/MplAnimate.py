@@ -162,7 +162,8 @@ class MplCanvas(QtGui.QGraphicsObject):
                             self.detector.append(device(self.parent.main.Scan_Dropdown.model.item(i).text()))
                         i += 1
             self.direction_1 = self.parent.main.Scan_1st_comboBox.currentText()
-            if self.parent.main.Scan_2nd_comboBox.currentText()=='None':
+			
+            if self.parent.main.Scan_1st_comboBox.currentText()=='Time':
                 self.duration = self.parent.main.Scan_1st_Range.value()
                 self.accuracy = self.parent.main.Scan_Delay_Range.value()/1000
                 self.delay = self.accuracy
@@ -177,7 +178,9 @@ class MplCanvas(QtGui.QGraphicsObject):
                 self.dims = [self.parent.main.Scan_1st_Range.value()]
                 self.accuracy = [self.parent.main.Scan_1st_Accuracy.value()]
                 self.xlabel = "%s" %parent.main.Scan_1st_comboBox.currentText()
-                self.xunit = ' %s' %self.devs[0].properties['Output']['Calibration']['Unit']
+                self.xunit = ' %s' %self.devs[0].properties['Output']['Calibration']['Unit']		
+                self.ylabel = ["%s" %self.detector[i].properties['Name'] for i in range(len(self.detector))]
+                self.yunit = [' %s' %self.detector[i].properties['Input']['Calibration']['Unit'] for i in range(len(self.detector))]
                 if not self.parent.main.Scan_2nd_comboBox.currentText()=='None':
                     self.devs.append(device(self.parent.main.Scan_2nd_comboBox.currentText()))
                     self.center.append(self.parent.Controler[self.parent.main.Scan_2nd_comboBox.currentText()]['PosBox'].value())
@@ -202,6 +205,8 @@ class MplCanvas(QtGui.QGraphicsObject):
             data = [self.adw.get_fifo(self.fifo.properties[self.fifo_name])]
         if self.MplAnimate.option[0]=='Scan' and self.parent.main.Scan_1st_comboBox.currentText()=='Time':
             data = self.adw.get_timetrace_dynamic(self.detector,self.duration,self.accuracy)
+        elif self.MplAnimate.option[0]=='Scan' and self.parent.main.Scan_2nd_comboBox.currentText()=='None':
+            data = copy.copy(self.adw.scan_dynamic(self.detector,self.devs,self.center,self.dims,self.accuracy,self.speed))
         elif self.MplAnimate.option[0]=='Scan':
             data = copy.copy(self.adw.scan_dynamic(self.detector,self.devs,self.center,self.dims,self.accuracy,self.speed))
         if type(data)==type(False) and data==0:
@@ -214,7 +219,6 @@ class MplCanvas(QtGui.QGraphicsObject):
         for i in range(len(self.detector)):
             calibration = self.detector[i].properties['Input']['Calibration']
             data[i] = (data[i]-calibration['Offset'])/calibration['Slope']
-            #print(data[i])
             if self.detector[i].properties['Type']=='Counter':
                 data[i] /= self.delay
             if self.MplAnimate.option[1]=='Line':

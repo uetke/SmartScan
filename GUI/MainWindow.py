@@ -239,7 +239,7 @@ class MainWindow(QMainWindow):
 			self.scan = MplAnimate(self,option,['Scan','Line'],timeindex,directory=self.directory)
 			self.scanwindows[timeindex] = self.scan
 		else:
-			if self.main.Scan_1st_comboBox.currentText()=='None':
+			if self.main.Scan_2nd_comboBox.currentText()=='None':
 				self.scan = MplAnimate(self,option,['Scan','Line'],self.scanindex,directory=self.directory)
 				self.main.Controler_Select_scan.addItem(_translate("MainWindow", 'Window %s'%self.scanindex, None))
 				self.scanwindows[self.scanindex] = self.scan
