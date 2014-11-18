@@ -239,9 +239,14 @@ class MainWindow(QMainWindow):
 			self.scan = MplAnimate(self,option,['Scan','Line'],timeindex,directory=self.directory)
 			self.scanwindows[timeindex] = self.scan
 		else:
-			self.scan = MplAnimate(self,option,['Scan','Imshow'],self.scanindex,directory=self.directory)
-			self.main.Controler_Select_scan.addItem(_translate("MainWindow", 'Window %s'%self.scanindex, None))
-			self.scanwindows[self.scanindex] = self.scan
+			if self.main.Scan_1st_comboBox.currentText()=='None':
+				self.scan = MplAnimate(self,option,['Scan','Line'],self.scanindex,directory=self.directory)
+				self.main.Controler_Select_scan.addItem(_translate("MainWindow", 'Window %s'%self.scanindex, None))
+				self.scanwindows[self.scanindex] = self.scan
+			else:
+				self.scan = MplAnimate(self,option,['Scan','Imshow'],self.scanindex,directory=self.directory)
+				self.main.Controler_Select_scan.addItem(_translate("MainWindow", 'Window %s'%self.scanindex, None))
+				self.scanwindows[self.scanindex] = self.scan
 		self.scan.setWindowTitle("Window %s: Scan with the %s Detector with on the x-axes %s" %(tuple([self.scanindex])+tuple(option.split(';'))))
 		self.scanindex += 1 
 		self.scan.show()
