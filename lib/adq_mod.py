@@ -8,7 +8,7 @@ import math as m
 from sys import stdout
 import ctypes
 import psutil
-from xml2dict import device,variables
+from lib.xml2dict import device,variables
 import logging
 from lib.logger import get_all_caller
 import copy
@@ -137,18 +137,28 @@ class adq(ADwin):
 				return np.array([])
 		else:
 			self.logger.error('The fifo number %s is out of range(0,201)' %(number))
-
+    
+	def get_fast_timetrace(self,detect,duration=1,acc=.1):
+		"""Gets a timetrace with a dedicated high-priority process. 
+			Only works for a counter.
+		"""
+		delay = m.floor(acc/25e-9)
+		port = detect.properties['Input']['Hardware']['PortID']
+		self.set_par(par.properties['Port'],int(port))
+		num_ticks = int(duration / (delay * 25e-9))
+		self.set_par(par.properties['Num_ticks'],num_ticks)
+		self.adw.Set_Processdelay(self.proc_num,delay)
+		self.start(process=8)
+		time.sleep(duration)
+		array = np.array(list(self.adw.GetData_Long(177,1,num_ticks)))
+		return array       
+        
 	def get_timetrace_static(self,detect,duration=1,acc=None):
 		"""gets the timetrace data from the adwin with the duration in seconds
 			and the accuracy in seconds"""
 		if not type(detect)== type([]):
 			detect = list(detect)
 		self.logger = logging.getLogger(get_all_caller())
-		if acc!=None:
-			self.adw.Set_Processdelay(self.proc_num, m.floor(acc/25e-9))
-		delay = self.adw.Get_Processdelay(self.proc_num) 
-		self.logger.info('Making static timetrace with %s for %ss and precision of %ss' %(', '.join([ i.properties['Name'] for i in detect ]),duration,acc))
-		num_ticks = int(duration / (delay * 25e-9))
 		#self.set_par(par.properties['Dev_type'],int(detect.properties['Type'][:5],36))
 		#self.set_par(par.properties['Port'],detect.properties['Input']['Hardware']['PortID'])
 		dev_params = np.array([])
@@ -156,10 +166,18 @@ class adq(ADwin):
 			dev_params = np.append(dev_params,[int(i.properties['Type'][:5],36),i.properties['Input']['Hardware']['PortID']])
 		self.set_datalong(dev_params,data.properties['dev_params'])
 		self.set_par(par.properties['Num_devs'],len(detect))
+		delay = m.floor(acc/25e-9)
+		num_ticks = int(duration / (delay * 25e-9))
 		self.set_par(par.properties['Num_ticks'],num_ticks)
 		self.set_par(par.properties['Case'],3)
+		if acc!=None:
+			self.adw.Set_Processdelay(self.proc_num, m.floor(acc/25e-9))
+		delay = self.adw.Get_Processdelay(self.proc_num) 
+		self.logger.info('Making static timetrace with %s for %ss and precision of %ss' %(', '.join([ i.properties['Name'] for i in detect ]),duration,acc))
+		
 		self.start()
-		self.wait()
+		time.sleep(duration)
+		#self.wait()
 		array = np.array(list(self.get_fifo(fifo.properties['Scan_data'])))
 		split_data = []
 		for i in range(len(detect)):

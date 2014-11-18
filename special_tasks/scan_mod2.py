@@ -2,15 +2,15 @@ from __future__ import division
 import numpy as np
 import time
 import matplotlib.pyplot as plt
-from adq_mod import *
-from xml2dict import device,variables
+from lib.adq_mod import *
+from lib.xml2dict import device,variables
 from datetime import datetime
 from tkinter.filedialog import askopenfilename
 import msvcrt
 import sys
 import os
-from logger import get_all_caller,logger
-from powermeter1830c import powermeter1830c as pp
+from lib.logger import get_all_caller,logger
+from devices.powermeter1830c import powermeter1830c as pp
 
 logger=logger(filelevel=20)
 
@@ -41,7 +41,7 @@ if __name__ == '__main__':
         os.makedirs(savedir)
     i=1
     filename = name
-    while os.path.exists(savedir+filename+"_532_raw_image.txt"):
+    while os.path.exists(savedir+filename+"_633_LP_raw_image.txt"):
         filename = '%s_%s' %(name,i)
         i += 1
     logger.info('%s\\%s.log' %(savedir,filename))
@@ -53,12 +53,12 @@ if __name__ == '__main__':
     zpiezo = device('z piezo')
     counter = device('APD 1')
     aom = device('AOM')
-    adw.go_to_position([aom],[1])
+    adw.go_to_position([aom],[1.5])
     
     #Newport Power Meter
     pmeter = pp(0)
     pmeter.initialize()
-    pmeter.wavelength = 532
+    pmeter.wavelength = 633
     pmeter.attenuator = True
     pmeter.filter = 'Medium' 
     pmeter.go = True
@@ -67,9 +67,9 @@ if __name__ == '__main__':
     #making a 2d scan of the sample and trying to find particles
     xcenter = 50.0 #In um
     ycenter = 50.0
-    zcenter = 49.3
-    xdim = 40    #In um
-    ydim = 40
+    zcenter = 49.0
+    xdim = 20    #In um
+    ydim = 20
     xacc = 0.2   #In um
     yacc = 0.2
     devs = [xpiezo,ypiezo,zpiezo]
@@ -81,9 +81,8 @@ if __name__ == '__main__':
     #Number of spectra to take on each particle
     number_of_spectra = 20
     
-    pressing = input('First let\'s do a scan with the 532nm laser. Enter when ready\n')
+    pressing = input('First let\'s do a scan with the 633nm laser. Enter when ready\n')
     
-    filename = askopenfilename()
     image = np.array(adw.scan_static(counter,[xpiezo,ypiezo],[xcenter,ycenter],[xdim,ydim],[xacc,yacc]))
     image = np.squeeze(image)
     
@@ -101,10 +100,10 @@ if __name__ == '__main__':
         power = 0
         
     header = 'center = [%s,%s,%s], dim = [%s,%s], acc = [%s,%s], laser = %s uW' %(xcenter,ycenter,zcenter,xdim,ydim,xacc,yacc,power)
-    np.savetxt(savedir + "%s_532_raw_image.txt" %(filename),image,fmt='%s',delimiter=',',header=header)
+    np.savetxt(savedir + "%s_633_LP_raw_image.txt" %(filename),image,fmt='%s',delimiter=',',header=header)
     imshow=ax.imshow(image, interpolation='none', cmap='gnuplot')
     plt.colorbar(imshow)
-    plt.savefig(savedir + "%s_532_scan" %(filename))
+    plt.savefig(savedir + "%s_633_LP_scan" %(filename))
 
     plot_backg, = ax.plot([], [],markeredgecolor = 'w' ,marker='$\circ$',markersize=10,markeredgewidth=2.0,linestyle="")      
     try:
@@ -172,32 +171,111 @@ if __name__ == '__main__':
     np.savetxt("%s%s_init.txt" %(savedir,filename), data,fmt='%s', delimiter=",", header=header)   
     logger.info('Initial file saved as %s%s_init.txt' %(savedir,filename))
     
-    print('Now is time to do a scan changing the intensity of the 633 laser\n')
-    pressing = input('Please save the file with particle coordinates as %s%s_good.txt and pres enter to coninue'%(savedir, filename))
+    print('Now is time to acquire spectra with the shortpass and the 633nm laser\n')
+    pressing = input('Enter when ready')
     
     
-    data = np.loadtxt('%s%s_good.txt' %(savedir, filename),dtype='bytes',delimiter =',').astype('str')#strange b in front of strings 
+    data = np.loadtxt('%s%s_init.txt' %(savedir, filename),dtype='bytes',delimiter =',').astype('str')#strange b in front of strings 
     num_particles = sum(data[:,0]=='particle')
     num_background = sum(data[:,0]=='background')
     
     pmeter.wavelength = 633
 
-    print('Acquiring the image (just for reference)')
-    image = np.array(adw.scan_static(counter,[xpiezo,ypiezo],[xcenter,ycenter],[xdim,ydim],[xacc,yacc]))
-    image = np.squeeze(image)
+    for i in range(num_particles):
+        center = data[i,1:4].astype('float')
+        center[2] = zcenter
+        adw.go_to_position(devs,center)
+        data[i,1:4] = adw.focus_full(counter,devs,center,dims,accuracy,rate=1,speed=50)
+        adw.set_digout(0)           
+        time.sleep(0.5)    
+        adw.clear_digout(0)
+        while adw.get_digin(1):
+            if msvcrt.kbhit():
+                key = msvcrt.getch()
+                if ord(key) == 113: #113 is ascii for letter q
+                     abort(filename+'_init')
+            time.sleep(0.1)
+        print('Done with particle %i of %i'%(i+1,len(particles[0,:])))
+    print('633 Short Pass particle spectra taken')
     
-    try:
-        power = pmeter.data*1000000
-    except:
-        power = 0
+    #make a spectra of the selected background
+    for i in range(num_background):
+        center = np.append(background[:2,i],np.mean(data[:len(particles[0,:]),3].astype('float')))
+        adw.go_to_position(devs,center)
+        data[i-len(background[0,:]),3]=str(np.mean(data[:len(particles[0,:]),3].astype('float')))
+        data[i-len(background[0,:]),4]=str(datetime.now().time())
+        adw.set_digout(0)
+        time.sleep(0.5)    
+        adw.clear_digout(0)
+        while adw.get_digin(1):
+            if msvcrt.kbhit(): # <--------
+                key = msvcrt.getch()
+                if ord(key) == 113:
+                     abort(filename+'_init')
+            time.sleep(0.1)
+        print('Done with background %i of %i'%(i+1,len(background[0,:])))
+    print('Done with backgrounds with the 633')
+    print('Done with the 633')
     
-    header = 'center = [%s,%s,%s], dim = [%s,%s], acc = [%s,%s], laser = %s uW' %(xcenter,ycenter,zcenter,xdim,ydim,xacc,yacc,power)
-    np.savetxt(savedir + "%s_633_raw_image.txt" %(filename),image,fmt='%s',delimiter=',',header=header)
+    
+    
+    
+    print('Now is time to take spectra with the 532')
+    pressing = input('Enter when ready')
+    
+    pmeter.wavelength = 532
+
+    for i in range(num_particles):
+        center = data[i,1:4].astype('float')
+        center[2] = zcenter
+        adw.go_to_position(devs,center)
+        data[i,1:4] = adw.focus_full(counter,devs,center,dims,accuracy,rate=1,speed=50)
+        adw.set_digout(0)           
+        time.sleep(0.5)    
+        adw.clear_digout(0)
+        while adw.get_digin(1):
+            if msvcrt.kbhit():
+                key = msvcrt.getch()
+                if ord(key) == 113: #113 is ascii for letter q
+                     abort(filename+'_init')
+            time.sleep(0.1)
+        print('Done with particle %i of %i'%(i+1,len(particles[0,:])))
+    print('532nm spectra taken')
+    
+    #make a spectra of the selected background
+    for i in range(num_background):
+        center = np.append(background[:2,i],np.mean(data[:len(particles[0,:]),3].astype('float')))
+        adw.go_to_position(devs,center)
+        data[i-len(background[0,:]),3]=str(np.mean(data[:len(particles[0,:]),3].astype('float')))
+        data[i-len(background[0,:]),4]=str(datetime.now().time())
+        adw.set_digout(0)
+        time.sleep(0.5)    
+        adw.clear_digout(0)
+        while adw.get_digin(1):
+            if msvcrt.kbhit(): # <--------
+                key = msvcrt.getch()
+                if ord(key) == 113:
+                     abort(filename+'_init')
+            time.sleep(0.1)
+        print('Done with background %i of %i'%(i+1,len(background[0,:])))
+    print('Done with backgrounds with the 532')
+    print('Done with the 532')
+
+    
+    print('Now is time to take spectra with varying intensity')
+    print('Please save the coordinates of the particles as %s%s_good.txt' %(savedir, filename))
+    pressing = input('Press enter when ready')
+
+    data = np.loadtxt('%s%s_good.txt' %(savedir, filename),dtype='bytes',delimiter =',').astype('str')#strange b in front of strings 
+    num_particles = sum(data[:,0]=='particle')
+    num_background = sum(data[:,0]=='background')
+    
+    pmeter.wavelength = 633
     
     for i in range(num_particles):
         center = data[i,1:4].astype('float')
         adw.go_to_position(devs,center)
-        for m in range(20):
+        for m in range(number_of_spectra):
             if m==0: # If it's the first time that is running
                 print('Focusing on particle %i'%(i+1))
                 adw.go_to_position([aom],[1]) # Go to a reasonable intensity
@@ -226,8 +304,8 @@ if __name__ == '__main__':
                 data = np.append(data,np.zeros([len(data),1]).astype('str'),1)
                 data[i,m+4]=str(power)
         print('Done with %s of %s particles' %(i+1, num_particles))
+        
     #make a spectra of the selected backgrounds
-    
     for i in range(num_background):
         center = np.append(background[:2,i],np.mean(data[:len(particles[0,:]),3].astype('float')))
         adw.go_to_position(devs,center)
@@ -257,5 +335,5 @@ if __name__ == '__main__':
     logger.info('Final file saved as %s%s_final.txt' %(savedir,filename))
     logger.info('633 completed')
     
-    print('Done with the 633')
+    
     print('Program finish')
