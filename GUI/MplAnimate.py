@@ -293,7 +293,12 @@ class MplCanvas(QtGui.QGraphicsObject):
                 self.imv[i].setImage(np.nan_to_num(self.data[i].T), pos=self.pos, scale=self.accuracy, autoLevels=False)
                 #data_wol = self.reject_outliers(temp[i][~np.isnan(temp[i])].flatten())
                 self.imv[i].setLevels(np.nanmin(self.data[i]), np.nanmax(self.data[i]))
-                self.parent.main.Controler_BusyLabel.setText(_translate("MainWindow", "Testing", None))
+				
+                done = np.count_nonzero(np.isnan(self.data))
+                not_done = np.count_nonzero(~np.isnan(self.data))
+                total = done+not_done
+                
+                self.parent.main.Controler_BusyLabel.setText("%s %%"%(int(done/total*100)))
     
     
     def monitor(self):
