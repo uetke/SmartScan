@@ -673,6 +673,22 @@ class adq(ADwin):
                 self.set_device_value(devs[i],center[i])
         else:
             self.logger.error('Dimensions of the arrays do not match')
+			
+    def init_port7(self):
+        """This couple of lines are for checking if LabView (Uberscan) is running 
+        if not then we need to initialize port 7. Otherwise port 7 will change its output
+        to ~ -1.7V as soon as we set a other port."""
+        
+        self.logger = logging.getLogger(get_all_caller())
+        init_port7=adq('lib/adbasic/init_port7.T99')
+        if init_port7.adw.Test_Version() != 0:
+            init_port7.boot()
+            print('Booting the ADwin...')
+        init_port7.load()
+        init_port7.start()
+        init_port7.wait()
+        self.logger.info('initialized port 7 to 0V')
+
             
 class inter_add_remove():
     def __init__(self,plot_parti,plot_backg,particles=None):
@@ -725,26 +741,3 @@ class inter_add_remove():
         self.plot_backg.figure.canvas.draw()      
         self.plot_parti.set_data(self.particles_x, self.particles_y)
         self.plot_parti.figure.canvas.draw()
-        
-    def init_port7():
-        """This couple of lines are for checking if LabView (Uberscan) is running 
-        if not then we need to initialize port 7. Otherwise port 7 will change its output
-        to ~ -1.7V as soon as we set a other port."""
-        proc = psutil.process_iter()
-        name=None
-        for i in proc:
-            try:
-                if i.name == 'LabVIEW.exe':
-                    name = 'LabVIEW'
-            except:
-                pass
-            
-        if name==None:
-            init_port7=adq('lib/adbasic/init_port7.T99')
-            if init_port7.adw.Test_Version() != 0:
-                init_port7.boot()
-                print('Booting the ADwin...')
-            init_port7.load()
-            init_port7.start()
-            init_port7.wait()
-            logger.info('initialized port 7 to 0V')
