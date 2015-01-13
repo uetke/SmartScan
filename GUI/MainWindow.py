@@ -11,7 +11,7 @@ from GUI.starting_window import Ui_MainWindow as Configuration_Window
 from GUI.MainWindowGui import Ui_MainWindow
 from lib.xml2dict import device
 import numpy as np
-from lib.adq_functions import adq
+from lib.adq_mod import adq
 from lib.logger import logger
 from datetime import datetime
 
@@ -117,6 +117,7 @@ class MainWindow(QMainWindow):
 		if self.adw.adw.Test_Version() != 0:
 			self.adw.boot()
 			print('Booting the ADwin...')
+        self.adw.init_port7()
 		self.adw.load()
 		self.scanwindows = {}
 		self.scanindex = 0
