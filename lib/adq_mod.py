@@ -368,12 +368,12 @@ class adq(ADwin):
             self.adw.Set_Processdelay(self.proc_num, int(speed*1e-3/25e-9))
             self.start()
             while self.adw.Process_Status(self.proc_num):
-                number = self.get_par(par.properties['Pix_done'])
-                perc = int(number/total*100)
-                stdout.write("\r{0:d}%".format(perc))
-                stdout.flush()
+                #number = self.get_par(par.properties['Pix_done'])
+                #perc = int(number/total*100)
+                #stdout.write("\r{0:d}%".format(perc))
+                #stdout.flush()
                 time.sleep(0.5)
-            print("")
+            #print("")
             temp = np.array(list(self.get_fifo(fifo.properties['Scan_data'], total)))
             self.scan_image = []
             for i in range(len(detect)):

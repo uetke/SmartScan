@@ -74,23 +74,26 @@ if __name__ == '__main__':
     data = np.zeros([number_of_spectra,1])
     
     for m in range(number_of_spectra):
-        power_aom = 2-m*2/number_of_spectra
+        power_aom = 1.5-m*1./number_of_spectra
         adw.go_to_position([aom],[power_aom])   
         adw.set_digout(0)           
-        time.sleep(0.5)    
-        adw.clear_digout(0)
-        while adw.get_digin(1):
+        time.sleep(1)    
+        while adw.get_digin(1) or adw.get_digin(2):
             if msvcrt.kbhit():
                 key = msvcrt.getch()
                 if ord(key) == 113:
                      abort(filename + '_inter')
             time.sleep(0.1)
+            adw.clear_digout(0)
+        if adw.get_digin(2) == 1:
+            raise Exception('Not Clearing digout')
         try:
             power = pmeter.data*1000000
         except:
             power = 0
-        print('Acquired background %i with %i uW'%(i,power))
+        print('Acquired Spectra %i with %i uW'%(m+1,power))
         data[m] = (str(power))
+        time.sleep(1)
     
     print('Done acquiring spectra.')
 

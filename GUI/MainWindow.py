@@ -44,7 +44,7 @@ class InitWindow(QMainWindow):
         self.help_menu.addAction('&About', self.about)
         self.connect(self.init.pushButton, SIGNAL("clicked()"), self.start)
         self.connect(self.init.search_directory, SIGNAL("clicked()"), self.search_directory)
-        self.logger=logger(filelevel=20)
+        self.logger=logger(filelevel=30)
         self.dev_conf = 'config/config_devices.xml'
         self.par_conf = 'config/config_variables.xml'
         
