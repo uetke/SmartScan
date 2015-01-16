@@ -12,6 +12,7 @@ import sys
 import os
 from lib.logger import get_all_caller,logger
 from devices.powermeter1830c import powermeter1830c as pp
+from winsound import Beep
 
 logger=logger(filelevel=20)
 
@@ -56,7 +57,7 @@ if __name__ == '__main__':
 
     devs = [xpiezo,ypiezo,zpiezo]
     number_of_spectra = 10
-    
+    Beep(840,200)
     #Newport Power Meter
     pmeter = pp(0)
     pmeter.initialize()
@@ -93,5 +94,5 @@ if __name__ == '__main__':
     np.savetxt("%s%s" %(savedir,filename), data,fmt='%s', delimiter=",", header=header)
     logger.info('Final file saved as %s%s' %(savedir,filename))
     logger.info('Finished acquiring several sepctra completed')
-    
+    Beep(440,200)
     print('Program finish')

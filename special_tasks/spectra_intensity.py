@@ -77,12 +77,16 @@ if __name__ == '__main__':
         adw.go_to_position([aom],[power_aom])
         # Triggers the spectrometer
         trigger_spectrometer(adw)
+
         try:
             power = pmeter.data*1000000
         except:
             power = 0
-        print('Acquired spectra %i with %i uW'%(i+1,power))
+
+        print('Acquired spectra %i with %i uW'%(m+1,power))
+
         data[m] = (str(power))
+        time.sleep(1)
     
     print('Done acquiring spectra.')
 
