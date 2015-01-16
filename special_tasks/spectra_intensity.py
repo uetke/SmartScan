@@ -3,65 +3,64 @@
 from __future__ import division
 import numpy as np
 import time
-import matplotlib.pyplot as plt
-from lib.adq_mod import *
-from lib.xml2dict import device,variables
-from datetime import datetime
 import msvcrt
 import sys
 import os
-from lib.logger import get_all_caller,logger
-from devices.powermeter1830c import powermeter1830c as pp
-
-logger=logger(filelevel=20)
+from datetime import datetime
+from .spectrometer import abort, trigger_spectrometer
 
 cwd = os.getcwd()
-savedir = cwd + '\\' + str(datetime.now().date()) + '\\'
-#names of the parameters
-par=variables('Par')
-fpar=variables('FPar')
-data=variables('Data')
-fifo=variables('Fifo')
+cwd = cwd.split('\\')
+path = ''
+# One level up from this folder
+for i in range(len(cwd)-1):
+    path+=cwd[i]+'\\'
 
-def abort(filename):
-    logger = logging.getLogger(get_all_caller())
-    logger.critical('You quit!')
-    header = "type,x-pos,y-pos,z-pos,first scan time" + ",time_%s"*(len(data[0,:])-5) %tuple(range((len(data[0,:])-5)))
-    np.savetxt("%s%s_abort.txt" %(savedir,filename), data,fmt='%s', delimiter=",", header=header)
-    logger.info('Aborted file saved as %s%s_abort.txt' %(savedir,filename))
-    sys.exit(0)
+if path not in sys.path:
+    sys.path.insert(0, path)
+
+    
+from lib.adq_mod import adq
+from lib.xml2dict import device,variables
+from devices.powermeter1830c import powermeter1830c as pp
+
+
         
 if __name__ == '__main__': 
-    #initialize the adwin and the devices   
-    name = 'spectra_power'
+    # Names of the parameters
+    config_variables = '../config/variables.xml'
+    par=variables('Par',filename=config_variables)
+    fpar=variables('FPar',filename=config_variables)
+    data=variables('Data',filename=config_variables)
+    fifo=variables('Fifo',filename=config_variables)
+    
+    # Name that the files will have
+    name = 'spectra_intensity' 
+    
+    # Directory for saving the files
     savedir = 'D:\\Data\\' + str(datetime.now().date()) + '\\'
     if not os.path.exists(savedir):
         os.makedirs(savedir)
+        
+    # Not overwrite
     i=1
     filename = '%s_%s.dat'%(name,i)
     while os.path.exists(savedir+filename):
         i += 1
         filename = '%s_%s.dat' %(name,i)
-    logger.info('%s\\%s.log' %(savedir,filename))
+
     print('Data will be saved in %s'%(savedir+filename))
-    #init the Adwin programm and also loading the configuration file for the devices
-    adw = adq('lib/adbasic/adwin.T99') 
-    xpiezo = device('x piezo')
-    ypiezo = device('y piezo')
-    zpiezo = device('z piezo')
-    counter = device('APD 1')
-    aom = device('AOM')
-    xcenter = 50.31 #In um
-    ycenter = 44.53
-    zcenter = 49.45
-    devs = [xpiezo,ypiezo,zpiezo]
-    #parameters for the refocusing on the particles
-    dims = [0.4,0.4,0.8]
-    accuracy = [0.05,0.05,0.1]
-    center = [xcenter, ycenter, zcenter]
+    #init the Adwin program and also load the configuration file for the devices
+    adw = adq('../lib/adbasic/adwin.T99') 
+    config_file = '../config/config_devices.xml'
+    xpiezo = device('x piezo',filename=config_file)
+    ypiezo = device('y piezo',filename=config_file)
+    zpiezo = device('z piezo',filename=config_file)
+    counter = device('APD 1',filename=config_file)
+    aom = device('AOM',filename=config_file)
+
     number_of_spectra = 10
- #   adw.clear_digout(0)
- #   adw.go_to_position([aom],[1])
+
     
     #Newport Power Meter
     pmeter = pp(0)
@@ -74,29 +73,20 @@ if __name__ == '__main__':
     data = np.zeros([number_of_spectra,1])
     
     for m in range(number_of_spectra):
-        power_aom = 2-m*2/number_of_spectra
-        adw.go_to_position([aom],[power_aom])   
-        adw.set_digout(0)           
-        time.sleep(0.5)    
-        adw.clear_digout(0)
-        while adw.get_digin(1):
-            if msvcrt.kbhit():
-                key = msvcrt.getch()
-                if ord(key) == 113:
-                     abort(filename + '_inter')
-            time.sleep(0.1)
+        power_aom = 1.5-m*1./number_of_spectra
+        adw.go_to_position([aom],[power_aom])
+        # Triggers the spectrometer
+        trigger_spectrometer(adw)
         try:
             power = pmeter.data*1000000
         except:
             power = 0
-        print('Acquired background %i with %i uW'%(i,power))
+        print('Acquired spectra %i with %i uW'%(i+1,power))
         data[m] = (str(power))
     
     print('Done acquiring spectra.')
 
     header = "Power in uW"
     np.savetxt("%s%s" %(savedir,filename), data,fmt='%s', delimiter=",", header=header)
-    logger.info('Final file saved as %s%s' %(savedir,filename))
-    logger.info('Finished acquiring several sepctra completed')
     
     print('Program finish')
