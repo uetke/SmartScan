@@ -4,7 +4,7 @@ import xml.etree.cElementTree as ET
 
 from datetime import datetime
 
-class logbook(directory='D:\\Data'):
+class logbook():
     """ This class includes all the necessary functions for keeping a centralized lab logbook in xml format. 
         The creation of the class takes on argument that is the directory where files are kept. Ideally this would be D:\Data 
         Or the root of the data directory.

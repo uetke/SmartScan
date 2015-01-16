@@ -7,7 +7,7 @@ import msvcrt
 import sys
 import os
 from datetime import datetime
-from .spectrometer import abort, trigger_spectrometer
+from spectrometer import abort, trigger_spectrometer
 
 cwd = os.getcwd()
 cwd = cwd.split('\\')
@@ -28,7 +28,7 @@ from devices.powermeter1830c import powermeter1830c as pp
         
 if __name__ == '__main__': 
     # Names of the parameters
-    config_variables = '../config/variables.xml'
+    config_variables = '../config/config_variables.xml'
     par=variables('Par',filename=config_variables)
     fpar=variables('FPar',filename=config_variables)
     data=variables('Data',filename=config_variables)

@@ -14,10 +14,11 @@ from lib.logger import get_all_caller
 import copy
     
 """initialize the variable names"""        
-par=variables('Par')
-fpar=variables('FPar')
-data=variables('Data')
-fifo=variables('Fifo')
+config_variables = '../config/config_variables.xml'
+par=variables('Par',filename=config_variables)
+fpar=variables('FPar',filename=config_variables)
+data=variables('Data',filename=config_variables)
+fifo=variables('Fifo',filename=config_variables)
     
 class adq(ADwin):
     def __init__(self, process):

@@ -655,10 +655,11 @@ class adq(ADwin):
             self.logger.error('Dimensions of the arrays do not match')
             
 """initialize the variable names"""        
-par=variables('Par')
-fpar=variables('FPar')
-data=variables('Data')
-fifo=variables('Fifo')    
+config_variables = '../config/config_variables.xml'
+par=variables('Par',filename=config_variables)
+fpar=variables('FPar',filename=config_variables)
+data=variables('Data',filename=config_variables)
+fifo=variables('Fifo',filename=config_variables)   
 
 class inter_add_remove():
     def __init__(self,plot_parti,plot_backg,particles=None):
