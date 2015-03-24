@@ -2,7 +2,7 @@ from pyqtgraph.Qt import QtCore, QtGui
 import numpy as np
 import pyqtgraph as pg
 
-from lib.adq_mod import *
+from lib.adq_mod import adq
 from lib.xml2dict import device,variables
 
 par=variables('Par')
@@ -56,7 +56,7 @@ pz.enableAutoRange('xy', False)  ## stop auto-scaling after the first data set i
 
 def update():
     global curvex, curvey, curvez
-    datax, datay, dataz = adw.get_QPD
+    datax, datay, dataz = adw.get_QPD(time,accuracy)
     
     pwrx = np.abs(np.fft.fft(datax))**2
     pwry = np.abs(np.fft.fft(datay))**2

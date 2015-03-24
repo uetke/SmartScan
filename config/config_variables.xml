@@ -40,5 +40,8 @@ Analog14='195'
 Analog15='196'
 Analog16='197'
 Scan_data='200'
-/>
+QPDx='176' 
+QPDy='175' 
+QPDz='174'>
+</Fifo>
 </Variables>
