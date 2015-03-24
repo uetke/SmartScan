@@ -153,6 +153,32 @@ class adq(ADwin):
         time.sleep(duration)
         array = np.array(list(self.adw.GetData_Long(177,1,num_ticks)))
         return array       
+    
+    def get_QPD(self,duration=1,acc=.0005):
+        """ Gets timetraces of 3 analog channels with high temporal accuracy.
+            It uses a dedicated high-priority process called qpd.T97 that has configured
+            the ports to which each signal was plugged. 
+            TODO: Be able to send port information as variables
+            Returns a 3 x num_ticks array
+        """
+        delay = m.floor(acc/25e-9)
+        # First acquire X and Y
+        self.set_par(par.properties['Case'],1)
+        num_ticks = int(duration / (delay * 25e-9))
+        self.set_par(par.properties['Num_ticks'],num_ticks)
+        self.adw.Set_Processdelay(self.proc_num,delay)
+        self.start(process=self.proc_num)
+        time.sleep(duration)
+        self.set_par(par.properties['Case'],2)
+        num_ticks = int(duration / (delay * 25e-9))
+        self.set_par(par.properties['Num_ticks'],num_ticks)
+        self.adw.Set_Processdelay(self.proc_num,delay)
+        self.start(process=self.proc_num)
+        time.sleep(duration) 
+        arrayX = np.array(list(self.get_fifo(fifo.properties['QPDx'])))
+        arrayY = np.array(list(self.get_fifo(fifo.properties['QPDy'])))
+        arrayZ = np.array(list(self.get_fifo(fifo.properties['QPDz'])))
+        return arrayX, arrayY, arrayZ    
         
     def get_timetrace_static(self,detect,duration=1,acc=None):
         """gets the timetrace data from the adwin with the duration in seconds
