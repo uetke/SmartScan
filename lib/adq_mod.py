@@ -163,21 +163,15 @@ class adq(ADwin):
         """
         delay = m.floor(acc/25e-9)
         # First acquire X and Y
-        self.set_par(par.properties['Case'],1)
         num_ticks = int(duration / (delay * 25e-9))
         self.set_par(par.properties['Num_ticks'],num_ticks)
         self.adw.Set_Processdelay(self.proc_num,delay)
         self.start(process=self.proc_num)
-        time.sleep(duration)
-        self.set_par(par.properties['Case'],2)
-        num_ticks = int(duration / (delay * 25e-9))
-        self.set_par(par.properties['Num_ticks'],num_ticks)
-        self.adw.Set_Processdelay(self.proc_num,delay)
-        self.start(process=self.proc_num)
-        time.sleep(duration) 
-        arrayX = np.array(list(self.get_fifo(fifo.properties['QPDx'])))
-        arrayY = np.array(list(self.get_fifo(fifo.properties['QPDy'])))
-        arrayZ = np.array(list(self.get_fifo(fifo.properties['QPDz'])))
+        while bool(self.adw.Process_Status(self.proc_num)):
+            time.sleep(0.1)
+        arrayX = np.array(list(self.get_data(176,num_ticks))
+        arrayY = np.array(list(self.get_data(175,num_ticks)))
+        arrayZ = np.array(list(self.get_data(174,num_ticks)))
         return arrayX, arrayY, arrayZ    
         
     def get_timetrace_static(self,detect,duration=1,acc=None):
