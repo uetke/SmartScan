@@ -5,8 +5,8 @@ from time import sleep
 import os
 from datetime import datetime
 
-#from devices.powermeter1830c import powermeter1830c as pp
-#from lib.adq_mod import adq
+from devices.powermeter1830c import powermeter1830c as pp
+from lib.adq_mod import adq
 #from lib.xml2dict import variables
 
 #par=variables('Par','config/config_variables.xml')
@@ -69,7 +69,7 @@ class Variances(QtGui.QWidget):
 class Power_Spectra(QtGui.QWidget):
     """ Class for starting the needed windows and updating the screen. 
     """
-    def __init__(self,time,accuracy,parent=None):
+    def __init__(self,time,accuracy,adw,parent=None):
         QtGui.QWidget.__init__(self, parent)
         
         self.setWindowTitle('QPD Power Spectrum')
@@ -90,7 +90,7 @@ class Power_Spectra(QtGui.QWidget):
 
         qpdz = QtGui.QLCDNumber()
         qpdz.display(125.6)
-
+        
         
         self.layout.addWidget(px, 0, 0,3,1)
         self.layout.addWidget(py, 0, 1,3,1)
@@ -137,32 +137,42 @@ class Power_Spectra(QtGui.QWidget):
         
         self.connect(QtGui.QShortcut(QtGui.QKeySequence(QtCore.Qt.Key_S), self), QtCore.SIGNAL('activated()'), self.fileSave)
                 
-        #self.pmeter = pp(0)
-        #self.pmeter.initialize()
-        #self.pmeter.wavelength = 1064
-        #self.pmeter.attenuator = True
-        #self.pmeter.filter = 'Medium' 
-        #self.pmeter.go = True
-        #self.pmeter.units = 'Watts' 
+        self.pmeter = pp(0)
+        self.pmeter.initialize()
+        self.pmeter.wavelength = 1064
+        self.pmeter.attenuator = True
+        self.pmeter.filter = 'Medium' 
+        self.pmeter.go = True
+        self.pmeter.units = 'Watts' 
         
         self.variances_gui = Variances()
         self.variances_gui.show()
+        self.continuous_runs = True
         
+        self.workThread = workThread(self.time,self.accuracy,adw)
+        self.connect( self.workThread, QtCore.SIGNAL("QPD"), self.updateGUI )
         
-        self.update()
+        self.setStatusTip('Running...')
+        self.is_running = True
+        self.workThread.start()
         
 
         
     def update(self):
         """ Connects the signals of the working Thread with the appropriate functions in the main Class. 
         """
-        self.workThread = workThread(self.time,self.accuracy)
-        self.connect( self.workThread, QtCore.SIGNAL("QPD"), self.updateGUI )
-        self.workThread.start()
+        self.setStatusTip('Running...')
+        if self.is_running == False:
+            self.is_running = True
+            self.workThread.start()
+        else:
+            print('Try to re-run')
     
     def updateGUI(self,frequencies,values,data):
         """Updates the curves in the screen and the mean values. 
         """
+        self.setStatusTip('Stopped...')
+        self.is_running = False
         self.data = data
         self.freqs = frequencies
         self.curvey.setData(self.freqs[1:],values[1,1:])
@@ -171,20 +181,23 @@ class Power_Spectra(QtGui.QWidget):
         self.qpdx.display('%5.1f'%(values[3,0]) )
         self.qpdy.display('%5.1f'%(values[3,1]) )
         self.qpdz.display('%5.1f'%(values[3,2]) )
-        self.update()
         box_size = int(.1/self.accuracy)
         num_variances = int(self.time*10)
         variances = np.zeros([3,num_variances])
         for i in range(num_variances):
             variances[:,i] = np.var(data[:,i*box_size:(i+1)*box_size], axis=1)
-                
         self.variances_gui.updateVariances(variances)
         
-    def updateTimes(self,time,accuracy):
+        if self.continuous_runs: # If the continuous runs is activated, then refresh.
+            self.update()
+        
+        
+    def updateTimes(self,time,accuracy,runs):
         """ Updates the time and the accuracy for the plots. 
         """
         self.time = time
         self.accuracy = accuracy
+        self.continuous_runs = runs
         self.workThread.updateTimes(time, accuracy)
             
     def fileSave(self):
@@ -222,12 +235,11 @@ class Power_Spectra(QtGui.QWidget):
 class workThread(QtCore.QThread):
     """ This is the class that will update the values from the QPD. Since it is an expensive task, it will be threaded. 
     """
-    def __init__(self,time,accuracy):
+    def __init__(self,time,accuracy,adw):
         QtCore.QThread.__init__(self)
-        #self.adw = adq('lib/adbasic/qpd.T98')
-        #self.adw.load()
         self.time = time
         self.accuracy = accuracy
+        self.adw = adw
         
     def __del__(self):
         self.wait()
@@ -243,11 +255,11 @@ class workThread(QtCore.QThread):
         """
         num_points = int(self.time/self.accuracy)
         self.freqs = np.fft.rfftfreq(num_points, self.accuracy)
-        #datax, datay, dataz = self.adw.get_QPD(self.time,self.accuracy)
-        datax = np.random.rand(int(num_points))
-        datay = np.random.rand(int(num_points))
-        dataz = np.random.rand(int(num_points))
-        sleep(2)
+        datax, datay, dataz = self.adw.get_QPD(self.time,self.accuracy)
+        #datax = np.random.rand(int(num_points))
+        #datay = np.random.rand(int(num_points))
+        #dataz = np.random.rand(int(num_points))
+        #sleep(2)
         
         pwrx = np.abs(np.fft.rfft(datax))**2
         pwry = np.abs(np.fft.rfft(datay))**2
@@ -272,7 +284,7 @@ class workThread(QtCore.QThread):
 class ConfigureTimes(QtGui.QWidget):
     """ Simple class to change the values for the acquisition times. 
     """
-    def __init__(self,parent=None):
+    def __init__(self,tt,acc,parent=None):
         QtGui.QWidget.__init__(self, parent)
         self.setWindowTitle('Configure the times')
         self.setGeometry(30,30,100,100)
@@ -282,23 +294,34 @@ class ConfigureTimes(QtGui.QWidget):
         self.time_label = QtGui.QLabel(self)
         self.time_label.setText('Time (s): ')
         self.time = QtGui.QLineEdit(self)
+        self.time.setText(str(tt))
         self.accuracy_label = QtGui.QLabel(self)
         self.accuracy_label.setText('Accuracy (ms): ')
         self.accuracy = QtGui.QLineEdit(self)
+        self.accuracy.setText(str(acc*1000))
+        
+        self.contin_runs = QtGui.QCheckBox('Continuous runs', self)
+        self.contin_runs.setChecked(True)
         
         self.apply_button = QtGui.QPushButton('Apply', self)
         self.apply_button.clicked[bool].connect(self.SetTimes)
+        
+        self.run_button = QtGui.QPushButton('Run', self)
+
         
         self.layout.addWidget(self.time_label,0,0)
         self.layout.addWidget(self.time,0,1)
         self.layout.addWidget(self.accuracy_label,1,0)
         self.layout.addWidget(self.accuracy,1,1)
-        self.layout.addWidget(self.apply_button,2,0,1,2)
+        self.layout.addWidget(self.contin_runs,2,0)
+        self.layout.addWidget(self.apply_button,3,0,1,2)
+        self.layout.addWidget(self.run_button,4,0,1,2)
         
     def SetTimes(self):
         new_time = float(self.time.text())
         new_accuracy = float(self.accuracy.text())/1000
-        self.emit( QtCore.SIGNAL('Times'), new_time, new_accuracy)
+        runs = self.contin_runs.isChecked()
+        self.emit( QtCore.SIGNAL('Times'), new_time, new_accuracy, runs)
 
         
 
@@ -310,12 +333,15 @@ class MainWindow(QtGui.QMainWindow):
         self.initUI(time,accuracy)
         
     def initUI(self,time,accuracy):
-        self.power_spectra = Power_Spectra(time,accuracy)
-        self.conf_times = ConfigureTimes()
+        adw = adq('lib/adbasic/qpd.T98')
+        adw.load()
+        
+        self.power_spectra = Power_Spectra(time,accuracy,adw)
+        self.conf_times = ConfigureTimes(time,accuracy)
         self.setCentralWidget(self.power_spectra)
         self.setGeometry(450,30,900,900)
         self.connect(self.conf_times,  QtCore.SIGNAL("Times"),self.power_spectra.updateTimes)
-        
+        QtCore.QObject.connect(self.conf_times.run_button, QtCore.SIGNAL('clicked()'),self.power_spectra.update)
         
         saveAction = QtGui.QAction(QtGui.QIcon('floppy-icon.png'),'Save',self)
         saveAction.setShortcut('Ctrl+S')
