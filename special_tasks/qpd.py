@@ -1,144 +1,356 @@
 from pyqtgraph.Qt import QtCore, QtGui
 import numpy as np
 import pyqtgraph as pg
+from time import sleep
+import os
+from datetime import datetime
 
-from lib.adq_mod import adq
-from lib.xml2dict import variables
+#from devices.powermeter1830c import powermeter1830c as pp
+#from lib.adq_mod import adq
+#from lib.xml2dict import variables
 
-par=variables('Par','config/config_variables.xml')
-fpar=variables('FPar','config/config_variables.xml')
-data=variables('Data','config/config_variables.xml')
-fifo=variables('Fifo','config/config_variables.xml')
-adw = adq('lib/adbasic/qpd.T98') 
-adw.load()
+#par=variables('Par','config/config_variables.xml')
+#fpar=variables('FPar','config/config_variables.xml')
+#data=variables('Data','config/config_variables.xml')
+#fifo=variables('Fifo','config/config_variables.xml')
 
-time = .5 # 1 Second acquisition
+time = 5 # 1 Second acquisition
 accuracy = .00005 # Accuracy in seconds
-num_points = int(time/accuracy)
-freqs = np.fft.rfftfreq(num_points, accuracy)
 
-initial_data = np.random.normal(size=(num_points))
-initial_ps = np.abs(np.fft.rfft(initial_data))**2
-
-win = pg.GraphicsWindow(title="QPD Power Spectrum")
-win.resize(900,900)
-win.setWindowTitle('QPD Power Spectrum')
-win.move(330,10)
-
-win3 = pg.GraphicsWindow(title="QPD Traces")
-win3.resize(900,900)
-win3.setWindowTitle('QPD Traces')
-win3.move(330,10)
-
-px3 = win3.addPlot(title="QPD x")
-curvex3 = px3.plot(freqs,initial_ps,pen='y')
-px3.setLabel('left', "Power Spectrum", units='U.A.')
-px3.setLabel('bottom', "Frequency", units='Hz')
-
-
-
-py3 = win3.addPlot(title="QPD y")
-curvey3 = py3.plot(freqs,initial_ps,pen='y')
-py3.setLabel('left', "Power Spectrum", units='U.A.')
-py3.setLabel('bottom', "Frequency", units='Hz')
-
-
-win.nextRow()
-
-pz3 = win3.addPlot(title="QPD z")
-curvez3 = pz3.plot(freqs,initial_ps,pen='y')
-pz3.setLabel('left', "Power Spectrum", units='U.A.')
-pz3.setLabel('bottom', "Frequency", units='Hz')
-
-
-px3.enableAutoRange('xy', True)  ## stop auto-scaling after the first data set is plotted
-py3.enableAutoRange('xy', True)  ## stop auto-scaling after the first data set is plotted
-pz3.enableAutoRange('xy', True)  ## stop auto-scaling after the first data set is plotted
-
-win2 = QtGui.QMainWindow()
-win2.resize(300,800)
-win2.move(10,10)
-win2.setWindowTitle('QPD Values')
-qpdx = QtGui.QLCDNumber(win2)
-qpdx.display(123.5)
-qpdx.resize(250,250)
-qpdx.move(10,10)
-qpdy = QtGui.QLCDNumber(win2)
-qpdy.display('124.5')
-qpdy.resize(250,250)
-qpdy.move(10,260)
-qpdz = QtGui.QLCDNumber(win2)
-qpdz.display(125.6)
-qpdz.resize(250,250)
-qpdz.move(10,510)
-
-pg.setConfigOptions(antialias=True)
-
-px = win.addPlot(title="QPD x")
-curvex = px.plot(freqs,initial_ps,pen='y')
-px.setLabel('left', "Power Spectrum", units='U.A.')
-px.setLabel('bottom', "Frequency", units='Hz')
-px.setLogMode(x=True, y=True)
+class Variances(QtGui.QWidget):
+    """ Class for showing the variances in the timetraces from the QPD. 
+    """
+    def __init__(self,parent=None):
+        QtGui.QWidget.__init__(self,parent)
+        self.setWindowTitle('Variances of the QPD')
+        self.setGeometry(30,30,450,900)
+        self.layout = QtGui.QGridLayout(self)
+        
+        # Initial variances data
+        self.var = np.zeros([3,250])
+        x = np.arange(np.size(self.var,axis=1))
+        # Variances
+        vx = pg.PlotWidget()
+        vy = pg.PlotWidget()
+        vz = pg.PlotWidget()
+        
+        self.varx = vx.plot(x,self.var[0,:],pen='y')
+        vx.setLabel('left', "Variance", units='U.A.')
+        vx.setLabel('bottom', "time", units='Steps')
+        
+        self.vary = vy.plot(x,self.var[1,:],pen='y')
+        vy.setLabel('left', "Variance", units='U.A.')
+        vy.setLabel('bottom', "time", units='Steps')
+        
+        self.varz = vz.plot(x,self.var[2,:],pen='y')
+        vz.setLabel('left', "Variance", units='U.A.')
+        vz.setLabel('bottom', "time", units='Steps')
+        
+        self.layout.addWidget(vx, 0, 0)
+        self.layout.addWidget(vy, 1, 0)
+        self.layout.addWidget(vz, 2, 0)
+        
+        
+        
+    def updateVariances(self,variances):
+        """ Updates the plots of the variances. 
+        """
+        # Check the sizes of the variances
+        s = np.size(variances, 1)
+        self.var = np.roll(self.var,-s,axis=1)
+        self.var[:,-s:] = variances
+        x = np.arange(np.size(self.var,axis=1))
+        self.varx.setData(x,self.var[0,:])
+        self.vary.setData(x,self.var[1,:])
+        self.varz.setData(x,self.var[2,:])
+        
 
 
-py = win.addPlot(title="QPD y")
-curvey = py.plot(freqs,initial_ps,pen='y')
-py.setLabel('left', "Power Spectrum", units='U.A.')
-py.setLabel('bottom', "Frequency", units='Hz')
-py.setLogMode(x=True, y=True)
+class Power_Spectra(QtGui.QWidget):
+    """ Class for starting the needed windows and updating the screen. 
+    """
+    def __init__(self,time,accuracy,parent=None):
+        QtGui.QWidget.__init__(self, parent)
+        
+        self.setWindowTitle('QPD Power Spectrum')
+        
+        self.layout = QtGui.QGridLayout(self)
+        
+        # Power Spectrum
+        px = pg.PlotWidget()
+        py = pg.PlotWidget()
+        pz = pg.PlotWidget()
+        
+        # Mean Values
+        qpdx = QtGui.QLCDNumber()
+        qpdx.display(123.5)
 
-win.nextRow()
+        qpdy = QtGui.QLCDNumber()
+        qpdy.display(124.5)
 
-pz = win.addPlot(title="QPD z")
-curvez = pz.plot(freqs,initial_ps,pen='y')
-pz.setLabel('left', "Power Spectrum", units='U.A.')
-pz.setLabel('bottom', "Frequency", units='Hz')
-pz.setLogMode(x=True, y=True)
+        qpdz = QtGui.QLCDNumber()
+        qpdz.display(125.6)
 
-px.enableAutoRange('xy', True)  ## stop auto-scaling after the first data set is plotted
-py.enableAutoRange('xy', True)  ## stop auto-scaling after the first data set is plotted
-pz.enableAutoRange('xy', True)  ## stop auto-scaling after the first data set is plotted
+        
+        self.layout.addWidget(px, 0, 0,3,1)
+        self.layout.addWidget(py, 0, 1,3,1)
+        self.layout.addWidget(pz, 3, 0,3,1)
+        self.layout.addWidget(qpdx,3,1)
+        self.layout.addWidget(qpdy,4,1)
+        self.layout.addWidget(qpdz,5,1)
+        
+        self.time = time
+        self.accuracy = accuracy
+        num_points = int(time/accuracy)
+        freqs = np.fft.rfftfreq(num_points, accuracy)
+        initial_data = np.random.normal(size=(num_points))
+        initial_ps = np.abs(np.fft.rfft(initial_data))**2
+        
 
-def update():
-    global curvex, curvey, curvez, qpdz, qpdy, qpdx
-    datax, datay, dataz = adw.get_QPD(time,accuracy)
-    print(dataz)
-    datax = np.float64((datax-32768)/6553.6)
-    datay = np.float64((datay-32768)/6553.6)
-    dataz = np.float64((dataz-32768)/6553.6)
-   
-    curvex3.setData(datax)
-    curvey3.setData(datay)
-    curvez3.setData(dataz)
+        self.curvex = px.plot(freqs,initial_ps,pen='y')
+        px.setLabel('left', "Power Spectrum", units='U.A.')
+        px.setLabel('bottom', "Frequency", units='Hz')
+        px.setLogMode(x=True, y=True)
+        
+        
+        self.curvey = py.plot(freqs,initial_ps,pen='y')
+        py.setLabel('left', "Power Spectrum", units='U.A.')
+        py.setLabel('bottom', "Frequency", units='Hz')
+        py.setLogMode(x=True, y=True)
+        
+        self.curvez = pz.plot(freqs,initial_ps,pen='y')
+        pz.setLabel('left', "Power Spectrum", units='U.A.')
+        pz.setLabel('bottom', "Frequency", units='Hz')
+        pz.setLogMode(x=True, y=True)
+        
+        px.enableAutoRange('xy', True)  
+        py.enableAutoRange('xy', True)  
+        pz.enableAutoRange('xy', True)  
+        
+        
+        self.freqs = freqs
+        self.qpdx = qpdx
+        self.qpdy = qpdy
+        self.qpdz = qpdz
+        self.num_points = num_points
+        
+        
+        self.connect(QtGui.QShortcut(QtGui.QKeySequence(QtCore.Qt.Key_S), self), QtCore.SIGNAL('activated()'), self.fileSave)
+                
+        #self.pmeter = pp(0)
+        #self.pmeter.initialize()
+        #self.pmeter.wavelength = 1064
+        #self.pmeter.attenuator = True
+        #self.pmeter.filter = 'Medium' 
+        #self.pmeter.go = True
+        #self.pmeter.units = 'Watts' 
+        
+        self.variances_gui = Variances()
+        self.variances_gui.show()
+        
+        
+        self.update()
+        
+
+        
+    def update(self):
+        """ Connects the signals of the working Thread with the appropriate functions in the main Class. 
+        """
+        self.workThread = workThread(self.time,self.accuracy)
+        self.connect( self.workThread, QtCore.SIGNAL("QPD"), self.updateGUI )
+        self.workThread.start()
     
-    pwrx = np.abs(np.fft.rfft(datax))**2
-    pwry = np.abs(np.fft.rfft(datay))**2
-    pwrz = np.abs(np.fft.rfft(dataz))**2
+    def updateGUI(self,frequencies,values,data):
+        """Updates the curves in the screen and the mean values. 
+        """
+        self.data = data
+        self.freqs = frequencies
+        self.curvey.setData(self.freqs[1:],values[1,1:])
+        self.curvex.setData(self.freqs[1:],values[0,1:])
+        self.curvez.setData(self.freqs[1:],values[2,1:])
+        self.qpdx.display('%5.1f'%(values[3,0]) )
+        self.qpdy.display('%5.1f'%(values[3,1]) )
+        self.qpdz.display('%5.1f'%(values[3,2]) )
+        self.update()
+        box_size = int(.1/self.accuracy)
+        num_variances = int(self.time*10)
+        variances = np.zeros([3,num_variances])
+        for i in range(num_variances):
+            variances[:,i] = np.var(data[:,i*box_size:(i+1)*box_size], axis=1)
+                
+        self.variances_gui.updateVariances(variances)
+        
+    def updateTimes(self,time,accuracy):
+        """ Updates the time and the accuracy for the plots. 
+        """
+        self.time = time
+        self.accuracy = accuracy
+        self.workThread.updateTimes(time, accuracy)
+            
+    def fileSave(self):
+        """Saves the files to a specified folder. 
+        """
+        name = 'QPD_Data'
+        savedir = 'P:\\Data\\' + str(datetime.now().date()) + '\\'
+        if not os.path.exists(savedir):
+            os.makedirs(savedir)
+        i=1
+        filename = name
+        while os.path.exists(savedir+filename+".dat"):
+            filename = '%s_%s' %(name,i)
+            i += 1
+        filename_params = filename +'_config'
+        filename = filename+".dat"
+        np.savetxt("%s%s" %(savedir,filename), self.data,fmt='%s', delimiter=",")
+        filename_params = filename_params+".dat"
+        header = "Length, Integration Time, 1064 power"
+        #try:
+        #    power = self.pmeter.data*1000000
+        #except:
+        #    power = 0
+        power = 0
+        np.savetxt("%s%s"%(savedir,filename_params), [self.time, self.accuracy, power], header=header,fmt='%s',delimiter=',')
+        print('Data saved in %s and configuration data in %s'%(savedir+filename,filename_params) )
+        return
     
-    datax = np.float32(np.mean(datax))
-    datay = np.float32(np.mean(datay))
-    dataz = np.float32(np.mean(dataz))
+    def exit_safe(self):
+        """ Exits waiting for the Working Thread to finish running. 
+        """
+        self.workThread.terminate()
+        app.quit()
+
+class workThread(QtCore.QThread):
+    """ This is the class that will update the values from the QPD. Since it is an expensive task, it will be threaded. 
+    """
+    def __init__(self,time,accuracy):
+        QtCore.QThread.__init__(self)
+        #self.adw = adq('lib/adbasic/qpd.T98')
+        #self.adw.load()
+        self.time = time
+        self.accuracy = accuracy
+        
+    def __del__(self):
+        self.wait()
     
-    curvex.setData(freqs[1:],pwrx[1:])
-    curvey.setData(freqs[1:],pwry[1:])
-    curvez.setData(freqs[1:],pwrz[1:])
+    def updateTimes(self,time,accuracy):
+        """ Updates the time and the accuracy of the acquisitions. 
+        """
+        self.time = time
+        self.accuracy = accuracy
+    
+    def run(self):
+        """ Triggers the ADwin to acquire a new set of data. It is a time consuming task. 
+        """
+        num_points = int(self.time/self.accuracy)
+        self.freqs = np.fft.rfftfreq(num_points, self.accuracy)
+        #datax, datay, dataz = self.adw.get_QPD(self.time,self.accuracy)
+        datax = np.random.rand(int(num_points))
+        datay = np.random.rand(int(num_points))
+        dataz = np.random.rand(int(num_points))
+        sleep(2)
+        
+        pwrx = np.abs(np.fft.rfft(datax))**2
+        pwry = np.abs(np.fft.rfft(datay))**2
+        pwrz = np.abs(np.fft.rfft(dataz))**2
+        
+        data = np.zeros([4,len(pwrx)])
+        values = np.zeros([3,len(datax)])
+        data[0,:] = pwrx
+        data[1,:] = pwry
+        data[2,:] = pwrz
+        data[3,0] = np.mean(datax)
+        data[3,1] = np.mean(datay)
+        data[3,2] = np.mean(dataz)
+        values[0,:] = datax
+        values[1,:] = datay
+        values[2,:] = dataz
+        
+        self.emit( QtCore.SIGNAL('QPD'), self.freqs, data, values )
+        return 
     
 
-    qpdz.display('%5.1f'%(dataz) )
-    qpdx.display('%5.1f'%(datax) )
-    qpdy.display('%5.1f'%(datay) )
-    print('%5.1f'%(dataz) )
-    print('%5.1f'%(datax) )
-    print('%5.1f'%(datay) )
-    
-#timer = QtCore.QTimer()
-#timer.timeout.connect(update)
-#timer.start(60)
-update()
+class ConfigureTimes(QtGui.QWidget):
+    """ Simple class to change the values for the acquisition times. 
+    """
+    def __init__(self,parent=None):
+        QtGui.QWidget.__init__(self, parent)
+        self.setWindowTitle('Configure the times')
+        self.setGeometry(30,30,100,100)
+        self.layout = QtGui.QGridLayout(self)
+        
+        
+        self.time_label = QtGui.QLabel(self)
+        self.time_label.setText('Time (s): ')
+        self.time = QtGui.QLineEdit(self)
+        self.accuracy_label = QtGui.QLabel(self)
+        self.accuracy_label.setText('Accuracy (ms): ')
+        self.accuracy = QtGui.QLineEdit(self)
+        
+        self.apply_button = QtGui.QPushButton('Apply', self)
+        self.apply_button.clicked[bool].connect(self.SetTimes)
+        
+        self.layout.addWidget(self.time_label,0,0)
+        self.layout.addWidget(self.time,0,1)
+        self.layout.addWidget(self.accuracy_label,1,0)
+        self.layout.addWidget(self.accuracy,1,1)
+        self.layout.addWidget(self.apply_button,2,0,1,2)
+        
+    def SetTimes(self):
+        new_time = float(self.time.text())
+        new_accuracy = float(self.accuracy.text())/1000
+        self.emit( QtCore.SIGNAL('Times'), new_time, new_accuracy)
 
-win2.show()
+        
+
+class MainWindow(QtGui.QMainWindow):
+    """ Window that will contain the Power Spectrum widget and some configuration options. 
+    """
+    def __init__(self,time,accuracy):
+        super(MainWindow,self).__init__()
+        self.initUI(time,accuracy)
+        
+    def initUI(self,time,accuracy):
+        self.power_spectra = Power_Spectra(time,accuracy)
+        self.conf_times = ConfigureTimes()
+        self.setCentralWidget(self.power_spectra)
+        self.setGeometry(450,30,900,900)
+        self.connect(self.conf_times,  QtCore.SIGNAL("Times"),self.power_spectra.updateTimes)
+        
+        
+        saveAction = QtGui.QAction(QtGui.QIcon('floppy-icon.png'),'Save',self)
+        saveAction.setShortcut('Ctrl+S')
+        saveAction.setStatusTip('Save the displayed data')
+        saveAction.triggered.connect(self.power_spectra.fileSave)
+        
+        exitAction = QtGui.QAction(QtGui.QIcon('Signal-stop-icon.png'),'Exit',self)
+        exitAction.setShortcut('Ctrl+Q')
+        exitAction.setStatusTip('Quit the program in a safe way')
+        exitAction.triggered.connect(self.power_spectra.exit_safe)
+        
+        configureTimes = QtGui.QAction(QtGui.QIcon('pinion-icon.png'),'Configure',self)
+        configureTimes.setShortcut('Ctrl+T')
+        configureTimes.setStatusTip('Configure the acquisition times')
+        configureTimes.triggered.connect(self.conf_times.show)
+        
+        self.statusBar()
+        menubar = self.menuBar()
+        fileMenu = menubar.addMenu('&File')
+        fileMenu.addAction(saveAction)
+        fileMenu.addAction(exitAction)
+        confgMenu = menubar.addMenu('&Configure')
+        confgMenu.addAction(configureTimes)
+        
+    def configure_times(self,time,accuracy):
+        """ Configures the times in the power spectra acquisition Widget. 
+        """
+        
+        self.power_spectra.updateTimes(time, accuracy)
+
 ## Start Qt event loop unless running in interactive mode or using pyside.
 if __name__ == '__main__':
     import sys
-    if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
-        QtGui.QApplication.instance().exec_()
+
+    app = QtGui.QApplication(sys.argv)
+    test = MainWindow(time,accuracy)
+    test.show()
+    app.exec_()
