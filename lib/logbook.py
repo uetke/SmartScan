@@ -77,19 +77,26 @@ class logbook():
     def new_setup(self,name,description,file=None):
         """ Method for inserting a new setup in the setups xml file. 
         """
+        
         tree = ET.parse(self.setups)
         setups = tree.getroot()
         
         new_setup = ET.Element('setup')
+        
         last_id = int(setups[-1].attrib['ID'])
+        
         new_setup.set('ID',str(last_id+1))
         new_name = ET.SubElement(new_setup,'name')
         new_name.text = name
         new_description = ET.SubElement(new_setup,'description')
-        new_description.text = description 
-        new_file = ET.SubElement(new_setup,'file')
+        new_description.text = description
+        if file != None or file!= '':
+            new_file = ET.SubElement(new_setup,'file')
+        else:
+            new_file = 'No File'
         new_file.text = file
-        
+               
+
         setups.append(new_setup)
         tree = ET.ElementTree(setups)
         tree.write(self.setups)
@@ -157,4 +164,5 @@ class logbook():
         last_setup = setups.findall(".//name/..[@ID='%i']"%(last_setup_id))
         last_setup_name = last_setup[0].find('name').text
         return list([last_setup_id, last_setup_name])
+        
         

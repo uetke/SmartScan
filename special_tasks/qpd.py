@@ -14,7 +14,7 @@ from lib.adq_mod import adq
 #data=variables('Data','config/config_variables.xml')
 #fifo=variables('Fifo','config/config_variables.xml')
 
-time = 5 # 1 Second acquisition
+time = 1 # 1 Second acquisition
 accuracy = .00005 # Accuracy in seconds
 
 class Variances(QtGui.QWidget):
