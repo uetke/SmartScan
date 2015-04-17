@@ -98,20 +98,8 @@ class MainWindow(QMainWindow):
         self.description = description
         QMainWindow.__init__(self, *args)
         self.main = Ui_MainWindow()
-        self.main.setupUi(self)
-        self.file_menu = QtGui.QMenu('&File', self)
-        self.file_menu.addAction('&Quit', self.fileQuit,
-                                 QtCore.Qt.CTRL + QtCore.Qt.Key_Q)
-        self.file_menu.addAction('&Close all scan windows', self.CloseScans)
-        self.menuBar().addMenu(self.file_menu)
+       # self.main.setupUi(self)
 
-        self.edit_menu = QtGui.QMenu('&Edit', self)
-        self.edit_menu.addAction('&Refresh Devices',self.update_devices)
-
-        self.help_menu = QtGui.QMenu('&Help', self)
-        self.help_menu.addAction('&About', self.about)
-        self.menuBar().addSeparator()
-        self.menuBar().addMenu(self.help_menu)
         
         
         
@@ -145,6 +133,20 @@ class MainWindow(QMainWindow):
         """ Updates the devices specified in the configuration file. 
         It allows to update devices without restarting the UI. 
         """
+        self.file_menu = QtGui.QMenu('&File', self)
+        self.file_menu.addAction('&Quit', self.fileQuit,
+                                 QtCore.Qt.CTRL + QtCore.Qt.Key_Q)
+        self.file_menu.addAction('&Close all scan windows', self.CloseScans)
+        self.menuBar().addMenu(self.file_menu)
+
+        self.edit_menu = QtGui.QMenu('&Edit', self)
+        self.edit_menu.addAction('&Refresh Devices',self.update_devices)
+
+        self.help_menu = QtGui.QMenu('&Help', self)
+        self.help_menu.addAction('&About', self.about)
+        self.menuBar().addSeparator()
+        self.menuBar().addMenu(self.help_menu)
+        
         self.device_names = device(type='Adwin',filename=self.dev_conf)
         self.devices = {}
         for name in self.device_names.properties:
