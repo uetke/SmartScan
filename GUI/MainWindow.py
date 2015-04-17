@@ -155,7 +155,7 @@ class MainWindow(QMainWindow):
         j=0
         k=1
         self.Controler = {}
-        self.main.retranslateUi(MainWindow)
+        self.main.setupUi(self)
         #self.main.Scan_Detector_comboBox.clear()
         #self.main.Controler_Detector_comboBox.clear()
         #self.main.Scan_Dropdown.model.clear()
