@@ -129,7 +129,17 @@ class MainWindow(QMainWindow):
         self.scanwindows = {}
         self.scanindex = 0
         self.monitor = {}
-        
+
+        self.connect(self.main.Monitor_pushButton, SIGNAL("clicked()"), self.Monitor)
+        QtCore.QObject.connect(self.main.Scan_Detector_comboBox, QtCore.SIGNAL("currentIndexChanged(int)"), self.ChangeUnit)
+        QtCore.QObject.connect(self.main.Scan_1st_comboBox, QtCore.SIGNAL("currentIndexChanged(int)"), self.ChangeUnit)                    
+        QtCore.QObject.connect(self.main.Scan_2nd_comboBox, QtCore.SIGNAL("currentIndexChanged(int)"), self.ChangeUnit)                    
+        QtCore.QObject.connect(self.main.Scan_3rd_comboBox, QtCore.SIGNAL("currentIndexChanged(int)"), self.ChangeUnit)
+        QtCore.QObject.connect(self.main.Scan_start_pushButton, QtCore.SIGNAL("clicked()"), self.StartScan)      
+        QtCore.QObject.connect(self.main.Scan_stop_pushButton, QtCore.SIGNAL("clicked()"), self.StopScan)
+        QtCore.QObject.connect(self.main.Scan_Mult_Detector_comboBox, QtCore.SIGNAL("clicked()"), self.Mult_detect)        
+        QtCore.QObject.connect(self.main.Controler_Go, QtCore.SIGNAL("clicked()"), self.Go2Pos)
+        QtCore.QObject.connect(self.main.Controler_Refocus, QtCore.SIGNAL("clicked()"), self.Refocus)            
     
     def update_devices(self):
         """ Updates the devices specified in the configuration file. 
@@ -211,18 +221,8 @@ class MainWindow(QMainWindow):
                 QtCore.QObject.connect(self.Controler[i['Name']]['PosBox'],QtCore.SIGNAL("valueChanged(double)"),self.ChangePos) 
                 k +=1
         
-                
         
-        self.connect(self.main.Monitor_pushButton, SIGNAL("clicked()"), self.Monitor)
-        QtCore.QObject.connect(self.main.Scan_Detector_comboBox, QtCore.SIGNAL("currentIndexChanged(int)"), self.ChangeUnit)
-        QtCore.QObject.connect(self.main.Scan_1st_comboBox, QtCore.SIGNAL("currentIndexChanged(int)"), self.ChangeUnit)                    
-        QtCore.QObject.connect(self.main.Scan_2nd_comboBox, QtCore.SIGNAL("currentIndexChanged(int)"), self.ChangeUnit)                    
-        QtCore.QObject.connect(self.main.Scan_3rd_comboBox, QtCore.SIGNAL("currentIndexChanged(int)"), self.ChangeUnit)
-        QtCore.QObject.connect(self.main.Scan_start_pushButton, QtCore.SIGNAL("clicked()"), self.StartScan)      
-        QtCore.QObject.connect(self.main.Scan_stop_pushButton, QtCore.SIGNAL("clicked()"), self.StopScan)
-        QtCore.QObject.connect(self.main.Scan_Mult_Detector_comboBox, QtCore.SIGNAL("clicked()"), self.Mult_detect)        
-        QtCore.QObject.connect(self.main.Controler_Go, QtCore.SIGNAL("clicked()"), self.Go2Pos)
-        QtCore.QObject.connect(self.main.Controler_Refocus, QtCore.SIGNAL("clicked()"), self.Refocus)    
+
         
         self.main.Scan_Dropdown.create()
         self.InitDevices()
