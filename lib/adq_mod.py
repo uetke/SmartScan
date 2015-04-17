@@ -29,7 +29,7 @@ class adq(ADwin):
         self.dev_value = dict()
         self.running = False
         self.logger = logging.getLogger(get_all_caller())
-        self.logger.info('Init the class with process %s' %process)
+        self.logger.info('Init the class with process')
         
     def boot(self): 
         """ Boots the ADwin. """
