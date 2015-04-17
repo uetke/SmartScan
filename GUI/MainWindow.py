@@ -155,12 +155,12 @@ class MainWindow(QMainWindow):
         j=0
         k=1
         self.Controler = {}
-        self.main.Scan_Detector_comboBox.clear()
-        self.main.Controler_Detector_comboBox.clear()
-        self.main.Scan_Dropdown.model.clear()
-        self.main.Scan_1st_comboBox.clear()
-        self.main.Scan_2nd_comboBox.clear()
-        self.main.Scan_3rd_comboBox.clear()
+        #self.main.Scan_Detector_comboBox.clear()
+        #self.main.Controler_Detector_comboBox.clear()
+        #self.main.Scan_Dropdown.model.clear()
+        #self.main.Scan_1st_comboBox.clear()
+        #self.main.Scan_2nd_comboBox.clear()
+        #self.main.Scan_3rd_comboBox.clear()
         for i in sorted(self.devices):
             i = self.devices[i].properties
             if 'Input' in i.keys():
@@ -220,9 +220,6 @@ class MainWindow(QMainWindow):
                 QtCore.QObject.connect(self.Controler[i['Name']]['MinButton'], QtCore.SIGNAL("clicked()"), self.ChangePos)
                 QtCore.QObject.connect(self.Controler[i['Name']]['PosBox'],QtCore.SIGNAL("valueChanged(double)"),self.ChangePos) 
                 k +=1
-        
-        
-
         
         self.main.Scan_Dropdown.create()
         self.InitDevices()
