@@ -655,7 +655,7 @@ class adq(ADwin):
             self.logger.error('Dimensions of the arrays do not match')
             
 """initialize the variable names"""        
-config_variables = '../config/config_variables.xml'
+config_variables = 'config/config_variables.xml'
 par=variables('Par',filename=config_variables)
 fpar=variables('FPar',filename=config_variables)
 data=variables('Data',filename=config_variables)

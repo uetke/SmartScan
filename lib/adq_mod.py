@@ -14,7 +14,7 @@ from lib.logger import get_all_caller
 import copy
     
 """initialize the variable names"""        
-config_variables = '../config/config_variables.xml'
+config_variables = 'config/config_variables.xml'
 par=variables('Par',filename=config_variables)
 fpar=variables('FPar',filename=config_variables)
 data=variables('Data',filename=config_variables)
@@ -169,7 +169,7 @@ class adq(ADwin):
         self.start(process=self.proc_num)
         while bool(self.adw.Process_Status(self.proc_num)):
             time.sleep(0.1)
-        arrayX = np.array(list(self.get_data(176,num_ticks))
+        arrayX = np.array(list(self.get_data(176,num_ticks)))
         arrayY = np.array(list(self.get_data(175,num_ticks)))
         arrayZ = np.array(list(self.get_data(174,num_ticks)))
         return arrayX, arrayY, arrayZ    
