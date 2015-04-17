@@ -149,12 +149,12 @@ class MainWindow(QMainWindow):
         k=1
         self.Controler = {}
         #self.main.setupUi(self)
-        #self.main.Scan_Detector_comboBox.clear()
-        #self.main.Controler_Detector_comboBox.clear()
-        #self.main.Scan_Dropdown.model.clear()
-        #self.main.Scan_1st_comboBox.clear()
-        #self.main.Scan_2nd_comboBox.clear()
-        #self.main.Scan_3rd_comboBox.clear()
+        self.main.Scan_Detector_comboBox.clear()
+        self.main.Controler_Detector_comboBox.clear()
+        self.main.Scan_Dropdown.model.clear()
+        self.main.Scan_1st_comboBox.clear()
+        self.main.Scan_2nd_comboBox.clear()
+        self.main.Scan_3rd_comboBox.clear()
         for i in sorted(self.devices):
             i = self.devices[i].properties
             if 'Input' in i.keys():
