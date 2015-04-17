@@ -242,12 +242,12 @@ class MainWindow(QMainWindow):
     def StartScan(self):
         self.main.Controler_BusyLabel.setText(_translate("MainWindow", "Busy", None))
         self.main.Scan_start_pushButton.setEnabled(False)
-        self.main.Controler_Refocus.setEnabled(False)
-        self.main.Controler_Go.setEnabled(False)
-        for name in self.Controler.keys():
-            self.Controler[name]['AddButton'].setEnabled(False)
-            self.Controler[name]['MinButton'].setEnabled(False)
-            self.Controler[name]['PosBox'].setEnabled(False)
+        #self.main.Controler_Refocus.setEnabled(False)
+        #self.main.Controler_Go.setEnabled(False)
+        #for name in self.Controler.keys():
+        #    self.Controler[name]['AddButton'].setEnabled(False)
+        #    self.Controler[name]['MinButton'].setEnabled(False)
+        #    self.Controler[name]['PosBox'].setEnabled(False)
         
         option = '%s;%s' %(self.main.Scan_Detector_comboBox.currentText(),self.main.Scan_1st_comboBox.currentText())
         if not self.main.Scan_2nd_comboBox.currentText()=='None':
