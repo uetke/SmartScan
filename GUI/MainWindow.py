@@ -105,25 +105,40 @@ class MainWindow(QMainWindow):
         self.file_menu.addAction('&Close all scan windows', self.CloseScans)
         self.menuBar().addMenu(self.file_menu)
 
+        self.edit_menu = QtGui.QMenu('&Edit', self)
+        self.edit_menu.addAction('&Refresh Devices',self.update_devices)
+
         self.help_menu = QtGui.QMenu('&Help', self)
+        self.help_menu.addAction('&About', self.about)
         self.menuBar().addSeparator()
         self.menuBar().addMenu(self.help_menu)
+        
+        
+        
+        self.update_devices() # Generates the devices listed in the configuration file
+        
+        self.adw = adq()
+        if self.adw.adw.Test_Version() != 0: # Not clear if this means the ADwin is booted or not
+            self.adw.boot()
+            self.adw.init_port7()
+            print('Booting the ADwin...')
+            
+        self.adw.load('lib/adbasic/adwin.T99')
+        self.scanwindows = {}
+        self.scanindex = 0
+        self.monitor = {}
+        
+    
+    def update_devices(self):
+        """ Updates the devices specified in the configuration file. 
+        It allows to update devices without restarting the UI. 
+        """
         self.device_names = device(type='Adwin',filename=self.dev_conf)
         self.devices = {}
         for name in self.device_names.properties:
             self.devices[name] = device(type='Adwin',name=name,filename=self.dev_conf)
-        
-        self.adw = adq('lib/adbasic/adwin.T99')
-        if self.adw.adw.Test_Version() != 0:
-            self.adw.boot()
-            print('Booting the ADwin...')
-        self.adw.init_port7()
-        self.adw.load()
-        self.scanwindows = {}
-        self.scanindex = 0
-        self.monitor = {}
         self.init_labels()
-
+    
     def init_labels(self):
         j=0
         k=1
@@ -189,7 +204,7 @@ class MainWindow(QMainWindow):
                 k +=1
         
                 
-        self.help_menu.addAction('&About', self.about)
+        
         self.connect(self.main.Monitor_pushButton, SIGNAL("clicked()"), self.Monitor)
         QtCore.QObject.connect(self.main.Scan_Detector_comboBox, QtCore.SIGNAL("currentIndexChanged(int)"), self.ChangeUnit)
         QtCore.QObject.connect(self.main.Scan_1st_comboBox, QtCore.SIGNAL("currentIndexChanged(int)"), self.ChangeUnit)                    
@@ -372,7 +387,7 @@ class App(QtGui.QApplication):
         QApplication.__init__(self, *args)
         self.init = InitWindow()
         self.connect(self, SIGNAL("lastWindowClosed()"), self.byebye )
-        self.init.setWindowTitle('Main')
+        self.init.setWindowTitle('Scan 2.0')
         self.init.show()
     
     def byebye(self):

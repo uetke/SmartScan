@@ -11,7 +11,7 @@ import pyqtgraph as pg
 
 import numpy as np
 
-from lib.adq_functions import adq
+from lib.adq_mod import adq
 from lib.xml2dict import device,variables
 
 

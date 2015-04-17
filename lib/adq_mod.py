@@ -7,28 +7,29 @@ import matplotlib.pyplot as plt
 import math as m
 from sys import stdout
 import ctypes
-import psutil
+#import psutil
 from lib.xml2dict import device,variables
 import logging
 from lib.logger import get_all_caller
 import copy
     
 """initialize the variable names"""        
-config_variables = '../config/config_variables.xml'
+config_variables = 'config/config_variables.xml'
 par=variables('Par',filename=config_variables)
 fpar=variables('FPar',filename=config_variables)
 data=variables('Data',filename=config_variables)
 fifo=variables('Fifo',filename=config_variables)
     
 class adq(ADwin):
-    def __init__(self, process):
+    def __init__(self, process=None):
         DEVICENUMBER = 1 # By default this is the number
         RAISE_EXCEPTIONS = 1
         self.adw = ADwin(DEVICENUMBER, RAISE_EXCEPTIONS)
-        self.proc = process
-        self.proc_num = int(process[-1])
-        if self.proc_num == 0:
-            self.proc_num = 10
+        if process != None: 
+            self.proc = process
+            self.proc_num = int(process[-1])
+            if self.proc_num == 0:
+                self.proc_num = 10
         self.scan_settings = dict()
         self.dev_value = dict()
         self.running = False
@@ -169,7 +170,7 @@ class adq(ADwin):
         self.start(process=self.proc_num)
         while bool(self.adw.Process_Status(self.proc_num)):
             time.sleep(0.1)
-        arrayX = np.array(list(self.get_data(176,num_ticks))
+        arrayX = np.array(list(self.get_data(176,num_ticks)))
         arrayY = np.array(list(self.get_data(175,num_ticks)))
         arrayZ = np.array(list(self.get_data(174,num_ticks)))
         return arrayX, arrayY, arrayZ    
@@ -762,3 +763,5 @@ class inter_add_remove():
         self.plot_backg.figure.canvas.draw()      
         self.plot_parti.set_data(self.particles_x, self.particles_y)
         self.plot_parti.figure.canvas.draw()
+
+
