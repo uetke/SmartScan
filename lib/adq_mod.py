@@ -49,16 +49,21 @@ class adq(ADwin):
         self.logger = logging.getLogger(get_all_caller())
         self.logger.info("Loaded process %s" %process)
         
-    def start(self,process):
+    def start(self,process=None):
         """ Starts the process. 
             :Process = integer from 1 to 10
+                      if None, uses the last known process to be loaded
         """
+        if process == None:
+            process = self.proc_num
         self.logger = logging.getLogger(get_all_caller())
         self.adw.Start_Process(process)
         self.logger.info("Started process %s" %process)
         
-    def stop(self,process):
+    def stop(self,process=None):
         """ Stops the process"""
+        if process == None:
+            process = self.proc_num
         self.adw.Stop_Process(process)
         self.logger = logging.getLogger(get_all_caller())
         self.logger.info("Stopped process %s" %process)
