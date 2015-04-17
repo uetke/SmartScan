@@ -131,7 +131,10 @@ class MainWindow(QMainWindow):
         
         self.update_devices() # Generates the devices listed in the configuration file
 
-           
+    def update_menu(self):
+        """ Updates the menu of the main screen. It is a workaround the missing menu in the original design file. 
+            It should be deprecated in future versions. 
+        """
     
     def update_devices(self):
         """ Updates the devices specified in the configuration file. 
