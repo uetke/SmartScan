@@ -62,11 +62,11 @@ class adq(ADwin):
         self.logger = logging.getLogger(get_all_caller())
         self.logger.info("Stopped process %s" %process)
     
-    def wait(self,ref_time=0.1):
+    def wait(self,process=9,ref_time=0.1):
         """ Waits until the process is finished"""
         self.logger = logging.getLogger(get_all_caller())
         self.logger.info("Waiting")
-        while self.adw.Process_Status(self.proc_num):
+        while self.adw.Process_Status(process):
             time.sleep(ref_time)  
                
     def set_par(self,index,value):
@@ -164,7 +164,7 @@ class adq(ADwin):
         self.set_par(par.properties['Num_ticks'],num_ticks)
         self.adw.Set_Processdelay(self.proc_num,delay)
         self.start(8)
-        while bool(self.adw.Process_Status(self.proc_num)):
+        while bool(self.adw.Process_Status(8)):
             time.sleep(0.1)
         arrayX = np.array(list(self.get_data(176,num_ticks)))
         arrayY = np.array(list(self.get_data(175,num_ticks)))
@@ -194,8 +194,8 @@ class adq(ADwin):
         self.logger.info('Making static timetrace with %s for %ss and precision of %ss' %(', '.join([ i.properties['Name'] for i in detect ]),duration,acc))
         
         self.start(9)
-        time.sleep(duration)
-        #self.wait()
+        #time.sleep(duration)
+        self.wait(process=9)
         array = np.array(list(self.get_fifo(fifo.properties['Scan_data'])))
         split_data = []
         for i in range(len(detect)):
@@ -224,7 +224,7 @@ class adq(ADwin):
             self.set_par(par.properties['Num_ticks'],num_ticks)
             self.set_par(par.properties['Case'],3)
             self.start(9)
-            self.running = bool(self.adw.Process_Status(self.proc_num))
+            self.running = bool(self.adw.Process_Status(9))
             self.array = np.array(list(self.get_fifo(fifo.properties['Scan_data'])))
             split_data = []
             for i in range(len(detect)):
@@ -259,7 +259,7 @@ class adq(ADwin):
             self.set_par(par.properties['Input_value'],value)
             self.set_par(par.properties['Case'],1)
             self.start(9)
-            self.wait()
+            self.wait(9)
         elif 0<=channel<=15:
             self.logger.error('The value %s is out of range(0,65537)'%value)
         else:
@@ -275,7 +275,7 @@ class adq(ADwin):
             self.set_par(par.properties['Input_value'],gain)
             self.set_par(par.properties['Case'],2)
             self.start(9)
-            self.wait()
+            self.wait(9)
             return self.get_par(par.properties['Output_value'])
         else:
             self.logger.error('The channel %s is out of range(0,16)' %channel)
@@ -303,7 +303,7 @@ class adq(ADwin):
             self.logger.info('Getting data from digital port %s' %port)
             self.set_par(par.properties['Case'],5)
             self.start(9)
-            self.wait()
+            self.wait(9)
             digin_data = self.get_par(par.properties['Output_value'])
             digin_data = bin(digin_data)[2:]
             digin_data = '0'*(16-len(digin_data)) + digin_data
@@ -319,7 +319,7 @@ class adq(ADwin):
             self.set_par(par.properties['Case'],6)
             self.set_par(par.properties['Port'],port)
             self.start(9)
-            self.wait()
+            self.wait(9)
         else:
             self.logger.error('The port %s is out of range(0,16)' %port)
             
@@ -332,7 +332,7 @@ class adq(ADwin):
             self.set_par(par.properties['Case'],7)
             self.set_par(par.properties['Port'],port)
             self.start(9)
-            self.wait()
+            self.wait(9)
         else:
             self.logger.error('The port %s is out of range(0,16)' %port)
 
@@ -385,7 +385,7 @@ class adq(ADwin):
             self.set_par(par.properties['Case'],4)
             self.adw.Set_Processdelay(self.proc_num, int(speed*1e-3/25e-9))
             self.start(9)
-            while self.adw.Process_Status(self.proc_num):
+            while self.adw.Process_Status(9):
                 #number = self.get_par(par.properties['Pix_done'])
                 #perc = int(number/total*100)
                 #stdout.write("\r{0:d}%".format(perc))
@@ -704,7 +704,7 @@ class adq(ADwin):
             print('Booting the ADwin...')
         init_port7.load('lib/adbasic/init_port7.T99')
         init_port7.start(9)
-        init_port7.wait()
+        init_port7.wait(9)
         self.logger.info('initialized port 7 to 0V')
 
             
