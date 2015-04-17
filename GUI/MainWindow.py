@@ -108,7 +108,9 @@ class MainWindow(QMainWindow):
         
         self.edit_menu = QtGui.QMenu('&Edit', self)
         self.edit_menu.addAction('&Refresh Devices',self.update_devices)
-
+        self.menuBar().addSeparator()
+        self.menuBar().addMenu(self.edit_menu)
+        
         self.help_menu = QtGui.QMenu('&Help', self)
         self.help_menu.addAction('&About', self.about)
         self.menuBar().addSeparator()
