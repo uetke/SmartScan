@@ -21,15 +21,10 @@ data=variables('Data',filename=config_variables)
 fifo=variables('Fifo',filename=config_variables)
     
 class adq(ADwin):
-    def __init__(self, process=None):
+    def __init__(self):
         DEVICENUMBER = 1 # By default this is the number
         RAISE_EXCEPTIONS = 1
         self.adw = ADwin(DEVICENUMBER, RAISE_EXCEPTIONS)
-        if process != None: 
-            self.proc = process
-            self.proc_num = int(process[-1])
-            if self.proc_num == 0:
-                self.proc_num = 10
         self.scan_settings = dict()
         self.dev_value = dict()
         self.running = False
@@ -42,26 +37,28 @@ class adq(ADwin):
         self.logger.info('Booted the Adwin')
         self.adw.Boot('c:\\adwin\\ADwin9.btl')
         
-    def load(self,process=None): 
+    def load(self,process): 
         """ Loads the processes. """
-        if process==None:
-            process=self.proc_num
-        self.adw.Load_Process(self.proc)
+        
+        # Stores the process name and number in variables
+        self.proc = process
+        self.proc_num = int(process[-1])
+        if self.proc_num == 0:
+            self.proc_num = 10
+        self.adw.Load_Process(process)
         self.logger = logging.getLogger(get_all_caller())
         self.logger.info("Loaded process %s" %process)
         
-    def start(self,process=None):
-        """ Starts the process"""
-        if process==None:
-            process=self.proc_num
+    def start(self,process):
+        """ Starts the process. 
+            :Process = integer from 1 to 10
+        """
         self.logger = logging.getLogger(get_all_caller())
         self.adw.Start_Process(process)
         self.logger.info("Started process %s" %process)
         
-    def stop(self,process=None):
+    def stop(self,process):
         """ Stops the process"""
-        if process==None:
-            process=self.proc_num
         self.adw.Stop_Process(process)
         self.logger = logging.getLogger(get_all_caller())
         self.logger.info("Stopped process %s" %process)
@@ -141,7 +138,7 @@ class adq(ADwin):
             self.logger.error('The fifo number %s is out of range(0,201)' %(number))
     
     def get_fast_timetrace(self,detect,duration=1,acc=.1):
-        """Gets a timetrace with a dedicated high-priority process. 
+        """ Gets a timetrace with a dedicated high-priority process. 
             Only works for a counter.
         """
         delay = m.floor(acc/25e-9)
