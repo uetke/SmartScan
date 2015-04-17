@@ -105,7 +105,7 @@ class MainWindow(QMainWindow):
                                  QtCore.Qt.CTRL + QtCore.Qt.Key_Q)
         self.file_menu.addAction('&Close all scan windows', self.CloseScans)
         self.menuBar().addMenu(self.file_menu)
-
+        
         self.edit_menu = QtGui.QMenu('&Edit', self)
         self.edit_menu.addAction('&Refresh Devices',self.update_devices)
 
@@ -156,7 +156,7 @@ class MainWindow(QMainWindow):
         j=0
         k=1
         self.Controler = {}
-        self.main.setupUi(self)
+        #self.main.setupUi(self)
         #self.main.Scan_Detector_comboBox.clear()
         #self.main.Controler_Detector_comboBox.clear()
         #self.main.Scan_Dropdown.model.clear()
