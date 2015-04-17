@@ -455,10 +455,10 @@ class adq(ADwin):
                 self.set_datalong(np.append((port,start,self.pix),increment),data.properties['Scan_params'])
                 total=int(np.prod(self.pix))
                 self.set_par(par.properties['Case'],4)
-                self.adw.Set_Processdelay(self.proc_num, int(speed*1e-3/25e-9))
+                self.adw.Set_Processdelay(9, int(speed*1e-3/25e-9))
                 self.start()
                 time.sleep(0.1)
-                self.running = bool(self.adw.Process_Status(self.proc_num))
+                self.running = bool(self.adw.Process_Status(9))
                 temp = np.zeros(total)
                 temp[:] = np.nan
                 image = self.get_fifo(fifo.properties['Scan_data'])
