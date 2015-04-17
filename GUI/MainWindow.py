@@ -103,7 +103,7 @@ class MainWindow(QMainWindow):
         
         
         
-        self.update_devices() # Generates the devices listed in the configuration file
+        
         
         self.adw = adq()
         if self.adw.adw.Test_Version() != 0: # Not clear if this means the ADwin is booted or not
@@ -117,6 +117,8 @@ class MainWindow(QMainWindow):
         self.scanwindows = {}
         self.scanindex = 0
         self.monitor = {}
+        
+        self.update_devices() # Generates the devices listed in the configuration file
 
         self.connect(self.main.Monitor_pushButton, SIGNAL("clicked()"), self.Monitor)
         QtCore.QObject.connect(self.main.Scan_Detector_comboBox, QtCore.SIGNAL("currentIndexChanged(int)"), self.ChangeUnit)
