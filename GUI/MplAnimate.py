@@ -145,7 +145,7 @@ class MplCanvas(QtGui.QGraphicsObject):
             self.xunit = ' s'
             self.ylabel = "%s" %parent.main.Monitor_comboBox.currentText()
             self.yunit = ' %s' %self.detector[0].properties['Input']['Calibration']['Unit']
-            @self.adw.load()
+            #self.adw.load()
             self.adw.start(10)
             
         else:
