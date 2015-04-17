@@ -123,6 +123,8 @@ class MainWindow(QMainWindow):
             self.adw.init_port7()
             print('Booting the ADwin...')
             
+        
+        self.adw.load('lib/adbasic/monitor.T90')
         self.adw.load('lib/adbasic/adwin.T99')
         self.scanwindows = {}
         self.scanindex = 0

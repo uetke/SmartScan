@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import math as m
 from sys import stdout
 import ctypes
-#import psutil
+import psutil
 from lib.xml2dict import device,variables
 import logging
 from lib.logger import get_all_caller

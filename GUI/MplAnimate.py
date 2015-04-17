@@ -132,12 +132,12 @@ class MplCanvas(QtGui.QGraphicsObject):
         self.xdata = []
         self.ydata = []
         self.MplAnimate = MplAnimate
-
-                
+   
         self.fifo = variables('Fifo')
         self.par = variables('Par')
         if MplAnimate.option[0]=='Monitor':
-            self.adw=adq('lib/adbasic/monitor.T90') 
+            self.adw=adq() 
+            #self.adw.load('lib/adbasic/monitor.T90')
             self.delay=400*0.1e-3
             self.detector = [device(parent.main.Monitor_comboBox.currentText())]
             self.fifo_name = '%s%i' %(self.detector[0].properties['Type'],self.detector[0].properties['Input']['Hardware']['PortID'])
@@ -145,12 +145,12 @@ class MplCanvas(QtGui.QGraphicsObject):
             self.xunit = ' s'
             self.ylabel = "%s" %parent.main.Monitor_comboBox.currentText()
             self.yunit = ' %s' %self.detector[0].properties['Input']['Calibration']['Unit']
-            self.adw.load()
-            self.adw.start()
+            @self.adw.load()
+            self.adw.start(10)
             
         else:
-            self.adw = adq('lib/adbasic/adwin.T99') 
-            self.adw.load()
+            self.adw = adq() 
+            #self.adw.load('lib/adbasic/adwin.T99')
             if not self.parent.main.Scan_Dropdown.button.isEnabled():
                 self.detector = [device(self.parent.main.Scan_Detector_comboBox.currentText())]
             else:
