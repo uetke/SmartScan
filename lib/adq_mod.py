@@ -5,7 +5,7 @@ import time
 import scipy.ndimage
 import matplotlib.pyplot as plt
 import math as m
-from sys import stdout
+#from sys import stdout
 import ctypes
 #import psutil
 from lib.xml2dict import device,variables

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>343</width>
-    <height>256</height>
+    <width>344</width>
+    <height>323</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,6 +15,9 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
+    <item row="3" column="0" colspan="3">
+     <widget class="QPlainTextEdit" name="experiment_description"/>
+    </item>
     <item row="0" column="0">
      <widget class="QLabel" name="save_directory_label">
       <property name="text">
@@ -45,13 +48,20 @@
       </property>
      </widget>
     </item>
-    <item row="3" column="0" colspan="3">
-     <widget class="QPlainTextEdit" name="experiment_description"/>
-    </item>
-    <item row="4" column="1" colspan="2">
+    <item row="4" column="2">
      <widget class="QPushButton" name="pushButton">
       <property name="text">
        <string>Continue</string>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="0">
+     <widget class="QCheckBox" name="autoSave">
+      <property name="text">
+       <string>Auto Save</string>
+      </property>
+      <property name="checked">
+       <bool>true</bool>
       </property>
      </widget>
     </item>
@@ -62,13 +72,20 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>343</width>
+     <width>344</width>
      <height>21</height>
     </rect>
    </property>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
+ <tabstops>
+  <tabstop>save_directory</tabstop>
+  <tabstop>search_directory</tabstop>
+  <tabstop>experiment_description</tabstop>
+  <tabstop>autoSave</tabstop>
+  <tabstop>pushButton</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

@@ -6,6 +6,7 @@ import os
 from PyQt4 import QtCore, QtGui
 from PyQt4.Qt import QMainWindow,QApplication,SIGNAL,QStandardItem,QFileDialog
 from GUI.MplAnimate import MplAnimate
+
 # from Configuration_Window import Ui_MainWindow as Configuration_Window
 from GUI.starting_window import Ui_MainWindow as Configuration_Window
 from GUI.MainWindowGui import Ui_MainWindow
@@ -56,6 +57,7 @@ class InitWindow(QMainWindow):
     def MainWindow(self):
         self.directory = self.init.save_directory.text()
         self.description = self.init.experiment_description.toPlainText()
+        self.autoSave = self.init.autoSave.isChecked()
         # Create the directory before starting the program
         if not os.path.exists(self.directory):
             os.makedirs(self.directory)
@@ -68,10 +70,10 @@ class InitWindow(QMainWindow):
         filename = name + '.txt'
         
         f = open(self.directory+filename,'w')
-        f.write(self.description)
+        f.write(self.description+'\n')
         f.close()
         
-        self.main = MainWindow(self.dev_conf,self.par_conf,self.directory,self.description)
+        self.main = MainWindow(self.dev_conf,self.par_conf,self.directory,self.description,self.autoSave)
         self.main.setWindowTitle('Main')
         self.main.show()
         
@@ -81,7 +83,7 @@ class InitWindow(QMainWindow):
         
     def search_directory(self):
         self.save_dir = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
-        self.init.save_directory.setText(self.save_dir+'/'+str(datetime.now().date())+'/')
+        self.init.save_directory.setText(self.save_dir+'\\'+str(datetime.now().date())+'/')
         
         
     def fileQuit(self):
@@ -92,15 +94,15 @@ class InitWindow(QMainWindow):
 
             
 class MainWindow(QMainWindow):
-    def __init__(self,dev_conf,par_conf,directory,description,*args):
+    def __init__(self,dev_conf,par_conf,directory,description,autoSave,*args):
         self.dev_conf = dev_conf
         self.par_conf = par_conf
         self.directory = directory
         self.description = description
+        self.autoSave = autoSave
+        self.evernoteSave = True
         QMainWindow.__init__(self, *args)
         self.main = Ui_MainWindow()
-        
-        
         self.main.setupUi(self)
                 
         self.adw = adq(debug)
@@ -118,26 +120,7 @@ class MainWindow(QMainWindow):
         
         self.update_devices() # Generates the devices listed in the configuration file
 
-    def update_menu(self):
-        """ Updates the menu of the main screen. It is a workaround the missing menu in the original design file. 
-            It should be deprecated in future versions. 
-        """
-        self.file_menu = QtGui.QMenu('&File', self)
-        self.file_menu.addAction('&Quit', self.fileQuit,
-                                 QtCore.Qt.CTRL + QtCore.Qt.Key_Q)
-        self.file_menu.addAction('&Close all scan windows', self.CloseScans)
-        self.menuBar().addMenu(self.file_menu)
-        
-        self.edit_menu = QtGui.QMenu('&Edit', self)
-        self.edit_menu.addAction('&Refresh Devices',self.update_devices, 
-                                 QtCore.Qt.CTRL + QtCore.Qt.Key_F5)
-        self.menuBar().addSeparator()
-        self.menuBar().addMenu(self.edit_menu)
-        
-        self.help_menu = QtGui.QMenu('&Help', self)
-        self.help_menu.addAction('&About', self.about)
-        self.menuBar().addSeparator()
-        self.menuBar().addMenu(self.help_menu)
+
     
     def update_devices(self):
         """ Updates the devices specified in the configuration file. 
@@ -235,6 +218,34 @@ class MainWindow(QMainWindow):
         
         self.main.Scan_Dropdown.create()
         self.InitDevices()
+    
+    def update_menu(self):
+        """ Updates the menu of the main screen. It is a workaround the missing menu in the original design file. 
+            It should be deprecated in future versions. 
+        """
+        self.file_menu = QtGui.QMenu('&File', self)
+        self.file_menu.addAction('&Quit', self.fileQuit,
+                                 QtCore.Qt.CTRL + QtCore.Qt.Key_Q)
+        self.file_menu.addAction('&Close all scan windows', self.CloseScans)
+        self.menuBar().addMenu(self.file_menu)
+        
+        self.edit_menu = QtGui.QMenu('&Edit', self)
+        self.edit_menu.addAction('&Refresh Devices',self.update_devices, 
+                                 QtCore.Qt.CTRL + QtCore.Qt.Key_F5)
+        self.edit_menu.addAction('&Edit Defaults',self.edit_defaults,
+                                 QtCore.Qt.CTRL + QtCore.Qt.Key_E)
+        
+        self.menuBar().addSeparator()
+        self.menuBar().addMenu(self.edit_menu)
+        
+        self.help_menu = QtGui.QMenu('&Help', self)
+        self.help_menu.addAction('&About', self.about)
+        self.menuBar().addSeparator()
+        self.menuBar().addMenu(self.help_menu)
+        
+    def edit_defaults(self):
+        dialog = EditConfig(self)
+        dialog.exec_()
         
     def InitDevices(self):
         for i in sorted(self.devices):
@@ -336,8 +347,7 @@ class MainWindow(QMainWindow):
         new_center = self.adw.focus_full(detector,devs,center,1*np.ones(len(devs)),.05*np.ones(len(devs)))
         for idx,dev in enumerate(devs):
             self.Controler[dev.properties['Name']]['PosBox'].setValue(new_center[idx])
-            
-        
+                    
         
     def ChangePos(self):
         names = self.sender().objectName().split('_')
@@ -399,6 +409,108 @@ class MainWindow(QMainWindow):
         self.fileQuit()
         ce.ignore()
     
+class EditConfig(QtGui.QDialog):
+    """ Dialog for editing the default values of the application. 
+    """
+    def __init__(self,inherits,parent=None):
+        QtGui.QDialog.__init__(self, parent)
+        
+        self.parent = inherits
+        
+        self.setWindowTitle('Configure scan 2')
+        self.setGeometry(100,100,100,200)
+        self.layout = QtGui.QGridLayout(self)
+        
+        self.title_label = QtGui.QLabel(self)
+        self.title_label.setText('Edit the configuration')
+        
+        self.saveDir_label = QtGui.QLabel(self)
+        self.saveDir_label.setText('Save directory')
+        self.saveDir = QtGui.QLineEdit(self)
+        self.saveDir.setText(self.parent.directory)
+        self.saveDir_search = QtGui.QPushButton('...',self)
+        
+        self.description_label = QtGui.QLabel(self)
+        self.description_label.setText('Experiment Description')
+        self.description = QtGui.QPlainTextEdit()
+        self.description.setPlainText(self.parent.description)
+        
+        self.autosave_label = QtGui.QLabel(self)
+        self.autosave_label.setText('Autosave')
+        
+        self.autosave = QtGui.QCheckBox(self)
+        if self.parent.autoSave:
+            self.autosave.setChecked(True) # By default things will be auto-saved
+        else:
+            self.autosave.setChecked(False)
+            
+        self.evernote_save_label = QtGui.QLabel(self)
+        self.evernote_save_label.setText('Save into Evernote')
+        
+        self.evernote_save = QtGui.QCheckBox(self)
+        if self.parent.evernoteSave:
+            self.evernote_save.setChecked(True) # By default save into evernote
+        else:
+            self.evernote_save.setChecked(False)
+            
+        self.evernote_label = QtGui.QLabel(self)
+        self.evernote_label.setText('Evernote username: ')
+        self.evernote = QtGui.QLineEdit(self)
+        self.evernote.setText("To be implemented...")
+#         self.evernote_button = QtGui.QPushButton('Change',self)
+#         self.evernote_button.clicked[bool].connect(self.updateEvernote)        
+        
+        self.apply_button = QtGui.QPushButton('Apply',self)
+        self.apply_button.clicked[bool].connect(self.apply)
+        
+        self.cancel_button = QtGui.QPushButton('Cancel', self)
+        self.cancel_button.clicked[bool].connect(self.cancel)
+        self.saveDir_search.clicked.connect(self.search_directory)
+        
+        self.layout.addWidget(self.title_label,0,0,1,3)
+        self.layout.addWidget(self.saveDir_label,1,0,1,1)
+        self.layout.addWidget(self.saveDir,1,1,1,1)
+        self.layout.addWidget(self.description_label,2,0,1,1)
+        self.layout.addWidget(self.description,2,1,1,2)
+        self.layout.addWidget(self.autosave_label,3,0,1,1)
+        self.layout.addWidget(self.autosave,3,1,1,1)
+        self.layout.addWidget(self.evernote_label,4,0,1,1)
+        self.layout.addWidget(self.evernote,4,1,1,1)
+        self.layout.addWidget(self.evernote_save,4,1,1,1)
+#         self.layout.addWidget(self.evernote_button,4,2,1,1)
+        self.layout.addWidget(self.apply_button,5,0,1,1)
+        self.layout.addWidget(self.cancel_button,5,2,1,1)
+        self.show()
+        
+    def apply(self):
+        """ Method for updating the edited values. 
+        """
+        self.parent.directory = self.saveDir.text()
+        self.parent.description = self.description.toPlainText()
+        self.parent.autoSave = self.autosave.isChecked()
+        if not os.path.exists(self.parent.directory):
+            os.makedirs(self.parent.directory)
+        filename = 'logbook.txt'    
+       
+        f = open(self.parent.directory+filename,'a')
+        f.write(self.parent.description+'\n')
+        f.close()
+        
+        self.close()
+        
+    def cancel(self):
+        """ Canceling any changes. 
+        """
+        self.close()
+        
+    def search_directory(self):
+        save_dir = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
+        self.saveDir.setText(save_dir+'\\'+str(datetime.now().date())+'/')
+        
+    def updateEvernote(self):
+        """ Function for updating the evernote login authorization. 
+        """
+        
 class App(QtGui.QApplication):
     def __init__(self, *args):
         QApplication.__init__(self, *args)
