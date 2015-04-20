@@ -19,6 +19,24 @@
 <Hardware PortID="5"/>
 </Input>
 </Device>
+<Device Name='QPD X' Type='Analog' Description='QPD X'>
+<Input>
+<Calibration Unit="Volts" Slope="3276.8" Offset="32768"/>
+<Hardware PortID="1"/>
+</Input>
+</Device>
+<Device Name='QPD Y' Type='Analog' Description='QPD Y'>
+<Input>
+<Calibration Unit="Volts" Slope="3276.8" Offset="32768"/>
+<Hardware PortID="4"/>
+</Input>
+</Device>
+<Device Name='QPD Z' Type='Analog' Description='QPD Z'>
+<Input>
+<Calibration Unit="Volts" Slope="3276.8" Offset="32768"/>
+<Hardware PortID="7"/>
+</Input>
+</Device>
 <Device Name='Photodiode' Type='Analog' Description='IR Photodiode'>
 <Input>
 <Calibration Unit="Volts" Slope="3276.8" Offset="32768"/>
