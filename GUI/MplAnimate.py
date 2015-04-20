@@ -21,6 +21,9 @@ matplotlib.rcParams['backend.qt4'] = "PyQt4"
 import copy
 import codecs
 
+from _private.set_debug import debug
+
+
 class MplAnimate(QtGui.QMainWindow):
     def __init__(self, MainWindow, name, option, scanindex=-1, parent=None, directory='.'):
         super(MplAnimate, self).__init__(parent)
@@ -136,7 +139,7 @@ class MplCanvas(QtGui.QGraphicsObject):
         self.fifo = variables('Fifo')
         self.par = variables('Par')
         if MplAnimate.option[0]=='Monitor':
-            self.adw=adq() 
+            self.adw=adq(debug) 
             #self.adw.load('lib/adbasic/monitor.T90')
             self.delay=400*0.1e-3
             self.detector = [device(parent.main.Monitor_comboBox.currentText())]
@@ -149,7 +152,7 @@ class MplCanvas(QtGui.QGraphicsObject):
             self.adw.start(10)
             
         else:
-            self.adw = adq() 
+            self.adw = adq(debug) 
             #self.adw.load('lib/adbasic/adwin.T99')
             if not self.parent.main.Scan_Dropdown.button.isEnabled():
                 self.detector = [device(self.parent.main.Scan_Detector_comboBox.currentText())]
@@ -162,7 +165,7 @@ class MplCanvas(QtGui.QGraphicsObject):
                             self.detector.append(device(self.parent.main.Scan_Dropdown.model.item(i).text()))
                         i += 1
             self.direction_1 = self.parent.main.Scan_1st_comboBox.currentText()
-			
+
             if self.parent.main.Scan_1st_comboBox.currentText()=='Time':
                 self.duration = self.parent.main.Scan_1st_Range.value()
                 self.accuracy = self.parent.main.Scan_Delay_Range.value()/1000

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Data>
 <Adwin>
-<Device Name='APD 1' Type='Counter' Description='a device that counts the number of photons'>
+	<Device Name='APD 1' Type='Counter' Description='a device that counts the number of photons'>
 <Input>
 <Calibration Unit="counts" Slope="1" Offset="0"/>
 <Hardware PortID="1"/>

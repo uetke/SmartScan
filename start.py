@@ -1,4 +1,5 @@
 import sys, os, inspect
+from _private.set_debug import debug
 
 def adding_to_path(folder):
     """ Simple function for adding a folder to the path of Python in order to have available for import.
@@ -26,7 +27,7 @@ def adding_to_path(folder):
         return True    
     
 if __name__ == "__main__":
-    adding_to_path(['GUI', 'lib'])
+    adding_to_path(['GUI', 'lib', '_private'])
     from GUI.MainWindow import App
     global app
     app = App(sys.argv)

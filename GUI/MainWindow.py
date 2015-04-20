@@ -15,6 +15,7 @@ from lib.adq_mod import adq
 from lib.logger import logger
 from datetime import datetime
 
+from _private.set_debug import debug
 
 def _fromUtf8(s):
     return s
@@ -80,7 +81,7 @@ class InitWindow(QMainWindow):
         
     def search_directory(self):
         self.save_dir = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
-        self.init.save_directory.setText(self.save_dir+str(datetime.now().date())+'/')
+        self.init.save_directory.setText(self.save_dir+'/'+str(datetime.now().date())+'/')
         
         
     def fileQuit(self):
@@ -98,25 +99,11 @@ class MainWindow(QMainWindow):
         self.description = description
         QMainWindow.__init__(self, *args)
         self.main = Ui_MainWindow()
+        
+        
         self.main.setupUi(self)
-
-        self.file_menu = QtGui.QMenu('&File', self)
-        self.file_menu.addAction('&Quit', self.fileQuit,
-                                 QtCore.Qt.CTRL + QtCore.Qt.Key_Q)
-        self.file_menu.addAction('&Close all scan windows', self.CloseScans)
-        self.menuBar().addMenu(self.file_menu)
-        
-        self.edit_menu = QtGui.QMenu('&Edit', self)
-        self.edit_menu.addAction('&Refresh Devices',self.update_devices)
-        self.menuBar().addSeparator()
-        self.menuBar().addMenu(self.edit_menu)
-        
-        self.help_menu = QtGui.QMenu('&Help', self)
-        self.help_menu.addAction('&About', self.about)
-        self.menuBar().addSeparator()
-        self.menuBar().addMenu(self.help_menu)
-        
-        self.adw = adq()
+                
+        self.adw = adq(debug)
         if self.adw.adw.Test_Version() != 0: # Not clear if this means the ADwin is booted or not
             self.adw.boot()
             self.adw.init_port7()
@@ -135,6 +122,22 @@ class MainWindow(QMainWindow):
         """ Updates the menu of the main screen. It is a workaround the missing menu in the original design file. 
             It should be deprecated in future versions. 
         """
+        self.file_menu = QtGui.QMenu('&File', self)
+        self.file_menu.addAction('&Quit', self.fileQuit,
+                                 QtCore.Qt.CTRL + QtCore.Qt.Key_Q)
+        self.file_menu.addAction('&Close all scan windows', self.CloseScans)
+        self.menuBar().addMenu(self.file_menu)
+        
+        self.edit_menu = QtGui.QMenu('&Edit', self)
+        self.edit_menu.addAction('&Refresh Devices',self.update_devices, 
+                                 QtCore.Qt.CTRL + QtCore.Qt.Key_F5)
+        self.menuBar().addSeparator()
+        self.menuBar().addMenu(self.edit_menu)
+        
+        self.help_menu = QtGui.QMenu('&Help', self)
+        self.help_menu.addAction('&About', self.about)
+        self.menuBar().addSeparator()
+        self.menuBar().addMenu(self.help_menu)
     
     def update_devices(self):
         """ Updates the devices specified in the configuration file. 
@@ -151,13 +154,14 @@ class MainWindow(QMainWindow):
         j=0
         k=1
         self.Controler = {}
-        #self.main.setupUi(self)
-        self.main.Scan_Detector_comboBox.clear()
-        self.main.Controler_Detector_comboBox.clear()
-        self.main.Scan_Dropdown.model.clear()
-        self.main.Scan_1st_comboBox.clear()
-        self.main.Scan_2nd_comboBox.clear()
-        self.main.Scan_3rd_comboBox.clear()
+        self.main.setupUi(self)
+        self.update_menu()
+#         self.main.Scan_Detector_comboBox.clear()
+#         self.main.Controler_Detector_comboBox.clear()
+#         self.main.Scan_Dropdown.model.clear()
+#         self.main.Scan_1st_comboBox.clear()
+#         self.main.Scan_2nd_comboBox.clear()
+#         self.main.Scan_3rd_comboBox.clear()
         for i in sorted(self.devices):
             i = self.devices[i].properties
             if 'Input' in i.keys():

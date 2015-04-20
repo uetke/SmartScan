@@ -3,5 +3,6 @@ from .adq_mod import adq
 from .logbook import *
 from .logger import *
 from .xml2dict import *
+from ._ADwin import ADwin, ADwinDebug
 
-__all__ = ['adq_mod' 'logbook' 'logger' 'xml2dict']
+__all__ = ['adq_mod' 'logbook' 'logger' 'xml2dict' '_ADwin']
