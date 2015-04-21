@@ -9,7 +9,7 @@
 ' ADbasic_Version                = 5.0.8
 ' Optimize                       = Yes
 ' Optimize_Level                 = 2
-' Info_Last_Save                 = MEETPC202  MEETPC202\monos
+' Info_Last_Save                 = MEETPC113  MEETPC113\LION
 '<Header End>
 
 #include c:\adwin\adbasic\inc\adwgcnt.inc
@@ -41,7 +41,13 @@ dim c,j,n as integer
 init:
   reset_event
   globaldelay = 400 '= 40 ms
-  
+  ' init the counters
+  cnt_enable(0)
+  cnt_clear(15)
+  cnt_mode(0)
+  cnt_set(15)
+  cnt_inputmode(0)
+  cnt_enable(15) 
   for j=1 to 4
     CNT_LATCH(j)
     old_timer[j] = cnt_readlatch(j)
