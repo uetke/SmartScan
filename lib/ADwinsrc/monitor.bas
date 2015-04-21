@@ -39,19 +39,19 @@ dim value_adc[16], average[16] as long
 dim c,j,n as integer
 
 init:
-  reset_event
-  globaldelay = 400 '= 40 ms
+  'reset_event
+  'globaldelay = 400 '= 40 ms
   ' init the counters
-  cnt_enable(0)
-  cnt_clear(15)
-  cnt_mode(0)
-  cnt_set(15)
-  cnt_inputmode(0)
-  cnt_enable(15) 
-  for j=1 to 4
-    CNT_LATCH(j)
-    old_timer[j] = cnt_readlatch(j)
-  NEXT j
+  'cnt_enable(0)
+  'cnt_clear(15)
+  'cnt_mode(0)
+  'cnt_set(15)
+  'cnt_inputmode(0)
+  'cnt_enable(15) 
+  'for j=1 to 4
+  '  CNT_LATCH(j)
+  '  old_timer[j] = cnt_readlatch(j)
+  'NEXT j
   
 event:
   for j=1 to 4

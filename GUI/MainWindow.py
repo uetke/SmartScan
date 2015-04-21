@@ -63,13 +63,13 @@ class InitWindow(QMainWindow):
             os.makedirs(self.directory)
         i=1
         filename = 'logbook'    
-        name = filename
-        while os.path.exists(self.directory+name+'.txt'):
-            name = '%s_%s' %(filename,i)
-            i += 1
-        filename = name + '.txt'
+        #name = filename
+        #while os.path.exists(self.directory+name+'.txt'):
+        #    name = '%s_%s' %(filename,i)
+        #    i += 1
+        filename += '.txt'
         
-        f = open(self.directory+filename,'w')
+        f = open(self.directory+filename,'a')
         f.write(self.description+'\n')
         f.close()
         
@@ -112,6 +112,9 @@ class MainWindow(QMainWindow):
             print('Booting the ADwin...')
             
         
+        self.adw.load('lib/adbasic/init_adwin.T98')
+        self.adw.start(8)
+        self.adw.wait(8)
         self.adw.load('lib/adbasic/monitor.T90')
         self.adw.load('lib/adbasic/adwin.T99')
         self.scanwindows = {}

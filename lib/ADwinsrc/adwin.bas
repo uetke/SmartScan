@@ -35,16 +35,16 @@ Function input(dev_type,port) as long
 EndFunction
 
 init:
-  Conf_DIO(1100b)
-  reset_event
+  'Conf_DIO(1100b)
+  'reset_event
   ' init the counters
-  cnt_enable(0)
-  cnt_clear(15)
-  cnt_mode(0)
-  cnt_set(15)
-  cnt_inputmode(0)
-  cnt_enable(15) 
-  FIFO_Clear(200)
+  'cnt_enable(0)
+  'cnt_clear(15)
+  'cnt_mode(0)
+  'cnt_set(15)
+  'cnt_inputmode(0)
+  'cnt_enable(15) 
+  'FIFO_Clear(200)
   i = 1
   k = 1
   for j=1 to 4
