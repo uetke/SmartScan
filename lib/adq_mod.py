@@ -148,7 +148,7 @@ class adq(ADwin,ADwinDebug):
         self.set_par(par.properties['Port'],int(port))
         num_ticks = int(duration / (delay * 25e-9))
         self.set_par(par.properties['Num_ticks'],num_ticks)
-        self.adw.Set_Processdelay(self.proc_num,delay)
+        self.adw.Set_Processdelay(8,delay)
         self.start(process=8)
         time.sleep(duration)
         array = np.array(list(self.adw.GetData_Long(177,1,num_ticks)))
@@ -656,7 +656,7 @@ class adq(ADwin,ADwinDebug):
   
         return np.array([x, y, flux, sharpness, roundness])
      
-    def focus_full(self, detect, devs, center, dims_default, accuracy_default, rate=1, steps=3, speed=50):
+    def focus_full(self, detect, devs, center, dims_default, accuracy_default, rate=1, steps=2, speed=50):
         self.logger = logging.getLogger(get_all_caller())
         devs = np.array(devs)
         center = np.array(center)

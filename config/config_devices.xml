@@ -37,7 +37,7 @@
 <Hardware PortID="7"/>
 </Input>
 </Device>
-<Device Name='Photodiode' Type='Analog' Description='IR Photodiode'>
+<Device Name='Thermocouple' Type='Analog' Description='Temperature Monitoring'>
 <Input>
 <Calibration Unit="Volts" Slope="3276.8" Offset="32768"/>
 <Hardware PortID="3"/>
