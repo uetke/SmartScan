@@ -421,7 +421,7 @@ class EditConfig(QtGui.QDialog):
         self.parent = inherits
         
         self.setWindowTitle('Configure scan 2')
-        self.setGeometry(100,100,100,200)
+        self.setGeometry(100,100,300,200)
         self.layout = QtGui.QGridLayout(self)
         
         self.title_label = QtGui.QLabel(self)
@@ -447,8 +447,8 @@ class EditConfig(QtGui.QDialog):
         else:
             self.autosave.setChecked(False)
             
-        self.evernote_save_label = QtGui.QLabel(self)
-        self.evernote_save_label.setText('Save into Evernote')
+        #self.evernote_save_label = QtGui.QLabel(self)
+        #self.evernote_save_label.setText('Save into Evernote')
         
         self.evernote_save = QtGui.QCheckBox(self)
         if self.parent.evernoteSave:
@@ -460,8 +460,8 @@ class EditConfig(QtGui.QDialog):
         self.evernote_label.setText('Evernote username: ')
         self.evernote = QtGui.QLineEdit(self)
         self.evernote.setText("To be implemented...")
-#         self.evernote_button = QtGui.QPushButton('Change',self)
-#         self.evernote_button.clicked[bool].connect(self.updateEvernote)        
+        self.evernote_button = QtGui.QPushButton('Change',self)
+        self.evernote_button.clicked[bool].connect(self.updateEvernote)        
         
         self.apply_button = QtGui.QPushButton('Apply',self)
         self.apply_button.clicked[bool].connect(self.apply)
@@ -473,6 +473,7 @@ class EditConfig(QtGui.QDialog):
         self.layout.addWidget(self.title_label,0,0,1,3)
         self.layout.addWidget(self.saveDir_label,1,0,1,1)
         self.layout.addWidget(self.saveDir,1,1,1,1)
+        self.layout.addWidget(self.saveDir_search,1,2,1,1)
         self.layout.addWidget(self.description_label,2,0,1,1)
         self.layout.addWidget(self.description,2,1,1,2)
         self.layout.addWidget(self.autosave_label,3,0,1,1)
