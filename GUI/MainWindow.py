@@ -106,7 +106,7 @@ class MainWindow(QMainWindow):
         self.main.setupUi(self)
                 
         self.adw = adq(debug)
-        if self.adw.adw.Test_Version() != 0: # Not clear if this means the ADwin is booted or not
+        if self.adw.adw.Test_Version() != 1: # Not clear if this means the ADwin is booted or not
             self.adw.boot()
             self.adw.init_port7()
             print('Booting the ADwin...')

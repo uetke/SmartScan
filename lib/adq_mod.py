@@ -353,6 +353,7 @@ class adq(ADwin,ADwinDebug):
         center = np.array(center)
         dims = np.array(dims)
         accuracy = np.array(accuracy)
+        self.adw.Fifo_Clear(fifo.properties['Scan_data'])
         if not type(detect) == type([]):
             detect = [detect]
         if len(devs)==len(center)==len(dims)==len(accuracy)<=3:
@@ -393,7 +394,7 @@ class adq(ADwin,ADwinDebug):
                 #perc = int(number/total*100)
                 #stdout.write("\r{0:d}%".format(perc))
                 #stdout.flush()
-                time.sleep(0.5)
+                time.sleep(0.1)
             #print("")
             temp = np.array(list(self.get_fifo(fifo.properties['Scan_data'], total)))
             self.scan_image = []
@@ -414,7 +415,9 @@ class adq(ADwin,ADwinDebug):
         accuracy: array of accuracy value (unit of the device),
         speed: the duration of one pixel (ms)"""
         self.logger = logging.getLogger(get_all_caller())
+        
         if not self.running:
+            self.adw.Fifo_Clear(fifo.properties['Scan_data'])
             devs = np.array(devs)
             center = np.array(center)
             dims = np.array(dims)
@@ -674,7 +677,7 @@ class adq(ADwin,ADwinDebug):
                     self.set_device_value(devs[j],center[j])
                     dims[j] /= rate
                     accuracy[j] /= rate
-                    self.logger.info('At the position %s' %center)
+                    self.logger.info('At the position %s' %center)                    
             values = []
             for i in range(len(devs)):
                 values.append(self.dev_value[devs[i].properties['Name']])
