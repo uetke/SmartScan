@@ -61,8 +61,6 @@ if __name__ == '__main__':
 
     focusing_power = 450 # In uW
     
-    focusing_aom = 1.25
-    
     # How much time between refocusing
     time_for_refocusing = 5*60
     
