@@ -72,11 +72,11 @@ if __name__ == '__main__':
     particles = []
     particles.append(particle(pcle1))
     particles.append(particle(pcle2))
-    particles.append(particle(pcle3))
-    particles.append(particle(pcle4))
-    particles.append(particle(pcle5))
-    particles.append(particle(pcle6))
-    particles.append(particle(pcle7))
+    #particles.append(particle(pcle3))
+    #particles.append(particle(pcle4))
+    #particles.append(particle(pcle5))
+    #particles.append(particle(pcle6))
+    #particles.append(particle(pcle7))
     
     background = particle(bkg)
     
