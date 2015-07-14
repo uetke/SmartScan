@@ -296,7 +296,6 @@ if __name__ == '__main__':
             print('Press q to exit and start acquiring spectra')
             t1 = time.time()
             while time.time()-t1 < 2:
-                print(time.time()-t1)
                 if msvcrt.kbhit():
                     key = msvcrt.getch()
                     if ord(key) == 113: #113 is ascii for letter q
