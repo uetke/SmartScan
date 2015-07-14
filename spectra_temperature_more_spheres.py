@@ -256,13 +256,14 @@ if __name__ == '__main__':
         print('Done with Arduino temperature %s.'%temp)
         
         # Let's start focusing on the particle
-            print('The program will start refocusing on the particle')
-            i = 1
-            
-            power_aom = focusing_aom
-            adw.go_to_position([aom],[power_aom])
-            center = particles[0].get_center() # Use the first particle for refocusing
-            adw.go_to_position(devs,center)
+        print('The program will start refocusing on the particle')
+        i = 1
+        
+        power_aom = np.polyval(P,focusing_power)
+        adw.go_to_position([aom],[power_aom])
+        adw.go_to_position([aom],[power_aom])
+        center = particles[0].get_center() # Use the first particle for refocusing
+        adw.go_to_position(devs,center)
         
         keep_track = True
         while keep_track:
