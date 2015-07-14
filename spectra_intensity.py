@@ -28,11 +28,11 @@ from devices.powermeter1830c import powermeter1830c as pp
         
 if __name__ == '__main__': 
     # Names of the parameters
-    config_variables = '../config/config_variables.xml'
-    par=variables('Par',filename=config_variables)
-    fpar=variables('FPar',filename=config_variables)
-    data=variables('Data',filename=config_variables)
-    fifo=variables('Fifo',filename=config_variables)
+#    config_variables = '../config/config_variables.xml'
+#    par=variables('Par',filename=config_variables)
+#    fpar=variables('FPar',filename=config_variables)
+#    data=variables('Data',filename=config_variables)
+#    fifo=variables('Fifo',filename=config_variables)
     
     # Name that the files will have
     name = 'spectra_intensity' 
@@ -51,21 +51,28 @@ if __name__ == '__main__':
 
     print('Data will be saved in %s'%(savedir+filename))
     #init the Adwin program and also load the configuration file for the devices
-    adw = adq('../lib/adbasic/adwin.T99') 
-    config_file = '../config/config_devices.xml'
-    xpiezo = device('x piezo',filename=config_file)
-    ypiezo = device('y piezo',filename=config_file)
-    zpiezo = device('z piezo',filename=config_file)
-    counter = device('APD 1',filename=config_file)
-    aom = device('AOM',filename=config_file)
+    adw = adq() 
+    counter = device('APD 1')
+    aom = device('AOM')
 
     number_of_spectra = 10
-
     
+    xpiezo = device('x piezo')
+    ypiezo = device('y piezo')
+    zpiezo = device('z piezo')
+    
+    xcenter = 52.09 #In um
+    ycenter = 53.24
+    zcenter = 48.20
+    devs = [xpiezo,ypiezo,zpiezo]
+    center = [xcenter, ycenter, zcenter]
+    #parameters for the refocusing on the particles
+    dims = [0.3,0.3,0.3]
+    accuracy = [0.05,0.05,0.1]
     #Newport Power Meter
     pmeter = pp(0)
     pmeter.initialize()
-    pmeter.wavelength = 633
+    pmeter.wavelength = 532
     pmeter.attenuator = True
     pmeter.filter = 'Medium' 
     pmeter.go = True
@@ -73,7 +80,12 @@ if __name__ == '__main__':
     data = np.zeros([number_of_spectra,1])
     
     for m in range(number_of_spectra):
-        power_aom = 1.5-m*1./number_of_spectra
+    
+        adw.go_to_position([aom],[1]) # Go to a reasonable intensity
+        
+        center = adw.focus_full(counter,devs,center,dims,accuracy).astype('float')
+        
+        power_aom = m*1.5/number_of_spectra
         adw.go_to_position([aom],[power_aom])
         # Triggers the spectrometer
         trigger_spectrometer(adw)

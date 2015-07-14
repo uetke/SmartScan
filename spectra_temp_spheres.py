@@ -20,6 +20,7 @@ import sys
 import os
 from datetime import datetime
 from spectrometer import abort, trigger_spectrometer
+import matplotlib.pyplot as plt
 import copy
 
 cwd = os.getcwd()
@@ -41,17 +42,25 @@ from devices.powermeter1830c import powermeter1830c as pp
         
 if __name__ == '__main__': 
     # Coordinates of the particle
-    xcenter = 34.13
-    ycenter = 62.43
-    zcenter = 53.10
+    xcenter = 42.44
+    ycenter = 44.81
+    zcenter = 46.19
     
-    number_of_spectra = 10 # Number of spectra for each temperature
-    number_of_accumulations = 10 # Accumulations of each spectra (for reducing noise in long-exposure images)
+    number_of_spectra = 5 # Number of spectra for each temperature
+    number_of_accumulations = 5 # Accumulations of each spectra (for reducing noise in long-exposure images)
     
-    #parameters for the refocusing on the particles
+    # Maximum and minimum laser intensities
+    
+    laser_min = 0 # In uW
+    laser_max = 1000 # In uW
+    laser_powers = np.linspace(laser_min,laser_max,number_of_spectra)
+    
+    # Parameters for the refocusing on the particles
     dims = [1,1,1.5]
     accuracy = [0.1,0.1,0.1]
 
+    focusing_power = 450 # In uW
+    
     focusing_aom = 1.25
     
     # How much time between refocusing
@@ -77,6 +86,22 @@ if __name__ == '__main__':
     filename2 = '%s_%s.dat' %(name2,i)
     print('Data will be saved in %s'%(savedir+filename))
     
+    # Check if the calibration of the AOM was done today and import the data for it.
+    if os.path.exists(savedir+'aom_calibration.txt'):
+        print('Importing AOM calibration...')
+        AOM_voltage = np.loadtxt(savedir+'aom_calibration2.txt').astype('float')[6:]
+        intensity = np.loadtxt(savedir+'aom_calibration.txt').astype('float')[6:]
+        P = np.polyfit(intensity,AOM_voltage,2)
+        print(P)
+        plt.plot(intensity,AOM_voltage,'.')
+        plt.plot(intensity,np.polyval(P,intensity))
+        plt.ylabel('AOM voltage (V)')
+        plt.xlabel('Laser intensity (uW)')
+        plt.show(block=False)
+    else:
+        raise Exception('The AOM was not calibrated today, please do it before running this program...')
+    
+
     # Prepare the folder in network drive
     savedir2 = 'R:\\monos\\Aquiles\\Data\\' + str(datetime.now().date()) + '\\'
     if not os.path.exists(savedir2):
@@ -103,6 +128,7 @@ if __name__ == '__main__':
     pmeter.units = 'Watts' 
     
     data = np.zeros(9)
+    data2 = np.zeros(6)
     # For the spectra data
     header = 'Time [s], Wavelength[nm], Type, Temp[Ohms], X [uM], Y [uM], Z [uM], Power [muW], Counts' 
     # For the keep track data
@@ -113,67 +139,10 @@ if __name__ == '__main__':
     acquire_spectra = True
     keep_track = True
     
+    input('Press enter when ready')
     while acquire_spectra:
-        print('First acquire 532nm data')
-        input('Press enter when 532nm is on')
-        temp = input('Enter the value of the multimeter: ')
-        temp = float(temp)
-        true_temp = (temp-100)/.385
-        print('Starting with Temperature %s'%true_temp)
-        
+        print('Aquiring spectra with 532nm laser')
         pmeter.wavelength = 532
-        # Refocus on the particle
-        position = adw.focus_full(counter,devs,center,dims,accuracy).astype('str')
-        time_last_refocus = time.time()
-        center = position.astype('float')
-        adw.go_to_position(devs,center)
-        for j in range(number_of_accumulations):
-            print('Triggering the spectrometer for 532nm data %s out of %s'%(j+1,number_of_accumulations))
-            trigger_spectrometer(adw)
-            if (time.time()-time_last_refocus>time_for_refocusing) and (j<number_of_accumulations-1):
-                print('Refocusing...')
-                position = adw.focus_full(counter,devs,center,dims,accuracy).astype('str')
-                time_last_refocus = time.time()
-                center = position.astype('float')
-                adw.go_to_position(devs,center)
-        try:
-            power = pmeter.data*1000000
-        except:
-            power = 0
-      
-        dd,ii = adw.get_timetrace_static([counter],duration=1,acc=1)
-        t = time.time()-t_0
-        new_data = [t,'532','spectra',temp,position[0],position[1],position[2],power,np.sum(dd)]
-        data = np.vstack([data,new_data])
-        try:
-            np.savetxt("%s%s" %(savedir,filename),data, fmt='%s', delimiter=",",header=header)
-            np.savetxt("%s%s" %(savedir2,filename),data, fmt='%s', delimiter=",",header=header)    
-        except:
-            print("Problem saving data")
-            
-        print('Time for backgrounds')
-        bkg_center = copy.copy(center)
-        bkg_center[0] += 1 # 1 micrometer to the right of the particle.
-        adw.go_to_position(devs,bkg_center)
-        for j in range(number_of_accumulations):
-            print('Triggering the spectrometer for 532nm background %s out of %s'%(j+1,number_of_accumulations))
-            trigger_spectrometer(adw)
-        try:
-            power = pmeter.data*1000000
-        except:
-            power = 0
-        dd,ii = adw.get_timetrace_static([counter],duration=1,acc=1)
-        t = time.time()-t_0
-        new_data = [t,'532','background',temp,bkg_center[0],bkg_center[1],bkg_center[2],power,np.sum(dd)]
-        data = np.vstack([data,new_data])
-        try:
-            np.savetxt("%s%s" %(savedir,filename),data, fmt='%s', delimiter=",",header=header)
-            np.savetxt("%s%s" %(savedir2,filename),data, fmt='%s', delimiter=",",header=header) 
-        except:
-            print("Problem saving data")
-        # Switch to 633nm
-        print('Time to switch to 633nm')
-        pmeter.wavelength = 633
         input('Press enter when ready')
         temp = input('Enter the value of the multimeter')
         temp = float(temp)
@@ -182,7 +151,7 @@ if __name__ == '__main__':
         
         for m in range(number_of_spectra):
             print('Refocusing on particle')
-            power_aom = focusing_aom
+            power_aom = np.polyval(P,focusing_power)
             adw.go_to_position([aom],[power_aom])
             adw.go_to_position(devs,center)
             position = adw.focus_full(counter,devs,center,dims,accuracy).astype('str')
@@ -190,16 +159,18 @@ if __name__ == '__main__':
             center = position.astype('float')
             adw.go_to_position(devs,center)
             
-            power_aom = 1.5-m*1./number_of_spectra
+            power_aom = np.polyval(P,laser_powers[m])
             adw.go_to_position([aom],[power_aom])
-            
+            print('---> Spectra %s out of %s'%(m+1,number_of_spectra))
             for j in range(number_of_accumulations):
                 # Triggers the spectrometer
-                print('Triggering the spectrometer for 633nm data %s out of %s'%(j+1,number_of_accumulations))
+                print('            ---> Accumulation %s out of %s'%(j+1,number_of_accumulations))
                 trigger_spectrometer(adw)
 
                 if time.time()-time_last_refocus>time_for_refocusing:
                     print('Refocusing...')
+                    power_aom = np.polyval(P,focusing_power)
+                    adw.go_to_position([aom],[power_aom])
                     position = adw.focus_full(counter,devs,center,dims,accuracy).astype('str')
                     time_last_refocus = time.time()
                     center = position.astype('float')
@@ -211,11 +182,14 @@ if __name__ == '__main__':
             # Take intensity    
             dd,ii = adw.get_timetrace_static([counter],duration=1,acc=1)
             t = time.time()-t_0
-            new_data = [t,'633','spectra',temp,position[0],position[1],position[2],power,np.sum(dd)]
+            new_data2 = [t,position[0],position[1],position[2],power,np.sum(dd)]
+            data2 = np.vstack([data2,new_data2])
+            new_data = [t,'532','spectra',temp,position[0],position[1],position[2],power,np.sum(dd)]
             data = np.vstack([data,new_data])
             try:
                 np.savetxt("%s%s" %(savedir,filename),data, fmt='%s', delimiter=",",header=header)
                 np.savetxt("%s%s" %(savedir2,filename),data, fmt='%s', delimiter=",",header=header)
+                np.savetxt("%s%s" %(savedir,filename2),data2, fmt='%s', delimiter=",",header=header2)
             except:
                 print("Problem saving data")
             
@@ -225,10 +199,13 @@ if __name__ == '__main__':
         adw.go_to_position(devs,bkg_center)
         
         for m in range(number_of_spectra):
-            power_aom = 1.5-m*1./number_of_spectra
+        
+            power_aom = np.polyval(P,laser_powers[m])
             adw.go_to_position([aom],[power_aom])
+            
+            print('---> Background %s out of %s'%(m+1,number_of_spectra))
             for j in range(number_of_accumulations):
-                print('Triggering the spectrometer for 633nm background %s out of %s'%(j+1,number_of_accumulations))
+                print('            ---> Accumulation %s out of %s'%(j+1,number_of_accumulations))
                 trigger_spectrometer(adw)
             try:
                 power = pmeter.data*1000000
@@ -236,7 +213,7 @@ if __name__ == '__main__':
                 power = 0
             dd,ii = adw.get_timetrace_static([counter],duration=1,acc=1)
             t = time.time()-t_0
-            new_data = [t,'633','background',temp,position[0],position[1],position[2],power,np.sum(dd)]
+            new_data = [t,'532','background',temp,position[0],position[1],position[2],power,np.sum(dd)]
             data = np.vstack([data,new_data])
             try:
                 np.savetxt("%s%s" %(savedir,filename),data, fmt='%s', delimiter=",",header=header)
@@ -249,42 +226,7 @@ if __name__ == '__main__':
         temp = float(temp)
         final_temp = (temp-100)/.385
         print('The final temperature is %s and the initial temperature was %s'%(final_temp,true_temp))
-        
-        print('Time for a final 532nm spectra to check reshaping')
-        input('Enter when ready with the 532nm \n')
-        
-        pmeter.wavelength = 532
-        # Refocus on the particle
-        adw.go_to_position(devs,center)
-        position = adw.focus_full(counter,devs,center,dims,accuracy).astype('str')
-        time_last_refocus = time.time()
-        center = position.astype('float')
-        adw.go_to_position(devs,center)
-
-        for j in range(number_of_accumulations):
-            print('Triggering the spectrometer for 532nm data %s out of %s'%(j+1,number_of_accumulations))
-            trigger_spectrometer(adw)
-            if (time.time()-time_last_refocus>time_for_refocusing) and (j<number_of_accumulations-1):
-                print('Refocusing...')
-                position = adw.focus_full(counter,devs,center,dims,accuracy).astype('str')
-                time_last_refocus = time.time()
-                center = position.astype('float')
-                adw.go_to_position(devs,center)
-        try:
-            power = pmeter.data*1000000
-        except:
-            power = 0
-      
-        dd,ii = adw.get_timetrace_static([counter],duration=1,acc=1)
-        t = time.time()-t_0
-        new_data = [t,'532','spectra',temp,position[0],position[1],position[2],power,np.sum(dd)]
-        data = np.vstack([data,new_data])
-        try:
-            np.savetxt("%s%s" %(savedir,filename),data, fmt='%s', delimiter=",",header=header)
-            np.savetxt("%s%s" %(savedir2,filename),data, fmt='%s', delimiter=",",header=header)    
-        except:
-            print("Problem saving data")
-        
+               
         answer = input('Do you want to take more spectra at a different temperature?[y/n]')
         
         if answer == 'n':
@@ -294,8 +236,8 @@ if __name__ == '__main__':
         print('The programm will start refocusing on the particle')
         # Let's start focusing on the particle
         i = 1
-        data2 = np.zeros(6)
-        power_aom = focusing_aom
+        
+        power_aom = np.polyval(P,focusing_power)
         adw.go_to_position([aom],[power_aom])
         adw.go_to_position(devs,center)
         while keep_track:
@@ -323,6 +265,11 @@ if __name__ == '__main__':
                 print("Problem saving data")
             print('Press q to exit and start acquiring spectra')
             t1 = time.time()
+            plt.plot(data2[1:,0],data2[1:,1],'o')
+            plt.plot(data2[1:,0],data2[1:,2],'o')
+            plt.plot(data2[1:,0],data2[1:,3],'o')
+            #plt.plot(data[1:,0],data[1:,5],'o')
+            plt.show(block=False)
             while time.time()-t1 < 5:
                 if msvcrt.kbhit():
                     key = msvcrt.getch()

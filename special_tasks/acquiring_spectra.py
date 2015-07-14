@@ -1,7 +1,7 @@
 # Collection of functions for acquiring spectra of Particles
+from spectrometer import abort, trigger_spectrometer
 
-
-def acquire_sequence(coordinates,ports):
+def acquire_sequence(coordinates,digin=1,digout=0,digcheck=2):
     """ Function for acquiring a series of spectra of the given particles. 
         
         Args: 
@@ -13,15 +13,6 @@ def acquire_sequence(coordinates,ports):
             center[2] = zcenter
             adw.go_to_position(devs,center)
             #data[i,1:4] = adw.focus_full(counter,devs,center,dims,accuracy,rate=1,speed=50)
-            time.sleep(0.5) 
-            adw.set_digout(0)           
-            time.sleep(0.5)    
-            adw.clear_digout(0)
-            while adw.get_digin(1):
-                if msvcrt.kbhit():
-                    key = msvcrt.getch()
-                    if ord(key) == 113: #113 is ascii for letter q
-                         abort(filename+'_init')
-                time.sleep(0.1)
+            trigger_spectrometer(adw)
             print('Done with particle %i of %i'%(i+1,num_particles))
-        print('532nm particle spectra taken')
+        print('Particles spectra taken')

@@ -387,7 +387,7 @@ class adq(ADwin,ADwinDebug):
             self.set_datalong(np.append((port,start,pix),increment),data.properties['Scan_params'])
             total=int(np.prod(pix))
             self.set_par(par.properties['Case'],4)
-            self.adw.Set_Processdelay(self.proc_num, int(speed*1e-3/25e-9))
+            self.adw.Set_Processdelay(9, int(speed*1e-3/25e-9))
             self.start(9)
             while self.adw.Process_Status(9):
                 #number = self.get_par(par.properties['Pix_done'])

@@ -24,9 +24,9 @@ from devices.arduino import arduino as ard
         
 if __name__ == '__main__': 
     #initialize the adwin and the devices   
-    xcenter = 53.7
-    ycenter = 52.5
-    zcenter = 51.6
+    xcenter = 52.45
+    ycenter = 48.49
+    zcenter = 50.40
     total_time = 360000    # In seconds
     wavelength = 532 # For the power meter
     
@@ -97,6 +97,11 @@ if __name__ == '__main__':
     t_0 = time.time() # Initial time
     
     keep_track = True
+    
+    file = open(savedir+filename+'.temp','a') # Erases any previous file
+    file.write(header)
+    file.write('\n')
+    file.flush()
     while (time.time()-t_0 < total_time) and (keep_track):
         print('Entering iteration %s...'%i)
         i+=1
@@ -125,11 +130,13 @@ if __name__ == '__main__':
 
         new_data = [t,position[0],position[1],position[2],power,np.sum(dd),flowcell_temp,room_temp,humidity]
         data = np.vstack([data,new_data])
-
         try:
-            np.savetxt("%s%s" %(savedir,filename),data, fmt='%s', delimiter=",",header=header)
+            for item in new_data:
+                file.write("%s, " % (item))
+            file.write("\n")
+            file.flush()
         except:
-            print('Problem saving local data')
+            print('Failed saving data at time %s seconds'%(t))
        
         print('Press q to exit')
         t1 = time.time()
@@ -138,5 +145,10 @@ if __name__ == '__main__':
                 key = msvcrt.getch()
                 if ord(key) == 113: #113 is ascii for letter q
                     keep_track = False
-     
+    
+    file.close()
+    try:
+        np.savetxt("%s%s" %(savedir,filename),data, fmt='%s', delimiter=",",header=header)
+    except:
+        print('Problem saving local data')
     arduino.close() 
