@@ -60,11 +60,11 @@ if __name__ == '__main__':
     # Coordinates of the particles
     pcle1 = [58.08, 52.21, 49.00]
     pcle2 = [49.21, 51.56, 49.00]
-    pcle3 = [44.27, 50.72, 49.00]
-    pcle4 = [45.85, 53.86, 49.00]
-    pcle5 = [52.97, 55.28, 49.00]
-    pcle6 = [53.80, 49.32, 49.00]
-    pcle7 = [55.88, 51.63, 49.00]
+    #pcle3 = [44.27, 50.72, 49.00]
+    #pcle4 = [45.85, 53.86, 49.00]
+    #pcle5 = [52.97, 55.28, 49.00]
+    #pcle6 = [53.80, 49.32, 49.00]
+    #pcle7 = [55.88, 51.63, 49.00]
     
     # Coordinates of the background
     bkg = [48.34, 49.36, 49.00]
@@ -80,8 +80,8 @@ if __name__ == '__main__':
     
     background = particle(bkg)
     
-    number_of_spectra = 7 # Number of spectra for each temperature
-    number_of_accumulations = 5 # Accumulations of each spectra (for reducing noise in long-exposure images)
+    number_of_spectra = 3 # Number of spectra for each temperature
+    number_of_accumulations = 2 # Accumulations of each spectra (for reducing noise in long-exposure images)
     
     #parameters for the refocusing on the particles
     dims = [1,1,1.5]
@@ -200,7 +200,7 @@ if __name__ == '__main__':
             particles[k].set_center(center)
             adw.go_to_position(devs,center)
             for j in range(number_of_accumulations):
-                print('    ---> Accumulation %s out of %s'%(j,number_of_accumulations))
+                print('    ---> Accumulation %s out of %s'%(j+1,number_of_accumulations))
                 trigger_spectrometer(adw)
                 
                 # Saves the data of each triggering
