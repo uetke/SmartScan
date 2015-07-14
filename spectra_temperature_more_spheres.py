@@ -313,10 +313,10 @@ if __name__ == '__main__':
                 center[2] += dz
                 particles[i+1].set_center(center)
             
-            answer = input('Do you want to take more spectra at a different temperature?[y/n]')
-            if answer == 'n':
-                keep_track = False
-                acquire_spectra = False
+        answer = input('Do you want to take more spectra at a different temperature?[y/n]')
+        if answer == 'n':
+            keep_track = False
+            acquire_spectra = False
         
         
         fl.close()
