@@ -200,7 +200,7 @@ if __name__ == '__main__':
             particles[k].set_center(center)
             adw.go_to_position(devs,center)
             for j in range(number_of_accumulations):
-                print('    ---> Accumulation %s out of s'%(j,number_of_accumulations))
+                print('    ---> Accumulation %s out of %s'%(j,number_of_accumulations))
                 trigger_spectrometer(adw)
                 
                 # Saves the data of each triggering
@@ -228,13 +228,13 @@ if __name__ == '__main__':
             except:
                 print("Problem saving data")
             
-        print('Time for backgrounds...')
+        print('-> Time for backgrounds...')
         bkg_center = background.get_center()
         bkg_center[2] = particles[-1].get_center()[2] # Gets the Z position of the last particle
         
         adw.go_to_position(devs,bkg_center)
         for j in range(number_of_accumulations):
-            print('Triggering the spectrometer for 532nm background %s out of %s'%(j+1,number_of_accumulations))
+            print('    ---> Accumulation %s out of %s'%(j+1,number_of_accumulations))
             trigger_spectrometer(adw)
             try:
                 power = pmeter.data*1000000
