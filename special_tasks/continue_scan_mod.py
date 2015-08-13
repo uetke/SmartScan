@@ -11,6 +11,7 @@ import os
 from lib.logger import get_all_caller,logger
 from devices.powermeter1830c import powermeter1830c as pp
 from start import adding_to_path
+from spectrometer import abort, trigger_spectrometer
 
 adding_to_path('lib')
 logger=logger(filelevel=30)
@@ -48,7 +49,7 @@ if __name__ == '__main__':
     #Newport Power Meter
     pmeter = pp(0)
     pmeter.initialize()
-    pmeter.wavelength = 633
+    pmeter.wavelength = 532
     pmeter.attenuator = True
     pmeter.filter = 'Medium' 
     pmeter.go = True
@@ -87,7 +88,7 @@ if __name__ == '__main__':
     number_of_spectra = 15
     
     global data 
-    print('Now is time to acquire spectra changing the 633nm intensity\n')
+    print('Now is time to acquire spectra changing the 532nm intensity\n')
     pressing = input('Please set up the spectrometer and press enter when ready')
 
     data = np.loadtxt('%s%s_data.txt' %(savedir, name),dtype='bytes',delimiter =',').astype('str')#strange b in front of strings 
@@ -104,17 +105,9 @@ if __name__ == '__main__':
                 adw.go_to_position([aom],[1]) # Go to a reasonable intensity
                 data[i,1:4] = adw.focus_full(counter,devs,center,dims,accuracy).astype('str')
                 
-            power_aom = 1.5-m*1./number_of_spectra
+            power_aom = 2.0-m*1./number_of_spectra
             adw.go_to_position([aom],[power_aom])   
-            adw.set_digout(0)           
-            time.sleep(0.5)    
-            adw.clear_digout(0)
-            while adw.get_digin(1):
-                if msvcrt.kbhit():
-                    key = msvcrt.getch()
-                    if ord(key) == 113:
-                        abort(filename + '_inter')
-                time.sleep(0.1)
+            trigger_spectrometer(adw)
             try:
                 power = pmeter.data*1000000
             except:
@@ -140,16 +133,7 @@ if __name__ == '__main__':
         for m in range(number_of_spectra):
             power_aom = 1.25-m*1.25/number_of_spectra
             adw.go_to_position([aom],[power_aom])   
-            adw.set_digout(0)           
-            time.sleep(0.5)    
-            adw.clear_digout(0)
-            
-            while adw.get_digin(1):
-                if msvcrt.kbhit():
-                    key = msvcrt.getch()
-                    if ord(key) == 113:
-                         abort(filename + '_inter')
-                time.sleep(0.1)
+            trigger_spectrometer(adw)
             try:
                 power = pmeter.data*1000000
             except:
@@ -163,7 +147,7 @@ if __name__ == '__main__':
 
     np.savetxt("%s%s_SP.txt" %(savedir,filename), data,fmt='%s', delimiter=",", header=header)
     logger.info('SP file saved as %s%s_SP.txt' %(savedir,filename))
-    logger.info('633 SP completed')
+    logger.info('532 SP completed')
     
     print('Done with the SP\n')
     print('Now is time to repeat with the LP filter')

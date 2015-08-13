@@ -34,6 +34,9 @@ def trigger_spectrometer(adw,digin=1,digout=0,digcheck=2):
         digin - digital port where the output of the spectrometer is connected
         digout - digital port where the input of the spectrometer is connected
         digcheck - digital port where digout is connected (to check the change of status after triggering)
+        REMINDER:
+                Connect digin to SCAN
+                Connect digout to External Sync
     """
     
     adw.set_digout(digout)   # This triggers the spectrometer if it is set to +edge (as it should be!)   

@@ -14,7 +14,7 @@ from lib.adq_mod import adq
 #data=variables('Data','config/config_variables.xml')
 #fifo=variables('Fifo','config/config_variables.xml')
 
-time = 1 # 1 Second acquisition
+time = 5 # 1 Second acquisition
 accuracy = .00005 # Accuracy in seconds
 
 class Variances(QtGui.QWidget):
@@ -204,7 +204,7 @@ class Power_Spectra(QtGui.QWidget):
         """Saves the files to a specified folder. 
         """
         name = 'QPD_Data'
-        savedir = 'P:\\Data\\' + str(datetime.now().date()) + '\\'
+        savedir = 'D:\\Data\\' + str(datetime.now().date()) + '\\'
         if not os.path.exists(savedir):
             os.makedirs(savedir)
         i=1

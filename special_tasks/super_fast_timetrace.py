@@ -42,12 +42,12 @@ if __name__ == '__main__':
     logger.info('%s\\%s.log' %(savedir,filename))
     print('Data will be saved in %s'%(savedir+filename))
     #init the Adwin programm and also loading the configuration file for the devices
-    adw = adq('lib/adbasic/fast_timetrace.T98') 
+    adw = adq() 
     adw.load('lib/adbasic/fast_timetrace.T98')
     counter = device('APD 1')
     
-    timetrace_time = 5    # In seconds
-    integration_time = .000005 # In seconds
+    timetrace_time = 3600    # In seconds
+    integration_time = .10 # In seconds
     number_elements = int(timetrace_time/integration_time)
     data = np.zeros([1,number_elements+1])
    
