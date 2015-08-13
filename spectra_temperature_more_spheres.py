@@ -58,30 +58,52 @@ class particle():
     
 if __name__ == '__main__': 
     # Coordinates of the particles
-    pcle1 = [58.08, 52.21, 49.00]
-    pcle2 = [49.21, 51.56, 49.00]
-    #pcle3 = [44.27, 50.72, 49.00]
+    pcle1 = [41.38, 44.32, 52.40]
+    pcle2 = [58.13, 41.74, 52.10]
+    pcle3 = [41.90, 48.76, 52.20]
     #pcle4 = [45.85, 53.86, 49.00]
     #pcle5 = [52.97, 55.28, 49.00]
     #pcle6 = [53.80, 49.32, 49.00]
     #pcle7 = [55.88, 51.63, 49.00]
     
     # Coordinates of the background
-    bkg = [48.34, 49.36, 49.00]
+    bkg = [48.91, 49.15, 52.40]
     # Create array of particles
     particles = []
     particles.append(particle(pcle1))
     particles.append(particle(pcle2))
-    #particles.append(particle(pcle3))
+    particles.append(particle(pcle3))
     #particles.append(particle(pcle4))
     #particles.append(particle(pcle5))
     #particles.append(particle(pcle6))
     #particles.append(particle(pcle7))
     
+    ##################################################################################
+    #   The next few lines are for updating the coordinates of the particles         #
+    #  in case there is the need for re_starting the program. Only the coordinates   #
+    #  of the first particle (the one used for tracking) are needed. The other       #
+    #  coordinates will be updated based on this one.                                #
+    #  It has to be commented out for a normal execution.                            #
+    ##################################################################################
+    
+    #new_center_first_particle = [39.14999999999983,47.36000000000002,64.09999999999994] # Get this value from the keep_track_temp.
+    #particles[0].set_center(new_center_first_particle)
+    ## Update the coordinates of the other particles
+    #dx = particles[0].xcenter[-1]-particles[0].xcenter[0]
+    #dy = particles[0].ycenter[-1]-particles[0].ycenter[0]
+    #dz = particles[0].zcenter[-1]-particles[0].zcenter[0]
+    #for i in range(len(particles)-1):
+    #    center = [particles[i+1].xcenter[0],particles[i+1].ycenter[0],particles[i+1].zcenter[0]]
+    #    center[0] += dx
+    #    center[1] += dy
+    #    center[2] += dz
+    #    particles[i+1].set_center(center)
+    #/********************************************************************************/#
+    
     background = particle(bkg)
     
-    number_of_spectra = 3 # Number of spectra for each temperature
-    number_of_accumulations = 2 # Accumulations of each spectra (for reducing noise in long-exposure images)
+    number_of_spectra = 7 # Number of spectra for each temperature
+    number_of_accumulations = 3 # Accumulations of each spectra (for reducing noise in long-exposure images)
     
     #parameters for the refocusing on the particles
     dims = [1,1,1.5]
@@ -89,10 +111,10 @@ if __name__ == '__main__':
     
     # Maximum and minimum laser intensities
     
-    laser_min = 0 # In uW
-    laser_max = 1000 # In uW
+    laser_min = 500 # In uW
+    laser_max = 3900 # In uW
     laser_powers = np.linspace(laser_min,laser_max,number_of_spectra)
-    focusing_power = 450 # In uW (The power used to refocus on the particles and to keep track during temperature changes)
+    focusing_power = 1800 # In uW (The power used to refocus on the particles and to keep track during temperature changes)
     
     # How much time between refocusing
     time_for_refocusing = 5*60 # In seconds
@@ -188,70 +210,81 @@ if __name__ == '__main__':
         pmeter.wavelength = 532
         
         for k in range(len(particles)):
-            # Refocus on the particle
-            center = particles[k].get_center()
-            print('-> Focusing on particle %s out of %s'%(k+1,len(particles)))
-            power_aom = np.polyval(P,focusing_power)
-            adw.go_to_position([aom],[power_aom])
-            adw.go_to_position(devs,center)
-            position = adw.focus_full(counter,devs,center,dims,accuracy).astype('str')
-            time_last_refocus = time.time()
-            center = position.astype('float')
-            particles[k].set_center(center)
-            adw.go_to_position(devs,center)
-            for j in range(number_of_accumulations):
-                print('    ---> Accumulation %s out of %s'%(j+1,number_of_accumulations))
-                trigger_spectrometer(adw)
+            print('-> Particle %s out of %s'%(k+1,len(particles)))
+            for m in range(number_of_spectra):
+                # Refocus on the particle
+                center = particles[k].get_center()
+                print('  --> Spectra %s out of %s'%(m+1,number_of_spectra))
+                power_aom = np.polyval(P,focusing_power)
+                adw.go_to_position([aom],[power_aom])
+                adw.go_to_position(devs,center)
+                position = adw.focus_full(counter,devs,center,dims,accuracy).astype('str')
+                time_last_refocus = time.time()
+                center = position.astype('float')
+                particles[k].set_center(center)
+                adw.go_to_position(devs,center)
+                power_aom = np.polyval(P,focusing_power)
+                adw.go_to_position([aom],[power_aom])               
                 
-                # Saves the data of each triggering
-                dd,ii = adw.get_timetrace_static([counter],duration=1,acc=1)
-                t = time.time()-t_0
-                room_temp = arduino.get_room_temp()
-                humidity = arduino.get_room_humidity()
+                power_aom = np.polyval(P,laser_powers[m])
+                adw.go_to_position([aom],[power_aom])
+                for j in range(number_of_accumulations):
+                    print('    ---> Accumulation %s out of %s'%(j+1,number_of_accumulations))
+                    trigger_spectrometer(adw)
+                    
+                    # Saves the data of each triggering
+                    dd,ii = adw.get_timetrace_static([counter],duration=1,acc=1)
+                    t = time.time()-t_0
+                    room_temp = arduino.get_room_temp()
+                    humidity = arduino.get_room_humidity()
+                    try:
+                        power = pmeter.data*1000000
+                    except:
+                        power = 0
+                    new_data = [t,'532','spectra',k+1,temp,position[0],position[1],position[2],power,np.sum(dd),room_temp,humidity]
+                    data = np.vstack([data,new_data])
+                                    
+                    if (time.time()-time_last_refocus>time_for_refocusing) and (j<number_of_accumulations-1):
+                        print('Focusing on particle %s'%(k+1))
+                        position = adw.focus_full(counter,devs,center,dims,accuracy).astype('str')
+                        time_last_refocus = time.time()
+                        center = position.astype('float')
+                        adw.go_to_position(devs,center)
+                        particles[k].set_center(center)
                 try:
-                    power = pmeter.data*1000000
+                    np.savetxt("%s%s" %(savedir,filename),data, fmt='%s', delimiter=",",header=header)
+                #    np.savetxt("%s%s" %(savedir2,filename),data, fmt='%s', delimiter=",",header=header)    
                 except:
-                    power = 0
-                new_data = [t,'532','spectra',k+1,temp,position[0],position[1],position[2],power,np.sum(dd),room_temp,humidity]
-                data = np.vstack([data,new_data])
-                                
-                if (time.time()-time_last_refocus>time_for_refocusing) and (j<number_of_accumulations-1):
-                    print('Focusing on particle %s'%(k+1))
-                    position = adw.focus_full(counter,devs,center,dims,accuracy).astype('str')
-                    time_last_refocus = time.time()
-                    center = position.astype('float')
-                    adw.go_to_position(devs,center)
-                    particles[k].set_center(center)
-            try:
-                np.savetxt("%s%s" %(savedir,filename),data, fmt='%s', delimiter=",",header=header)
-            #    np.savetxt("%s%s" %(savedir2,filename),data, fmt='%s', delimiter=",",header=header)    
-            except:
-                print("Problem saving data")
+                    print("Problem saving data")
             
         print('-> Time for backgrounds...')
         bkg_center = background.get_center()
         bkg_center[2] = particles[-1].get_center()[2] # Gets the Z position of the last particle
         
         adw.go_to_position(devs,bkg_center)
-        for j in range(number_of_accumulations):
-            print('    ---> Accumulation %s out of %s'%(j+1,number_of_accumulations))
-            trigger_spectrometer(adw)
+        for m in range(number_of_spectra):
+            power_aom = np.polyval(P,laser_powers[m])
+            adw.go_to_position([aom],[power_aom])
+            print('  --> Spectra %s out of %s'%(m+1,number_of_spectra))
+            for j in range(number_of_accumulations):
+                print('    ---> Accumulation %s out of %s'%(j+1,number_of_accumulations))
+                trigger_spectrometer(adw)
+                try:
+                    power = pmeter.data*1000000
+                except:
+                    power = 0
+                dd,ii = adw.get_timetrace_static([counter],duration=1,acc=1)
+                t = time.time()-t_0
+                temp = arduino.get_flowcell_temp()
+                room_temp = arduino.get_room_temp()
+                humidity = arduino.get_room_humidity()
+                new_data = [t,'532','background',1,temp,bkg_center[0],bkg_center[1],bkg_center[2],power,np.sum(dd),room_temp,humidity]
+                data = np.vstack([data,new_data])
             try:
-                power = pmeter.data*1000000
+                np.savetxt("%s%s" %(savedir,filename),data, fmt='%s', delimiter=",",header=header)
+            #    np.savetxt("%s%s" %(savedir2,filename),data, fmt='%s', delimiter=",",header=header) 
             except:
-                power = 0
-            dd,ii = adw.get_timetrace_static([counter],duration=1,acc=1)
-            t = time.time()-t_0
-            temp = arduino.get_flowcell_temp()
-            room_temp = arduino.get_room_temp()
-            humidity = arduino.get_room_humidity()
-            new_data = [t,'532','background',1,temp,bkg_center[0],bkg_center[1],bkg_center[2],power,np.sum(dd),room_temp,humidity]
-            data = np.vstack([data,new_data])
-        try:
-            np.savetxt("%s%s" %(savedir,filename),data, fmt='%s', delimiter=",",header=header)
-        #    np.savetxt("%s%s" %(savedir2,filename),data, fmt='%s', delimiter=",",header=header) 
-        except:
-            print("Problem saving data")    
+                print("Problem saving data")    
 
         print('Done with Arduino temperature %s.'%temp)
         
@@ -284,8 +317,9 @@ if __name__ == '__main__':
             
             t = time.time()-t_0
             temp = arduino.get_flowcell_temp()
-            new_data = [t,position[0],position[1],position[2],power,np.sum(dd),temp]
-            data2 = np.vstack([data2,new_data])
+            print('     --> Temperature: %s'%(temp))
+            new_data2 = [t,position[0],position[1],position[2],power,np.sum(dd),temp]
+            data2 = np.vstack([data2,new_data2])
             try:
                 for item in new_data2:
                     fl.write("%s, " % (item)) ## Appends the most recent data to the temporary file
@@ -296,22 +330,21 @@ if __name__ == '__main__':
             print('Press q to exit and start acquiring spectra')
             t1 = time.time()
             while time.time()-t1 < 2:
-                print(time.time()-t1)
                 if msvcrt.kbhit():
                     key = msvcrt.getch()
                     if ord(key) == 113: #113 is ascii for letter q
                         keep_track = False
                             
-            # Once finished keeping track, update the centers of all particles checking the original deltas
-            dx = particles[0].xcenter[-1]-particles[0].xcenter[0]
-            dy = particles[0].ycenter[-1]-particles[0].ycenter[0]
-            dz = particles[0].zcenter[-1]-particles[0].zcenter[0]
-            for i in range(len(particles)-1):
-                center = [particles[i+1].xcenter[0],particles[i+1].ycenter[0],particles[i+1].zcenter[0]]
-                center[0] += dx
-                center[1] += dy
-                center[2] += dz
-                particles[i+1].set_center(center)
+        # Once finished keeping track, update the centers of all particles checking the original deltas
+        dx = particles[0].xcenter[-1]-particles[0].xcenter[0]
+        dy = particles[0].ycenter[-1]-particles[0].ycenter[0]
+        dz = particles[0].zcenter[-1]-particles[0].zcenter[0]
+        for i in range(len(particles)-1):
+            center = [particles[i+1].xcenter[0],particles[i+1].ycenter[0],particles[i+1].zcenter[0]]
+            center[0] += dx
+            center[1] += dy
+            center[2] += dz
+            particles[i+1].set_center(center)
             
         answer = input('Do you want to take more spectra at a different temperature?[y/n]')
         if answer == 'n':
@@ -319,9 +352,9 @@ if __name__ == '__main__':
             acquire_spectra = False
         
         
-        fl.close()
-        try:
-            np.savetxt("%s%s" %(savedir,filename2),data2, fmt='%s', delimiter=",",header=header)
-        except:
-            print('Problem saving local data for keeping track. Check temporar files')   
-        print('Program finish')
+    fl.close()
+    try:
+        np.savetxt("%s%s" %(savedir,filename2),data2, fmt='%s', delimiter=",",header=header)
+    except:
+        print('Problem saving local data for keeping track. Check temporar files')   
+    print('Program finish')
