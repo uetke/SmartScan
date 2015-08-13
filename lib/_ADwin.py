@@ -450,8 +450,8 @@ class ADwinDebug:
         '''Process_Status returns the status of a process.'''
         #ret = self.dll.e_Get_ADBPar(-100 + ProcessNo, self.DeviceNo, self.__errPointer)
         #self.__checkError('Process_Status')
-        ret = 0
-        return ret
+        ret = np.random.rand(1)[0]*0.55
+        return round(1-ret)
 
     def Get_Processdelay(self, ProcessNo):
         '''Get_Processdelay returns the parameter Processdelay for a process.'''
@@ -634,6 +634,7 @@ class ADwinDebug:
 #         self.dll.e_Get_Fifo(data, 2, FifoNo, Count, self.DeviceNo, self.__errPointer)
 #         self.__checkError('GetFifo_Long')
         data = np.random.rand((Count))*1000
+        print('Getting Data')
         return data
 
     def SetFifo_Float(self, FifoNo, Data, Count):

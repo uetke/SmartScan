@@ -192,8 +192,8 @@ class adq(ADwin,ADwinDebug):
         self.set_par(par.properties['Num_ticks'],num_ticks)
         self.set_par(par.properties['Case'],3)
         if acc!=None:
-            self.adw.Set_Processdelay(self.proc_num, m.floor(acc/25e-9))
-        delay = self.adw.Get_Processdelay(self.proc_num) 
+            self.adw.Set_Processdelay(9, m.floor(acc/25e-9))
+        delay = self.adw.Get_Processdelay(9) 
         self.logger.info('Making static timetrace with %s for %ss and precision of %ss' %(', '.join([ i.properties['Name'] for i in detect ]),duration,acc))
          
         self.start(9)
@@ -215,7 +215,7 @@ class adq(ADwin,ADwinDebug):
         if not self.running:
             self.logger.info('Making dynamic timetrace with %s' %', '.join([ i.properties['Name'] for i in detect ])) 
             self.logger.info('for %ss and precision of %ss' %(duration,acc))
-            self.adw.Set_Processdelay(self.proc_num, m.floor(acc/25e-9))
+            self.adw.Set_Processdelay(9, m.floor(acc/25e-9))
             num_ticks = int(duration / (acc))
             #self.set_par(par.properties['Dev_type'],int(detect.properties['Type'][:5],36))
             #self.set_par(par.properties['Port'],detect.properties['Input']['Hardware']['PortID'])
