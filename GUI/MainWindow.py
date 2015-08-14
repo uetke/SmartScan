@@ -14,6 +14,8 @@ from lib.xml2dict import device
 import numpy as np
 from lib.adq_mod import adq
 from lib.logger import logger
+from lib.db_comm import db_comm
+
 from datetime import datetime
 
 from _private.set_debug import debug
@@ -57,7 +59,7 @@ class InitWindow(QMainWindow):
         self._session['par_conf'] = 'config/config_variables.xml'
         # Select the default saving folder
         self.init.save_directory.setText('D:/Data/'+str(datetime.now().date())+'/')
-        
+        self.db = db_comm('_private/logbook.db')
         
     def MainWindow(self):
         #self.directory = self.init.save_directory.text()
