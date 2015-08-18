@@ -31,7 +31,7 @@ class db_comm():
         
         self.cur.execute(sql)
         
-        sql = "CREATE TABLE Setup(Id INTEGER PRIMARY KEY, Date TEXT, Description TEXT, File TEXT)"
+        sql = "CREATE TABLE Setups(Id INTEGER PRIMARY KEY, Name TEXT, Date TEXT, Description TEXT, File TEXT)"
         self.cur.execute(sql)
         self.con.commit()
         
@@ -52,8 +52,8 @@ class db_comm():
         """ Creates a new setup. 
             Returns the ID of the newly created setup.
         """
-        sql = "INSERT INTO Setup (Date, Description, File) VALUES (?, ?, ?)"
-        self.cur.execute(sql,(self.now(),setup['description'],setup['file']))
+        sql = "INSERT INTO Setups (Date, Name, Description, File) VALUES (?, ?, ?, ?)"
+        self.cur.execute(sql,(self.now(),setup['name'],setup['description'],setup['file']))
         self.con.commit()
         return self.cur.lastrowid
     
@@ -78,7 +78,7 @@ class db_comm():
     def get_setups(self):
         """ Returns a list of all current setups and their IDs. 
         """
-        sql = 'SELECT Id, Description'
+        sql = 'SELECT Id, Description from Setups'
         self.cur.execute(sql)
         return self.cur.fetchall()
     

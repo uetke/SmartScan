@@ -102,6 +102,8 @@ class MplAnimate(QtGui.QMainWindow):
         now = datetime.now()
         i = 1
         name = now.strftime('%y%m%d%H%M')
+        detectors = self.widget.detector[0].properties['Name']
+        variables = ''
         filename = name
         while os.path.exists(os.path.join(directory,filename+".dat")):
             filename = '%s_%s' %(name,i)
@@ -111,17 +113,21 @@ class MplAnimate(QtGui.QMainWindow):
             filename = QtGui.QFileDialog.getSaveFileName(self, 'Save File', directory)
         else:
             filename = os.path.join(directory,filename)
+            
         if self.option[1]=='Imshow':
             data = self.widget.data[0]
             header = '#The detector is %s\n#Format 2d array of image\n#x-axis %s (%s ), y-axis %s (%s )\n#center %s, dims %s, accuracy %s, delay %s\n' %(self.widget.detector[0].properties['Name'],self.widget.xlabel,self.widget.xunit,self.widget.ylabel,self.widget.yunit,self.widget.center,self.widget.dims,self.widget.accuracy,self.widget.delay)
+            variables = '%s, %s'%(self.widget.xlabel,self.widget.ylabel)
         elif self.option[1]=='Line':
             data = np.vstack((self.widget.xdata[0],self.widget.ydata[0])).T
             header = '#The detector is %s\n#Format x-axis,yaxis\n#x-axis %s (%s ), y-axis %s (%s )' %(self.widget.detector[0].properties['Name'],self.widget.xlabel,self.widget.xunit,list(self.widget.ylabel)[0],list(self.widget.yunit)[0])
             if not self.option[0]=='Monitor' and self.widget.direction_1=='Time':
                 header += '#duration %s, accuracy %s\n' %(self.widget.duration,self.widget.accuracy)
+            variables = '%s'%(self.widget.xlabel)
         for i in range(1,len(self.widget.detector)):
             ordinal = lambda n: "%d%s" % (n,"tsnrhtdd"[(n/10%10!=1)*(n%10<4)*n%10::4])
             header += '#The %s detector is %s\n' %(ordinal(i+1),self.widget.detector[i].properties['Name'])
+            detectors += ', %s' % (self.widget.detector[i].properties['Name'])
             if self.option[1]=='Imshow':
                 data = np.vstack((data,self.widget.data[i]))
             elif self.option[1]=='Line':
@@ -130,11 +136,26 @@ class MplAnimate(QtGui.QMainWindow):
                 data = np.vstack((data,temp))
         if len(self.widget.detector) > 1:
             header += '#Note this file contains multiple (%s) plots\n#Number of lines for a plot is %s\n' %(len(self.widget.detector),data.shape[0]/len(self.widget.detector))
+        
         file_output = codecs.open(filename, 'w', 'utf-8')
         file_output.write(header)
         file_output.close()
         file_output = open(filename,'a+b')
         np.savetxt(file_output, data, '%s', ',')   
+        
+        entry = {}
+        entry['user'] = self._session['userId']
+        entry['setup'] = self._session['setupId']
+        entry['entry'] = 'Saved scan'
+        entry['file'] = filename
+        entry['detectors'] = detectors
+        entry['variables'] = variables
+        if autosave:
+            entry['comments'] = 'Autosave'
+        else:
+            entry['comments'] = 'Manually saved'
+        
+        self._session['db'].new_entry(entry)
         
     def fileQuit(self):
         self.close()

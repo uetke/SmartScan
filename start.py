@@ -27,6 +27,7 @@ def adding_to_path(folder):
     
 if __name__ == "__main__":
     adding_to_path(['GUI', 'lib', '_private'])
+    
     from GUI.MainWindow import App
     global app
     app = App(sys.argv)
