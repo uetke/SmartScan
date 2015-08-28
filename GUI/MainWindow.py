@@ -14,9 +14,12 @@ from lib.xml2dict import device
 import numpy as np
 from lib.adq_mod import adq
 from lib.logger import logger
+from lib.db_comm import db_comm
+
 from datetime import datetime
 
 from _private.set_debug import debug
+
 
 def _fromUtf8(s):
     return s
@@ -58,24 +61,40 @@ class InitWindow(QMainWindow):
         # Select the default saving folder
         self.init.save_directory.setText('D:/Data/'+str(datetime.now().date())+'/')
         
+        self.db = db_comm('_private/logbook.db')
+                
+        self.users = self.db.get_users()
+        self.setups = self.db.get_setups()
+        
+        self.init.setup_comboBox.addList(self.setups)
+        self.init.user_comboBox.addList(self.users)
         
     def MainWindow(self):
-        #self.directory = self.init.save_directory.text()
         self._session['directory'] = self.init.save_directory.text()
-        #self.description = self.init.experiment_description.toPlainText()
         self._session['description'] = self.init.experiment_description.toPlainText()
-        #self.autoSave = self.init.autoSave.isChecked()
         self._session['autoSave'] = self.init.autoSave.isChecked()
+        self._session['userId'] = self.init.user_comboBox.getKey()
+        self._session['setupId'] = self.init.setup_comboBox.getKey()
+        self._session['db'] = self.db
         # Create the directory before starting the program
         if not os.path.exists(self._session['directory']):
             os.makedirs(self._session['directory'])
         
         # Makes the initial logbook entry.
-        
         filename = 'logbook.txt'
         f = open(self._session['directory']+filename,'a')
         f.write(self._session['description']+'\n')
         f.close()
+        
+        entry = {}
+        entry['user'] = self._session['userId']
+        entry['setup'] = self._session['setupId']
+        entry['entry'] = self._session['description']
+        entry['file'] = None
+        entry['detectors'] = None
+        entry['variables'] = None
+        entry['comments'] = 'Starting the program'
+        self.db.new_entry(entry)
         
         self.main = MainWindow(self._session)
         self.main.setWindowTitle('Main')
