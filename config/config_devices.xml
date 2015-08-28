@@ -19,6 +19,24 @@
 <Hardware PortID="5"/>
 </Input>
 </Device>
+<Device Name='Monitor +' Type='Analog' Description='Balance +'>
+<Input>
+<Calibration Unit="Volts" Slope="3276.8" Offset="32768"/>
+<Hardware PortID="13"/>
+</Input>
+</Device>
+<Device Name='Monitor -' Type='Analog' Description='Balance -'>
+<Input>
+<Calibration Unit="Volts" Slope="3276.8" Offset="32768"/>
+<Hardware PortID="14"/>
+</Input>
+</Device>
+<Device Name='Diff' Type='Analog' Description='Balance'>
+<Input>
+<Calibration Unit="Volts" Slope="3276.8" Offset="32768"/>
+<Hardware PortID="15"/>
+</Input>
+</Device>
 <Device Name='QPD X' Type='Analog' Description='QPD X'>
 <Input>
 <Calibration Unit="Volts" Slope="3276.8" Offset="32768"/>
