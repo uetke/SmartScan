@@ -4,10 +4,12 @@ from PyQt4.Qt import QGridLayout
 
 import matplotlib
 import matplotlib.pyplot as plt
+import os
+from datetime import datetime
+
 #from matplotlib.figure import Figure
 #import matplotlib.animation as animation
 import pyqtgraph as pg
-
 
 import numpy as np
 
@@ -23,18 +25,25 @@ import codecs
 
 from _private.set_debug import debug
 
-
+try:
+    _encoding = QtGui.QApplication.UnicodeUTF8
+    def _translate(context, text, disambig):
+        return QtGui.QApplication.translate(context, text, disambig, _encoding)
+except AttributeError:
+    def _translate(context, text, disambig):
+        return QtGui.QApplication.translate(context, text, disambig)
+    
 class MplAnimate(QtGui.QMainWindow):
-    def __init__(self, MainWindow, name, option, scanindex=-1, parent=None, directory='.'):
+    def __init__(self, MainWindow, name, option, session, scanindex=-1, parent=None):
         super(MplAnimate, self).__init__(parent)
         #self.ui = Ui_MainWindow()
         #QtGui.QGraphicsObject.__init__(self)
         self.MainWindow = MainWindow
         self.name = name
         self.option = option
-        self.directory = directory
         self.scanindex = scanindex
-        self.widget = MplCanvas(self,MainWindow)
+        self._session = session
+        self.widget = MplCanvas(self,self._session,MainWindow)
         self.resize(700,450)
         self.setWindowTitle('pyqtgraph example: ImageView')
         #self.ui.setupUi(self,MplCanvas,MainWindow)
@@ -80,10 +89,28 @@ class MplAnimate(QtGui.QMainWindow):
             event.ignore()
              
     def isRunning(self):
-        return self._running
-    
-    def saveDialog(self):
-        filename = QtGui.QFileDialog.getSaveFileName(self, 'Save File', self.directory)
+        return self.widget._running        
+        
+    def saveDialog(self,autosave=False):
+        """ This function will run whenever a scan stops and the autoSave option is established. 
+            It relies in the _session variable to get the directory where to save data. 
+            Data will be saved as YYMMDDhhmm#.dat
+            If the dialog is open by a mouse click, then the dialog for choosing the folder and filename will appear.
+        """
+        
+        directory = self._session['directory']
+        now = datetime.now()
+        i = 1
+        name = now.strftime('%y%m%d%H%M')
+        filename = name
+        while os.path.exists(os.path.join(directory,filename+".dat")):
+            filename = '%s_%s' %(name,i)
+            i += 1
+        filename += '.dat'
+        if not autosave:
+            filename = QtGui.QFileDialog.getSaveFileName(self, 'Save File', directory)
+        else:
+            filename = os.path.join(directory,filename)
         if self.option[1]=='Imshow':
             data = self.widget.data[0]
             header = '#The detector is %s\n#Format 2d array of image\n#x-axis %s (%s ), y-axis %s (%s )\n#center %s, dims %s, accuracy %s, delay %s\n' %(self.widget.detector[0].properties['Name'],self.widget.xlabel,self.widget.xunit,self.widget.ylabel,self.widget.yunit,self.widget.center,self.widget.dims,self.widget.accuracy,self.widget.delay)
@@ -113,12 +140,20 @@ class MplAnimate(QtGui.QMainWindow):
         self.close()
         
     def closeEvent(self, ce):
-        self._running=False
-        self.animation.stop()
-        if self.option[0]=='Scan':
-            del self.MainWindow.scanwindows[self.scanindex]
-            self.MainWindow.StopScan()
-    
+        if self.isRunning:
+            self.animation.stop()
+            if self.option[0]=='Scan':
+                del self.MainWindow.scanwindows[self.scanindex]
+                self.MainWindow.StopScan()
+        else:
+            if self.option[0]=='Scan':
+                del self.MainWindow.scanwindows[self.scanindex]
+                
+        self.MainWindow.main.Controler_Select_scan.clear()
+        for key in self.MainWindow.scanwindows.keys():
+            if not str(key).startswith('T'):
+                self.MainWindow.main.Controler_Select_scan.addItem(_translate("MainWindow", 'Window %s'%key, None)) 
+                        
     def about_scan(self):
         print(tuple(self.name.split('-')))
         QtGui.QMessageBox.about(self, "About","""Scan with the %s Detector with on the x-axes %s""" %tuple(self.name.split(';')))
@@ -127,7 +162,7 @@ class MplAnimate(QtGui.QMainWindow):
         QtGui.QMessageBox.about(self, "About","""Monitor of the %s""" %self.name)
         
 class MplCanvas(QtGui.QGraphicsObject):
-    def __init__(self, MplAnimate,parent=None):
+    def __init__(self, MplAnimate,session,parent=None):
         #super(MplCanvas, self).__init__(self.imv)
         QtGui.QGraphicsObject.__init__(self)
         self.setParent(parent)
@@ -135,7 +170,9 @@ class MplCanvas(QtGui.QGraphicsObject):
         self.xdata = []
         self.ydata = []
         self.MplAnimate = MplAnimate
-   
+        self._running = True
+        self.autosave = session['autoSave']
+        
         self.fifo = variables('Fifo')
         self.par = variables('Par')
         if MplAnimate.option[0]=='Monitor':
@@ -218,7 +255,10 @@ class MplCanvas(QtGui.QGraphicsObject):
         if not bool(self.adw.adw.Process_Status(9)) and self.MplAnimate.option[0]=='Scan':
             self.adw.running = False
             self.timer.stop()
+            self._running = False
             self.MplAnimate.MainWindow.StopScan()
+            if self.autosave:
+                self.MplAnimate.saveDialog(True)
         for i in range(len(self.detector)):
             calibration = self.detector[i].properties['Input']['Calibration']
             data[i] = (data[i]-calibration['Offset'])/calibration['Slope']

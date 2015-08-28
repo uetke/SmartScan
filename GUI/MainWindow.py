@@ -32,6 +32,8 @@ except AttributeError:
 class InitWindow(QMainWindow):
     def __init__(self,*args):
         QMainWindow.__init__(self, *args)
+        self._session = {} # Dictionary to store session variables
+        
         self.init = Configuration_Window()
         self.init.setupUi(self)
         self.file_menu = QtGui.QMenu('&File', self)
@@ -47,33 +49,35 @@ class InitWindow(QMainWindow):
         self.connect(self.init.pushButton, SIGNAL("clicked()"), self.start)
         self.connect(self.init.search_directory, SIGNAL("clicked()"), self.search_directory)
         self.logger=logger(filelevel=30)
-        self.dev_conf = 'config/config_devices.xml'
-        self.par_conf = 'config/config_variables.xml'
         
+        # These variables should be erased. They are being kept for legacy support.
+        self.dev_conf = 'config/config_devices.xml'
+        self._session['dev_conf'] = 'config/config_devices.xml'
+        self.par_conf = 'config/config_variables.xml'
+        self._session['par_conf'] = 'config/config_variables.xml'
         # Select the default saving folder
         self.init.save_directory.setText('D:/Data/'+str(datetime.now().date())+'/')
         
         
     def MainWindow(self):
-        self.directory = self.init.save_directory.text()
-        self.description = self.init.experiment_description.toPlainText()
-        self.autoSave = self.init.autoSave.isChecked()
+        #self.directory = self.init.save_directory.text()
+        self._session['directory'] = self.init.save_directory.text()
+        #self.description = self.init.experiment_description.toPlainText()
+        self._session['description'] = self.init.experiment_description.toPlainText()
+        #self.autoSave = self.init.autoSave.isChecked()
+        self._session['autoSave'] = self.init.autoSave.isChecked()
         # Create the directory before starting the program
-        if not os.path.exists(self.directory):
-            os.makedirs(self.directory)
-        i=1
-        filename = 'logbook'    
-        #name = filename
-        #while os.path.exists(self.directory+name+'.txt'):
-        #    name = '%s_%s' %(filename,i)
-        #    i += 1
-        filename += '.txt'
+        if not os.path.exists(self._session['directory']):
+            os.makedirs(self._session['directory'])
         
-        f = open(self.directory+filename,'a')
-        f.write(self.description+'\n')
+        # Makes the initial logbook entry.
+        
+        filename = 'logbook.txt'
+        f = open(self._session['directory']+filename,'a')
+        f.write(self._session['description']+'\n')
         f.close()
         
-        self.main = MainWindow(self.dev_conf,self.par_conf,self.directory,self.description,self.autoSave)
+        self.main = MainWindow(self._session)
         self.main.setWindowTitle('Main')
         self.main.show()
         
@@ -94,13 +98,14 @@ class InitWindow(QMainWindow):
 
             
 class MainWindow(QMainWindow):
-    def __init__(self,dev_conf,par_conf,directory,description,autoSave,*args):
-        self.dev_conf = dev_conf
-        self.par_conf = par_conf
-        self.directory = directory
-        self.description = description
-        self.autoSave = autoSave
-        self.evernoteSave = True
+    def __init__(self,session,*args):
+        self._session = session
+        self.dev_conf = session['dev_conf']
+        self.par_conf = session['par_conf']
+        self.directory = session['directory']
+        self.description = session['description']
+        self.autoSave = session['autoSave']
+        self.evernoteSave = True # TODO
         QMainWindow.__init__(self, *args)
         self.main = Ui_MainWindow()
         self.main.setupUi(self)
@@ -122,8 +127,6 @@ class MainWindow(QMainWindow):
         self.monitor = {}
         
         self.update_devices() # Generates the devices listed in the configuration file
-
-
     
     def update_devices(self):
         """ Updates the devices specified in the configuration file. 
@@ -283,15 +286,15 @@ class MainWindow(QMainWindow):
             option += ' and on the y-axes the %s.' %self.main.Scan_2nd_comboBox.currentText()
         if self.main.Scan_1st_comboBox.currentText()=='Time':
             timeindex = 'Timetrace%s' %self.scanindex
-            self.scan = MplAnimate(self,option,['Scan','Line'],timeindex,directory=self.directory)
+            self.scan = MplAnimate(self,option,['Scan','Line'],self._session,timeindex)
             self.scanwindows[timeindex] = self.scan
         else:
             if self.main.Scan_2nd_comboBox.currentText()=='None':
-                self.scan = MplAnimate(self,option,['Scan','Line'],self.scanindex,directory=self.directory)
+                self.scan = MplAnimate(self,option,['Scan','Line'],self._session,self.scanindex)
                 self.main.Controler_Select_scan.addItem(_translate("MainWindow", 'Window %s'%self.scanindex, None))
                 self.scanwindows[self.scanindex] = self.scan
             else:
-                self.scan = MplAnimate(self,option,['Scan','Imshow'],self.scanindex,directory=self.directory)
+                self.scan = MplAnimate(self,option,['Scan','Imshow'],self._session,self.scanindex)
                 self.main.Controler_Select_scan.addItem(_translate("MainWindow", 'Window %s'%self.scanindex, None))
                 self.scanwindows[self.scanindex] = self.scan
         self.scan.setWindowTitle("Window %s: Scan with the %s Detector with on the x-axes %s" %(tuple([self.scanindex])+tuple(option.split(';'))))
@@ -309,11 +312,10 @@ class MainWindow(QMainWindow):
             self.Controler[name]['PosBox'].setEnabled(True)
         self.scan.animation.stop()
         self.adw.stop(9)
-        self.main.Controler_Select_scan.clear()
-        for key in self.scanwindows.keys():
-            if not str(key).startswith('T'):
-                self.main.Controler_Select_scan.addItem(_translate("MainWindow", 'Window %s'%key, None))
-            
+#         self.main.Controler_Select_scan.clear()
+#         for key in self.scanwindows.keys():
+#             if not str(key).startswith('T'):
+#                 self.main.Controler_Select_scan.addItem(_translate("MainWindow", 'Window %s'%key, None))               
                 
     def CloseScans(self):
         values = list(self.scanwindows.values())
@@ -395,7 +397,7 @@ class MainWindow(QMainWindow):
         if option in self.monitor.keys():
             if self.monitor[option].isRunning():
                 self.monitor[option].fileQuit()
-        self.monitor[option]=MplAnimate(self,option,['Monitor','Line'],directory=self.directory)
+        self.monitor[option]=MplAnimate(self,option,['Monitor','Line'],self._session)
         self.monitor[option].setWindowTitle(option)
         self.monitor[option].show()
         
@@ -420,8 +422,8 @@ class EditConfig(QtGui.QDialog):
         
         self.parent = inherits
         
-        self.setWindowTitle('Configure scan 2')
-        self.setGeometry(100,100,300,200)
+        self.setWindowTitle('Configure scan')
+        self.setGeometry(100,100,400,300)
         self.layout = QtGui.QGridLayout(self)
         
         self.title_label = QtGui.QLabel(self)
@@ -460,9 +462,9 @@ class EditConfig(QtGui.QDialog):
         self.evernote_label.setText('Evernote username: ')
         self.evernote = QtGui.QLineEdit(self)
         self.evernote.setText("To be implemented...")
-        self.evernote_button = QtGui.QPushButton('Change',self)
-        self.evernote_button.clicked[bool].connect(self.updateEvernote)        
-        
+#         self.evernote_button = QtGui.QPushButton('Change',self)
+#         self.evernote_button.clicked[bool].connect(self.updateEvernote)        
+#         
         self.apply_button = QtGui.QPushButton('Apply',self)
         self.apply_button.clicked[bool].connect(self.apply)
         
@@ -489,15 +491,16 @@ class EditConfig(QtGui.QDialog):
     def apply(self):
         """ Method for updating the edited values. 
         """
-        self.parent.directory = self.saveDir.text()
-        self.parent.description = self.description.toPlainText()
-        self.parent.autoSave = self.autosave.isChecked()
-        if not os.path.exists(self.parent.directory):
-            os.makedirs(self.parent.directory)
+        
+        self.parent._session['directory'] = self.saveDir.text()
+        self.parent._session['description'] = self.description.toPlainText()
+        self.parent._session['autoSave'] = self.autosave.isChecked()
+        if not os.path.exists(self.parent._session['directory']):
+            os.makedirs(self.parent._session['directory'])
         filename = 'logbook.txt'    
        
-        f = open(self.parent.directory+filename,'a')
-        f.write(self.parent.description+'\n')
+        f = open(self.parent._session['directory']+filename,'a')
+        f.write(self.parent._session['description']+'\n')
         f.close()
         
         self.close()
