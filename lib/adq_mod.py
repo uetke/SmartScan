@@ -165,7 +165,7 @@ class adq(ADwin,ADwinDebug):
         # First acquire X and Y
         num_ticks = int(duration / (delay * 25e-9))
         self.set_par(par.properties['Num_ticks'],num_ticks)
-        self.adw.Set_Processdelay(self.proc_num,delay)
+        self.adw.Set_Processdelay(8,delay)
         self.start(8)
         while bool(self.adw.Process_Status(8)):
             time.sleep(0.1)
