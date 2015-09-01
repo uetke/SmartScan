@@ -46,8 +46,8 @@ if __name__ == '__main__':
     adw.load('lib/adbasic/fast_timetrace.T98')
     counter = device('APD 1')
     
-    timetrace_time = 3600    # In seconds
-    integration_time = .10 # In seconds
+    timetrace_time = 3    # In seconds
+    integration_time = .001 # In seconds
     number_elements = int(timetrace_time/integration_time)
     data = np.zeros([1,number_elements+1])
    

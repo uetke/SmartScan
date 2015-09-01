@@ -150,9 +150,12 @@ class adq(ADwin,ADwinDebug):
         self.set_par(par.properties['Num_ticks'],num_ticks)
         self.adw.Set_Processdelay(8,delay)
         self.start(process=8)
-        time.sleep(duration)
+        while bool(self.adw.Process_Status(8)):
+            time.sleep(0.5)
+        num_ticks = self.adw.Get_Par(par.properties['Num_ticks'])
         array = np.array(list(self.adw.GetData_Long(177,1,num_ticks)))
-        return array       
+        array2 = np.array(list(self.adw.GetData_Long(176,1,num_ticks)))
+        return array,array2       
      
     def get_QPD(self,duration=1,acc=.0005):
         """ Gets timetraces of 3 analog channels with high temporal accuracy.
