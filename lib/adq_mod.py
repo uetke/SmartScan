@@ -23,7 +23,7 @@ fifo=variables('Fifo',filename=config_variables)
 class adq(ADwin,ADwinDebug):
     def __init__(self,debug=0):
         DEVICENUMBER = 1 # By default this is the number
-        RAISE_EXCEPTIONS = 1
+        RAISE_EXCEPTIONS = 0
         if debug == 0:
             self.adw = ADwin(DEVICENUMBER, RAISE_EXCEPTIONS)
         else:
@@ -147,10 +147,15 @@ class adq(ADwin,ADwinDebug):
         port = detect.properties['Input']['Hardware']['PortID']
         self.set_par(par.properties['Port'],int(port))
         num_ticks = int(duration / (delay * 25e-9))
+        print(num_ticks)
         self.set_par(par.properties['Num_ticks'],num_ticks)
         self.adw.Set_Processdelay(8,delay)
+        time.sleep(5)
+        print('Proc. Delay')
         self.start(process=8)
-        while bool(self.adw.Process_Status(8)):
+        print('Started')
+        t0 = time.time()
+        while time.time()-t0<duration+5:
             time.sleep(0.5)
         num_ticks = self.adw.Get_Par(par.properties['Num_ticks'])
         array = np.array(list(self.adw.GetData_Long(177,1,num_ticks)))
