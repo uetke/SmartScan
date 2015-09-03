@@ -8,7 +8,7 @@
 ' ADbasic_Version                = 5.0.8
 ' Optimize                       = Yes
 ' Optimize_Level                 = 1
-' Info_Last_Save                 = MEETPC113  MEETPC113\LION
+' Info_Last_Save                 = MN97  PHYSICS\carattino
 '<Header End>
 #include c:\adwin\adbasic\inc\adwgcnt.inc
 dim new_timer as integer
@@ -77,6 +77,18 @@ event:
         end
       endif
       i = i + 1
+    
+    case 33
+      'For acquiring signals of several devices, but keeping in mind higher temporal accuracy'
+      'The acquisition is done in series (first one device, then another, etc.'
+      for j=1 to par_71
+        do 
+          data_200 = input(data_198[2*j-1],data_198[2*j])
+          Inc i
+        until (i = par_78)
+        i = 1  
+      next j
+      
       
     case 4
       'doing a scan'
