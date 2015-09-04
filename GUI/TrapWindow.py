@@ -1,8 +1,8 @@
 import numpy as np
 from pyqtgraph.Qt import QtCore, QtGui
-
+import sys
 from lib.adq_mod import adq
-from monitor_trap import _session
+from lib.xml2dict import device
 
 class MainWindow(QtGui.QMainWindow):
     """ Window that will contain the Power Spectrum widget and some configuration options. 
@@ -477,9 +477,7 @@ class monitor(QtCore.QThread):
     
 ## Start Qt event loop unless running in interactive mode or using pyside.
 if __name__ == '__main__':
-    import sys
-    from lib.adq_mod import adq
-    from lib.xml2dict import device
+
     
     global _session
     _session = {}
