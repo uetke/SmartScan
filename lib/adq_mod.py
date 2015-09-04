@@ -23,7 +23,7 @@ fifo=variables('Fifo',filename=config_variables)
 class adq(ADwin,ADwinDebug):
     def __init__(self,debug=0):
         DEVICENUMBER = 1 # By default this is the number
-        RAISE_EXCEPTIONS = 0
+        RAISE_EXCEPTIONS = 1
         if debug == 0:
             self.adw = ADwin(DEVICENUMBER, RAISE_EXCEPTIONS)
         else:
@@ -143,6 +143,7 @@ class adq(ADwin,ADwinDebug):
         """ Gets a timetrace with a dedicated high-priority process. 
             Only works for a counter.
         """
+        self.load('lib/ADwinsrc/fast_timetrace.T98')
         delay = m.floor(acc/25e-9)
         port = detect.properties['Input']['Hardware']['PortID']
         self.set_par(par.properties['Port'],int(port))
@@ -150,17 +151,26 @@ class adq(ADwin,ADwinDebug):
         print(num_ticks)
         self.set_par(par.properties['Num_ticks'],num_ticks)
         self.adw.Set_Processdelay(8,delay)
-        time.sleep(5)
-        print('Proc. Delay')
         self.start(process=8)
-        print('Started')
         t0 = time.time()
-        while time.time()-t0<duration+5:
-            time.sleep(0.5)
-        num_ticks = self.adw.Get_Par(par.properties['Num_ticks'])
-        array = np.array(list(self.adw.GetData_Long(177,1,num_ticks)))
-        array2 = np.array(list(self.adw.GetData_Long(176,1,num_ticks)))
-        return array,array2       
+        while time.time()-t0<duration:
+            print('Waiting %3.f more seconds... \n'%(duration-time.time()+t0))
+            time.sleep(0.25)
+                
+        num_ticks = self.get_par(par.properties['Pix_done'])
+        print(num_ticks)
+        # Starts at 2 to remove the initial pixel that has the wrong count 
+        array = self.get_data(data.properties['Timetrace'], num_ticks)
+        array2 = self.get_data(data.properties['Time'], num_ticks)
+        
+        data_c = []
+        data_t = []
+        
+        for i in range(len(array)):
+            data_c.append(array[i])
+            data_t.append(array2[i])
+        
+        return data_t,data_c       
      
     def get_QPD(self,detect,duration=1,acc=.0005):
         """ Gets timetraces of 3 analog channels with high temporal accuracy.

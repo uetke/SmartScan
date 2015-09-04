@@ -120,7 +120,7 @@ class ADwin:
     def Start_Process(self, ProcessNo):
         '''Start_Process starts a process.'''
         self.dll.e_ADB_Start(ProcessNo, self.DeviceNo, self.__errPointer)
-        self.__checkError('Start_Process')
+        #self.__checkError('Start_Process')
 
     def Stop_Process(self, ProcessNo):
         '''Stop_Process stops a process.'''

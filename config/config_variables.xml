@@ -17,8 +17,8 @@ Delay='70'
 dev_params = '198'
 Scan_params = '199'
 Timetrace = '177'
-QPDx="176" QPDy="175" QPDz="174"/>
-<Fifo Name='Fifo' Description='Fifo array names of the adwin'
+QPDx="176" QPDy="175" QPDz="174" Time="176"/>
+	<Fifo Name='Fifo' Description='Fifo array names of the adwin'
 Counter1='178'
 Counter2='179'
 Counter3='180'
