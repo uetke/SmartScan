@@ -13,13 +13,7 @@ from lib.adq_mod import adq
 
 from lib.xml2dict import device,variables
 
-global _session 
-_session = {}
-_session['adw'] = adq()
-_session['adw'].load('lib/adbasic/qpd.T98')
-
 if __name__ == "__main__":   
-    global _session
     _session = {}
     _session['adw'] = adq()
     _session['time'] = 1
@@ -28,9 +22,9 @@ if __name__ == "__main__":
     qpdx = device('QPD x')
     qpdy = device('QPD y')
     qpdz = device('QPD z')
-    diffx = device('Diff +')
-    diffy = device('Diff -')
-    monitor = device('Monitor')
+    diffx = device('Monitor +')
+    diffy = device('Monitor -')
+    monitor = device('Diff')
     
     devices = [qpdx,qpdy,qpdz,diffx,diffy,monitor]
     _session['devices'] = devices

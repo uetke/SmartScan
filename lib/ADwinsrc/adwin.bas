@@ -59,6 +59,7 @@ init:
     cur_pix[j] = 0
     increment[j] = data_199[j+9]
   NEXT j
+  j = 1 
 event:
   SelectCase par_80
     case 1
@@ -81,13 +82,14 @@ event:
     case 33
       'For acquiring signals of several devices, but keeping in mind higher temporal accuracy'
       'The acquisition is done in series (first one device, then another, etc.'
-      for j=1 to par_71
-        do 
-          data_200 = input(data_198[2*j-1],data_198[2*j])
-          Inc i
-        until (i = par_78)
-        i = 1  
-      next j
+		data_200 = input(data_198[2*j-1],data_198[2*j])
+        Inc i
+        if (i = par_78) then
+        	Inc j
+        	if(j=par_71+1) then
+        		end
+    		endif
+       	endif  
       
       
     case 4
