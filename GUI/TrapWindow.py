@@ -1,22 +1,21 @@
 import numpy as np
 from pyqtgraph.Qt import QtCore, QtGui
 import sys
-from lib.adq_mod import adq
-from lib.xml2dict import device
+import session
 
 class MainWindow(QtGui.QMainWindow):
     """ Window that will contain the Power Spectrum widget and some configuration options. 
     """
-    def __init__(self,time,accuracy):
+    def __init__(self):
         super(MainWindow,self).__init__()
-        self.initUI(time,accuracy)
+        self.initUI()
         
-    def initUI(self,time,accuracy):
-        adw = adq()
-        adw.load('lib/adbasic/qpd.T98')
+    def initUI(self):
+#         adw = adq()
+#         adw.load('lib/adbasic/qpd.T98')
         
-        self.power_spectra = Power_Spectra(time,accuracy,adw)
-        self.conf_times = ConfigureTimes(time,accuracy)
+#         self.power_spectra = Power_Spectra(time,accuracy,adw)
+#         self.conf_times = ConfigureTimes(time,accuracy)
         self.monitor_values = monitor_values()
         self.setCentralWidget(self.monitor_values)
         self.setGeometry(450,30,450,900)
@@ -310,7 +309,7 @@ class MainWindow(QtGui.QMainWindow):
 class monitor_values(QtGui.QWidget):
     """ Class for monitoring the values of given devices. 
     """
-    def __init__(self,time,accuracy,adw,parent=None):
+    def __init__(self,parent=None):
         QtGui.QWidget.__init__(self, parent)
         
         self.setWindowTitle('Monitor')
@@ -319,26 +318,26 @@ class monitor_values(QtGui.QWidget):
         
         # Mean Values
         qpdx = QtGui.QLCDNumber()
-        qpdx.display(123.5)
+        qpdx.display(123.1)
 
         qpdy = QtGui.QLCDNumber()
-        qpdy.display(124.5)
+        qpdy.display(124.2)
 
         qpdz = QtGui.QLCDNumber()
-        qpdz.display(125.6)
+        qpdz.display(125.3)
         
         monitor1 = QtGui.QLCDNumber()
-        monitor1.display(125.6)
+        monitor1.display(125.4)
         
         monitor2 = QtGui.QLCDNumber()
-        monitor2.display(125.6)
+        monitor2.display(125.5)
         
         diff = QtGui.QLCDNumber()
         diff.display(125.6)
         
         
         self.layout.addWidget(monitor1, 0, 0)
-        self.layout.addWidget(monitor2, 1, 1)
+        self.layout.addWidget(monitor2, 1, 0)
         self.layout.addWidget(diff, 2, 0)
         self.layout.addWidget(qpdx,0,1)
         self.layout.addWidget(qpdy,1,1)
@@ -353,16 +352,16 @@ class monitor_values(QtGui.QWidget):
         
         self.monitorThread = monitor()
         
-        self.detector = _session['devices']
+        self.detector = session._session['devices']
         
         for i in range(len(self.detector)): 
-            self.connect( self.workThread, QtCore.SIGNAL(self.detector[i].properties['Name']), self.updateMeans)
+            self.connect( self.monitorThread, QtCore.SIGNAL(self.detector[i].properties['Name']), self.updateMeans)
         
         self.setStatusTip('Running...')
         self.is_running = True
         self.monitorThread.start()
         
-        def updateMeans(self, values, signal):
+    def updateMeans(self, values, signal):
             if signal == "Monitor +":
                 self.monitor1.display(np.mean(values[1,:]))
             elif signal == "Monitor -":
@@ -382,11 +381,10 @@ class monitor(QtCore.QThread):
         It will just emit a signal with the needed arrays. 
     """
     def __init__(self):
-        global _session
         QtCore.QThread.__init__(self)
-        self.adw = _session['adw']
+        self.adw = session._session['adw']
         self.adw.start(10)
-        self.detector = _session['devices']
+        self.detector = session._session['devices']
         
     def __del__(self):
         self.adw.stop(10)
@@ -397,7 +395,7 @@ class monitor(QtCore.QThread):
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.monitor_update)
         self.timer.start(100)  
-        return self.timer
+        return
         
     def monitor_update(self):
         """ Gets the most recent values from the ADwin and sends them to the main window. 
@@ -417,11 +415,11 @@ class monitor(QtCore.QThread):
 #     """ This is the class that will update the values from the QPD. Since it is an expensive task, it will be threaded. 
 #     """
 #     def __init__(self):
-#         global _session
+#         global session._session
 #         QtCore.QThread.__init__(self)
-#         self.time = _session['time']
-#         self.accuracy = _session['accuracy']
-#         self.adw = _session['adw']
+#         self.time = session._session['time']
+#         self.accuracy = session._session['accuracy']
+#         self.adw = session._session['adw']
 #         
 #     def __del__(self):
 #         self.wait()
@@ -430,9 +428,9 @@ class monitor(QtCore.QThread):
 #         """ Updates the time and the accuracy of the acquisitions. 
 #         """
 #         self.time = time
-#         _session['time'] = time
+#         session._session['time'] = time
 #         self.accuracy = accuracy
-#         _session['accuracy'] = accuracy
+#         session._session['accuracy'] = accuracy
 #     
 #     def run(self):
 #         """ Triggers the ADwin to acquire a new set of data. It is a time consuming task. 
@@ -477,19 +475,18 @@ class monitor(QtCore.QThread):
     
 ## Start Qt event loop unless running in interactive mode or using pyside.
 if __name__ == '__main__':
+    from lib.adq_mod import adq
+    from lib.xml2dict import device
 
-    
-    global _session
-    _session = {}
     adw = adq()
     # Loads the monitor into the adwin
     adw.load('lib/adbasic/monitor.T90')
     # Loads the needed libraries for the trap
     adw.load('lib/adbasic/qpd.T98')
     adw.load('')
-    _session['adw'] = adw
-    _session['time'] = 1
-    _session['accuracy'] = 0.05
+    session._session['adw'] = adw
+    session._session['time'] = 1
+    session._session['accuracy'] = 0.05
     monitor1 = device('Monitor +')
     monitor2 = device('Monitor -')
     diff = device('Diff')
@@ -497,7 +494,7 @@ if __name__ == '__main__':
     QPDY = device('QPD Y')
     QPDZ = device('QPD Z')
     devices = [monitor1, monitor2, diff, QPDX, QPDY, QPDZ]
-    _session['devices'] = devices
+    session._session['devices'] = devices
     app = QtGui.QApplication(sys.argv)
     test = MainWindow()
     test.show()
