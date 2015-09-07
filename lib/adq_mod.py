@@ -197,17 +197,21 @@ class adq(ADwin,ADwinDebug):
             self.adw.Set_Processdelay(9, delay)
         
         self.start(9)
+        intermediate_data = np.zeros(1)
         while bool(self.adw.Process_Status(9)):
-            time.sleep(0.1)
-            
-        array = np.array(list(self.get_fifo(fifo.properties['Scan_data'])))
+            intermediate_data = np.append(intermediate_data, np.array(list(self.get_fifo(fifo.properties['Scan_data']))))
+            time.sleep(0.25)
+        
+        intermediate_data = np.append(intermediate_data, np.array(list(self.get_fifo(fifo.properties['Scan_data']))))
+        array = intermediate_data
+        
         split_data = []
         
         for i in range(len(detect)):
             split_data.append(array[i*num_ticks:(i+1)*num_ticks-1])
             
-        index = np.arange(num_ticks)*(delay*25e-9)
-        return split_data,index
+        #index = np.arange(num_ticks)*(delay*25e-9)
+        return split_data#,index
          
     def get_timetrace_static(self,detect,duration=1,acc=None):
         """gets the timetrace data from the adwin with the duration in seconds
