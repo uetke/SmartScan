@@ -15,7 +15,7 @@ class MainWindow(QtGui.QMainWindow):
 #         adw.load('lib/adbasic/qpd.T98')
         
 #         self.power_spectra = Power_Spectra(time,accuracy,adw)
-#         self.conf_times = ConfigureTimes(time,accuracy)
+        self.conf_times = ConfigureTimes(time,accuracy)
         self.monitor_values = monitor_values()
         self.setCentralWidget(self.monitor_values)
         self.setGeometry(450,30,450,900)
@@ -27,16 +27,26 @@ class MainWindow(QtGui.QMainWindow):
 #         saveAction.setStatusTip('Save the displayed data')
 #         saveAction.triggered.connect(self.power_spectra.fileSave)
 #         
-#         exitAction = QtGui.QAction(QtGui.QIcon('Signal-stop-icon.png'),'Exit',self)
-#         exitAction.setShortcut('Ctrl+Q')
-#         exitAction.setStatusTip('Quit the program in a safe way')
-#         exitAction.triggered.connect(self.power_spectra.exit_safe)
+        exitAction = QtGui.QAction(QtGui.QIcon('Icons/Signal-stop-icon.png'),'Exit',self)
+        exitAction.setShortcut('Ctrl+Q')
+        exitAction.setStatusTip('Quit the program in a safe way')
+        exitAction.triggered.connect(self.power_spectra.exit_safe)
+        
+        configureTimes = QtGui.QAction(QtGui.QIcon('Icons/pinion-icon.png'),'Configure',self)
+        configureTimes.setShortcut('Ctrl+T')
+        configureTimes.setStatusTip('Configure the acquisition times')
+        configureTimes.triggered.connect(self.conf_times.show)
 #         
-#         configureTimes = QtGui.QAction(QtGui.QIcon('pinion-icon.png'),'Configure',self)
-#         configureTimes.setShortcut('Ctrl+T')
-#         configureTimes.setStatusTip('Configure the acquisition times')
-#         configureTimes.triggered.connect(self.conf_times.show)
-#         
+
+        runMonitor = QtGui.QAction('Run Monitor',self)
+        runMonitor.setShortcut('Ctrl+R')
+        runMonitr.setStatusTip('Starts running the monitor of signals')
+        runMonitor.triggered.connect(self.monitor_values.start_timer)
+        
+        stopMonitor = QtGui.QAction('Stop Monitor',self)
+        runMonitr.setStatusTip('Stops running the monitor of signals')
+        runMonitor.triggered.connect(self.monitor_values.stop_timer)
+        
 #         self.statusBar()
 #         menubar = self.menuBar()
 #         fileMenu = menubar.addMenu('&File')
@@ -264,47 +274,49 @@ class MainWindow(QtGui.QMainWindow):
 #         self.workThread.terminate()
 #         app.quit()
 # 
-# class ConfigureTimes(QtGui.QWidget):
-#     """ Simple class to change the values for the acquisition times. 
-#     """
-#     def __init__(self,tt,acc,parent=None):
-#         QtGui.QWidget.__init__(self, parent)
-#         self.setWindowTitle('Configure the times')
-#         self.setGeometry(30,30,100,100)
-#         self.layout = QtGui.QGridLayout(self)
-#         
-#         
-#         self.time_label = QtGui.QLabel(self)
-#         self.time_label.setText('Time (s): ')
-#         self.time = QtGui.QLineEdit(self)
-#         self.time.setText(str(tt))
-#         self.accuracy_label = QtGui.QLabel(self)
-#         self.accuracy_label.setText('Accuracy (ms): ')
-#         self.accuracy = QtGui.QLineEdit(self)
-#         self.accuracy.setText(str(acc*1000))
-#         
-#         self.contin_runs = QtGui.QCheckBox('Continuous runs', self)
-#         self.contin_runs.setChecked(True)
-#         
-#         self.apply_button = QtGui.QPushButton('Apply', self)
-#         self.apply_button.clicked[bool].connect(self.SetTimes)
-#         
-#         self.run_button = QtGui.QPushButton('Run', self)
-# 
-#         
-#         self.layout.addWidget(self.time_label,0,0)
-#         self.layout.addWidget(self.time,0,1)
-#         self.layout.addWidget(self.accuracy_label,1,0)
-#         self.layout.addWidget(self.accuracy,1,1)
-#         self.layout.addWidget(self.contin_runs,2,0)
-#         self.layout.addWidget(self.apply_button,3,0,1,2)
-#         self.layout.addWidget(self.run_button,4,0,1,2)
-#         
-#     def SetTimes(self):
-#         new_time = float(self.time.text())
-#         new_accuracy = float(self.accuracy.text())/1000
-#         runs = self.contin_runs.isChecked()
-#         self.emit( QtCore.SIGNAL('Times'), new_time, new_accuracy, runs)
+class ConfigureTimes(QtGui.QWidget):
+    """ Simple class to change the values for the acquisition times. 
+    """
+    def __init__(self,tt,acc,parent=None):
+        global _session
+        
+        QtGui.QWidget.__init__(self, parent)
+        self.setWindowTitle('Configure the times')
+        self.setGeometry(30,30,100,100)
+        self.layout = QtGui.QGridLayout(self)
+         
+        self.time_label = QtGui.QLabel(self)
+        self.time_label.setText('Time (s): ')
+        self.time = QtGui.QLineEdit(self)
+        self.time.setText(str(tt))
+        self.accuracy_label = QtGui.QLabel(self)
+        self.accuracy_label.setText('Accuracy (ms): ')
+        self.accuracy = QtGui.QLineEdit(self)
+        self.accuracy.setText(str(acc*1000))
+         
+        self.contin_runs = QtGui.QCheckBox('Continuous runs', self)
+        self.contin_runs.setChecked(True)
+         
+        self.apply_button = QtGui.QPushButton('Apply', self)
+        self.apply_button.clicked[bool].connect(self.SetTimes)
+         
+        self.run_button = QtGui.QPushButton('Run', self)
+ 
+        self.layout.addWidget(self.time_label,0,0)
+        self.layout.addWidget(self.time,0,1)
+        self.layout.addWidget(self.accuracy_label,1,0)
+        self.layout.addWidget(self.accuracy,1,1)
+        self.layout.addWidget(self.contin_runs,2,0)
+        self.layout.addWidget(self.apply_button,3,0,1,2)
+        self.layout.addWidget(self.run_button,4,0,1,2)
+         
+    def SetTimes(self):
+        new_time = float(self.time.text())
+        new_accuracy = float(self.accuracy.text())/1000
+        _session['time'] = new_time
+        _session['accuracy'] = new_accuracy
+        runs = self.contin_runs.isChecked()
+        self.emit( QtCore.SIGNAL('Times'), new_time, new_accuracy, runs)
 
 class monitor_values(QtGui.QWidget):
     """ Class for monitoring the values of given devices. 
@@ -312,11 +324,17 @@ class monitor_values(QtGui.QWidget):
     def __init__(self,parent=None):
         QtGui.QWidget.__init__(self, parent)
         
-        self.setWindowTitle('Monitor')
+        # Starts the monitor routine in the ADwin
+        global _session
+        self.adw = _session['adw']       
+        self.detector = _session['devices']
         
+        
+        self.setWindowTitle('Monitor')
         self.layout = QtGui.QGridLayout(self)
         
         # Mean Values
+        # QPD
         qpdx = QtGui.QLCDNumber()
         qpdx.display(123.1)
 
@@ -326,6 +344,7 @@ class monitor_values(QtGui.QWidget):
         qpdz = QtGui.QLCDNumber()
         qpdz.display(125.3)
         
+        # Balanced Photodetector 
         monitor1 = QtGui.QLCDNumber()
         monitor1.display(125.4)
         
@@ -350,57 +369,33 @@ class monitor_values(QtGui.QWidget):
         self.monitor2 = monitor2
         self.diff = diff
         
-        self.monitorThread = monitor()
+        # Starts the timer for the updates.
+        self.ctimer = QtCore.QTimer()
+        self.running = False
         
-        self.detector = session._session['devices']
-        
-        for i in range(len(self.detector)): 
-            self.connect( self.monitorThread, QtCore.SIGNAL(self.detector[i].properties['Name']), self.updateMeans)
-        
-        self.setStatusTip('Running...')
-        self.is_running = True
-        self.monitorThread.start()
-        
-    def updateMeans(self, values, signal):
-            if signal == "Monitor +":
-                self.monitor1.display(np.mean(values[1,:]))
-            elif signal == "Monitor -":
-                self.monitor2.display(np.mean(values[1,:]))
-            elif signal == "Diff":
-                self.diff.display(np.mean(values[1,:]))
-            elif signal == "QPD X":
-                self.qpdx.display(np.mean(values[1,:]))
-            elif signal == "QPD Y":
-                self.qpdy.display(np.mean(values[1,:]))
-            elif signal == "QPD Z":
-                self.qpdz.display(np.mean(values[1,:]))
+        QtCore.QObject.connect(self.ctimer,QtCore.SIGNAL("timeout()"),self.updateMeans)
 
-
-class monitor(QtCore.QThread):
-    """ This class is used for monitoring the signals from the QPD and the balanced photodetector. 
-        It will just emit a signal with the needed arrays. 
-    """
-    def __init__(self):
-        QtCore.QThread.__init__(self)
-        self.adw = session._session['adw']
-        self.adw.start(10)
-        self.detector = session._session['devices']
         
-    def __del__(self):
+    def start_timer(self):
+        """ Starts the timer with a predefined update interval. 
+        """
+        if not self.running:
+            # Starts the process inside the ADwin
+            self.adw.start(10) 
+            self.ctimer.start(100)
+            self.running = True
+        else:
+            self.stop_timer()
+            
+    def stop_timer(self):
+        """ Stops the refreshing and the ADwin monitor. 
+        """
+        self.ctimer.stop()
         self.adw.stop(10)
-
-    def run(self):
-        """ Connects a QTimer to an update function. 
-        """
-        self.timer = QtCore.QTimer()
-        self.timer.timeout.connect(self.monitor_update)
-        self.timer.start(100)  
-        return
+        self.running = False
         
-    def monitor_update(self):
-        """ Gets the most recent values from the ADwin and sends them to the main window. 
-        """
-        delay=400*0.1e-3
+
+    def updateMeans(self):
         for i in range(len(self.detector)):
             self.fifo_name = '%s%i' %(self.detector[i].properties['Type'],self.detector[0].properties['Input']['Hardware']['PortID'])
             data = [self.adw.get_fifo(self.fifo.properties[self.fifo_name])]
@@ -408,70 +403,83 @@ class monitor(QtCore.QThread):
             data = (data-calibration['Offset'])/calibration['Slope']
             xdata = np.arange(len(data))*delay
             final_data = np.vstack((xdata,data))
-            self.emit(QtCore.SIGNAL(self.detector[i].properties['Name']),final_data,self.detector[i].properties['Name']) 
+            name = self.detector[i].properties['Name']
+            if name == "Monitor +":
+                self.monitor1.display(np.mean(data))
+            elif name == "Monitor -":
+                self.monitor2.display(np.mean(data))
+            elif name == "Diff":
+                self.diff.display(np.mean(data))
+            elif name == "QPD X":
+                self.qpdx.display(np.mean(data))
+            elif name == "QPD Y":
+                self.qpdy.display(np.mean(data))
+            elif name == "QPD Z":
+                self.qpdz.display(np.mean(data))
 
-# 
-# class workThread(QtCore.QThread):
-#     """ This is the class that will update the values from the QPD. Since it is an expensive task, it will be threaded. 
-#     """
-#     def __init__(self):
-#         global session._session
-#         QtCore.QThread.__init__(self)
-#         self.time = session._session['time']
-#         self.accuracy = session._session['accuracy']
-#         self.adw = session._session['adw']
-#         
-#     def __del__(self):
-#         self.wait()
-#     
-#     def updateTimes(self,time,accuracy):
-#         """ Updates the time and the accuracy of the acquisitions. 
-#         """
-#         self.time = time
-#         session._session['time'] = time
-#         self.accuracy = accuracy
-#         session._session['accuracy'] = accuracy
-#     
-#     def run(self):
-#         """ Triggers the ADwin to acquire a new set of data. It is a time consuming task. 
-#         """
-#         num_points = int(self.time/self.accuracy)
-#         freqs = np.fft.rfftfreq(num_points, self.accuracy)           
-#         """ Need to stop the monitor? 
-#             If the monitor changes the position of the multiplexor, then it will 
-#             alter the timing between the measurements. 
-#         """
-#         try:
-#             self.adw.stop(10)
-#         except:
-#             print('Process 10 was not running')
-#             
-#         data_adw,index = self.adw.get_QPD(self.time,self.accuracy)
-#         #datax = np.random.rand(int(num_points))
-#         #datay = np.random.rand(int(num_points))
-#         #dataz = np.random.rand(int(num_points))
-#         #sleep(2)
-#         
-#         """ Have to assume a particular order of the devices, i.e. QPDx->QPDy->QPDz->Monitor+->Monitor-->Diff """
-#         
-#         pwrx = np.abs(np.fft.rfft(data_adw[0,:]))**2
-#         pwry = np.abs(np.fft.rfft(data_adw[1,:]))**2
-#         pwrz = np.abs(np.fft.rfft(data_adw[2,:]))**2
-#         
-#         data = np.zeros([4,len(pwrx)])
-#         values = np.zeros([3,len(datax)])
-#         data[0,:] = pwrx
-#         data[1,:] = pwry
-#         data[2,:] = pwrz
-#         data[3,0] = np.mean(datax)
-#         data[3,1] = np.mean(datay)
-#         data[3,2] = np.mean(dataz)
-#         values[0,:] = datax
-#         values[1,:] = datay
-#         values[2,:] = dataz
-#         
-#         self.emit( QtCore.SIGNAL('QPD'), freqs, data, values)
-#         return 
+
+
+ 
+class workThread(QtCore.QThread):
+    """ This is the class that will update the values from the QPD. Since it is an expensive task, it will be threaded. 
+    """
+    def __init__(self):
+        QtCore.QThread.__init__(self)
+        self.time = _session['time']
+        self.accuracy = _session['accuracy']
+        self.adw = _session['adw']
+
+    def __del__(self):
+        self.wait()
+     
+    def updateTimes(self,time,accuracy):
+        """ Updates the time and the accuracy of the acquisitions. 
+        """
+        self.time = time
+        _session['time'] = time
+        self.accuracy = accuracy
+        _session['accuracy'] = accuracy
+     
+    def run(self):
+        """ Triggers the ADwin to acquire a new set of data. It is a time consuming task. 
+        """
+        num_points = int(self.time/self.accuracy)
+        freqs = np.fft.rfftfreq(num_points, self.accuracy)           
+        """ Need to stop the monitor? 
+            If the monitor changes the position of the multiplexor, then it will 
+            alter the timing between the measurements. 
+        """
+        try:
+            self.adw.stop(10)
+        except:
+            print('Process 10 was not running')
+             
+        data_adw,index = self.adw.get_QPD(self.time,self.accuracy)
+        #datax = np.random.rand(int(num_points))
+        #datay = np.random.rand(int(num_points))
+        #dataz = np.random.rand(int(num_points))
+        #sleep(2)
+         
+        """ Have to assume a particular order of the devices, i.e. QPDx->QPDy->QPDz->Monitor+->Monitor-->Diff """
+         
+        pwrx = np.abs(np.fft.rfft(data_adw[0,:]))**2
+        pwry = np.abs(np.fft.rfft(data_adw[1,:]))**2
+        pwrz = np.abs(np.fft.rfft(data_adw[2,:]))**2
+         
+        data = np.zeros([4,len(pwrx)])
+        values = np.zeros([3,len(datax)])
+        data[0,:] = pwrx
+        data[1,:] = pwry
+        data[2,:] = pwrz
+        data[3,0] = np.mean(datax)
+        data[3,1] = np.mean(datay)
+        data[3,2] = np.mean(dataz)
+        values[0,:] = datax
+        values[1,:] = datay
+        values[2,:] = dataz
+         
+        self.emit( QtCore.SIGNAL('QPD'), freqs, data, values)
+        return 
     
 ## Start Qt event loop unless running in interactive mode or using pyside.
 if __name__ == '__main__':
