@@ -27,6 +27,7 @@ class MainWindow(QtGui.QMainWindow):
         self.monitor_values = monitor_values()
         self.timetraces = TimeTraces()
         QtCore.QObject.connect(self.monitor_values, QtCore.SIGNAL('TimeTraces'),self.timetraces.updateTimes)
+        QtCore.QObject.connect(self.power_spectra, QtCore.SIGNAL('Stop_Tr'),self.monitor_values.stop_timer)
         
         self.setCentralWidget(self.monitor_values)
         self.setGeometry(450,30,550,900)
@@ -42,7 +43,7 @@ class MainWindow(QtGui.QMainWindow):
         exitAction = QtGui.QAction(QtGui.QIcon('GUI/Icons/Signal-stop-icon.png'),'Exit',self)
         exitAction.setShortcut('Ctrl+Q')
         exitAction.setStatusTip('Quit the program in a safe way')
-#         exitAction.triggered.connect(self.exit_safe)
+        exitAction.triggered.connect(self.power_spectra.exit_safe)
         
         configureTimes = QtGui.QAction(QtGui.QIcon('GUI/Icons/pinion-icon.png'),'Configure',self)
         configureTimes.setShortcut('Ctrl+T')
@@ -65,21 +66,37 @@ class MainWindow(QtGui.QMainWindow):
         acquireTimetrace = QtGui.QAction('Acquire timetrace',self)
         acquireTimetrace.setStatusTip('Starts acquiring fast timetraces')
         acquireTimetrace.triggered.connect(self.power_spectra.show)
-
+        
+        triggerTimetrace = QtGui.QAction('Start acquiring timetraces',self)
+        triggerTimetrace.setStatusTip('Click tu run the high priority ADwin process')
+        triggerTimetrace.triggered.connect(self.power_spectra.update)
+        
+        stopTimetrace = QtGui.QAction('Stop timetrace',self)
+        stopTimetrace.setStatusTip('Stops the acquisition after the current')
+        stopTimetrace.triggered.connect(self.power_spectra.stop_acq)
+        
         self.statusBar()
         menubar = self.menuBar()
         fileMenu = menubar.addMenu('&File')
         fileMenu.addAction(saveAction)
         fileMenu.addAction(exitAction)
-        fileMenu.addAction(runMonitor)
-        fileMenu.addAction(stopMonitor)
+
         confgMenu = menubar.addMenu('&Configure')
         confgMenu.addAction(configureTimes)
-        confgMenu.addAction(showTimetraces)
-        confgMenu.addAction(acquireTimetrace)
+
+        monitorMenu = menubar.addMenu('&Monitor')
+        monitorMenu.addAction(showTimetraces)
+        monitorMenu.addAction(runMonitor)
+        monitorMenu.addAction(stopMonitor)
+        
+        traceMenu = menubar.addMenu('&Timetraces')
+        traceMenu.addAction(acquireTimetrace)
+        traceMenu.addAction(triggerTimetrace)
+        traceMenu.addAction(stopTimetrace)
         
     def closeEvent(self, event):
         _session.adw.stop(10)
+        _session.adw.stop(9)
         event.accept()
 #         
 #     def configure_times(self,time,accuracy):
@@ -214,15 +231,24 @@ class Power_Spectra(QtGui.QWidget):
 #         self.pmeter.go = True
 #         self.pmeter.units = 'Watts' 
 
-        self.continuous_runs = True
+        _session.runs = True # Continuous runs
          
         self.workThread = workThread()
         self.connect(self.workThread, QtCore.SIGNAL("QPD"), self.updateGUI )
-         
+        self.connect(self.workThread,  QtCore.SIGNAL('Stop_Tr'), self.stop_tr)
         self.setStatusTip('Running...')
-        self.is_running = False
+        self.is_running = False # Status of the thread
          
- 
+    def stop_tr(self):
+        """ Emmits a signal for stopping the TR.
+        """
+        self.emit(QtCore.SIGNAL('Stop_Tr'))
+    
+    def stop_acq(self):
+        """ Stops the continuous runs.
+        """
+        _session.runs = False
+        
     def update(self):
         """ Connects the signals of the working Thread with the appropriate functions in the main Class. 
         """
@@ -240,22 +266,22 @@ class Power_Spectra(QtGui.QWidget):
         self.is_running = False
         self.data = data
         self.freqs = frequencies
-        self.curvey.setData(self.freqs[1:],values[1,1:])
-        self.curvex.setData(self.freqs[1:],values[0,1:])
-        self.curvez.setData(self.freqs[1:],values[2,1:])
-        self.curved.setData(self.freqs[1:],values[3,1:])
+        self.curvey.setData(self.freqs[2:],values[1,1:])
+        self.curvex.setData(self.freqs[2:],values[0,1:])
+        self.curvez.setData(self.freqs[2:],values[2,1:])
+        self.curved.setData(self.freqs[2:],values[3,1:])
          
-        if self.continuous_runs: # If the continuous runs is activated, then refresh.
+        if _session.runs: # If the continuous runs is activated, then refresh.
             self.update()
          
          
-    def updateTimes(self,time,accuracy,runs):
-        """ Updates the time and the accuracy for the plots. 
-        """
-        self.time = time
-        self.accuracy = accuracy
-        self.continuous_runs = runs
-        self.workThread.updateTimes(time, accuracy)
+#     def updateTimes(self,time,accuracy,runs):
+#         """ Updates the time and the accuracy for the plots. 
+#         """
+#         self.time = time
+#         self.accuracy = accuracy
+#         self.continuous_runs = runs
+#         self.workThread.updateTimes(time, accuracy)
              
     def fileSave(self):
         """Saves the files to a specified folder. 
@@ -331,7 +357,7 @@ class ConfigureTimes(QtGui.QWidget):
         _session.time = new_time
         _session.accuracy = new_accuracy
         _session.runs = self.contin_runs.isChecked()
-        self.emit( QtCore.SIGNAL('Times'), new_time, new_accuracy, runs)
+        self.emit( QtCore.SIGNAL('Times'), new_time, new_accuracy, _session.runs)
 
 class monitor_values(QtGui.QWidget):
     """ Class for monitoring the values of given devices. 
@@ -442,20 +468,9 @@ class monitor_values(QtGui.QWidget):
 class workThread(QtCore.QThread):
     def __init__(self):
         QtCore.QThread.__init__(self)
-        self.time = _session.time
-        self.accuracy = _session.accuracy
-        self.adw = _session.adw
 
     def __del__(self):
         self.wait()
-     
-#     def updateTimes(self,time,accuracy):
-#         """ Updates the time and the accuracy of the acquisitions. 
-#         """
-#         self.time = time
-#         _session['time'] = time
-#         self.accuracy = accuracy
-#         _session['accuracy'] = accuracy
      
     def run(self):
         """ Triggers the ADwin to acquire a new set of data. It is a time consuming task. 
@@ -466,13 +481,10 @@ class workThread(QtCore.QThread):
             If the monitor changes the position of the multiplexor, then it will 
             alter the timing between the measurements. 
         """
-        try:
-            self.adw.stop(10)
-        except:
-            print('Process 10 was not running')
-        
+        self.emit(QtCore.SIGNAL('Stop_Tr'))
+
         dev = _session.devices[0:4]
-        data_adw = self.adw.get_QPD(dev,_session.time,_session.accuracy)
+        data_adw = _session.adw.get_QPD(dev,_session.time,_session.accuracy)
         #datax = np.random.rand(int(num_points))
         #datay = np.random.rand(int(num_points))
         #dataz = np.random.rand(int(num_points))

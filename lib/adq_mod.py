@@ -199,8 +199,9 @@ class adq(ADwin,ADwinDebug):
         self.start(9)
         intermediate_data = np.zeros(1)
         while bool(self.adw.Process_Status(9)):
+            time.sleep(.25)
             intermediate_data = np.append(intermediate_data, np.array(list(self.get_fifo(fifo.properties['Scan_data']))))
-            time.sleep(0.25)
+            
         
         intermediate_data = np.append(intermediate_data, np.array(list(self.get_fifo(fifo.properties['Scan_data']))))
         array = intermediate_data

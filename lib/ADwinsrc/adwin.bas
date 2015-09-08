@@ -86,7 +86,7 @@ event:
  
       data_200 = input(data_198[2*j-1],data_198[2*j])
       Inc i
-      if(i = par_78) then
+      if(i = par_78+1) then
         Inc j
         i = 1        
         if (j=Par_71+1) then

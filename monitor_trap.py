@@ -37,7 +37,7 @@ if __name__ == "__main__":
     _session.adw.wait(8)
     _session.adw.load('lib/adbasic/monitor.T90')
     _session.adw.load('lib/adbasic/adwin.T99')
-
+    
     
     devices = [qpdx,qpdy,qpdz,monitor,apd1,diffx,diffy]
     _session.devices = devices
