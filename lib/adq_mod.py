@@ -143,7 +143,7 @@ class adq(ADwin,ADwinDebug):
         """ Gets a timetrace with a dedicated high-priority process. 
             Only works for a counter.
         """
-        self.load('lib/ADwinsrc/fast_timetrace.T98')
+        self.load('lib/ADwinsrc/fast_timetrace.T98') # Does it need to happen here?
         delay = m.floor(acc/25e-9)
         port = detect.properties['Input']['Hardware']['PortID']
         self.set_par(par.properties['Port'],int(port))
@@ -174,10 +174,10 @@ class adq(ADwin,ADwinDebug):
      
     def get_QPD(self,detect,duration=1,acc=.0005):
         """ Gets timetraces of 3 analog channels with high temporal accuracy.
-            It uses a dedicated high-priority process called qpd.T97 that has configured
-            the ports to which each signal was plugged. 
-            TODO: Be able to send port information as variables
-            Returns a 3 x num_ticks array
+            It uses a modified version of the routine used for acquiring a timetrace of
+            several inputs. It is not yet set to work with variable gains, and it only
+            acquires at 16-bit resolution. 
+            RETURNS: a list of numpy arrays with the respective timetraces
         """
         if not type(detect)== type([]):
             detect = list(detect)

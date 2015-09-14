@@ -26,8 +26,11 @@ class MainWindow(QtGui.QMainWindow):
         self.conf_times = ConfigureTimes()
         self.monitor_values = monitor_values()
         self.timetraces = TimeTraces()
+        self.apd_timetrace = Apd_Timetrace()
+        
         QtCore.QObject.connect(self.monitor_values, QtCore.SIGNAL('TimeTraces'),self.timetraces.updateTimes)
         QtCore.QObject.connect(self.power_spectra, QtCore.SIGNAL('Stop_Tr'),self.monitor_values.stop_timer)
+        
         
         self.setCentralWidget(self.monitor_values)
         self.setGeometry(450,30,550,900)
@@ -75,6 +78,14 @@ class MainWindow(QtGui.QMainWindow):
         stopTimetrace.setStatusTip('Stops the acquisition after the current')
         stopTimetrace.triggered.connect(self.power_spectra.stop_acq)
         
+        showAPD = QtGui.QAction('APD',self)
+        showAPD.setStatusTip('Shows the window for high time resolution APD timetrace')
+        showAPD.triggered.connect(self.apd_timetrace.show)
+        
+        triggerAPD = QtGui.QAction('Trigger APD',self)
+        triggerAPD.setStatusTip('Triggers time resolution APD timetrace')
+        triggerAPD.triggered.connect(self.apd_timetrace.start_timetrace)
+        
         self.statusBar()
         menubar = self.menuBar()
         fileMenu = menubar.addMenu('&File')
@@ -93,6 +104,10 @@ class MainWindow(QtGui.QMainWindow):
         traceMenu.addAction(acquireTimetrace)
         traceMenu.addAction(triggerTimetrace)
         traceMenu.addAction(stopTimetrace)
+        
+        apdMenu = menubar.addMenu('&APD')
+        apdMenu.addAction(showAPD)
+        apdMenu.addAction(triggerAPD)
         
     def closeEvent(self, event):
         _session.adw.stop(10)
@@ -155,9 +170,9 @@ class TimeTraces(QtGui.QWidget):
             self.var[i,-s:] = variances[i]
         
         x = np.arange(np.size(self.var,axis=1))
-        self.varx.setData(x,self.var[0,:])
+        self.varx.setData(x,self.var[2,:])
         self.vary.setData(x,self.var[1,:])
-        self.vard.setData(x,self.var[2,:])
+        self.vard.setData(x,self.var[0,:])
         self.vara.setData(x,self.var[3,:])
 
 class Power_Spectra(QtGui.QWidget):
@@ -266,8 +281,8 @@ class Power_Spectra(QtGui.QWidget):
         self.is_running = False
         self.data = data
         self.freqs = frequencies
-        self.curvey.setData(self.freqs[2:],values[1,1:])
-        self.curvex.setData(self.freqs[2:],values[0,1:])
+        self.curvex.setData(self.freqs[2:],values[1,1:])
+        self.curvey.setData(self.freqs[2:],values[0,1:])
         self.curvez.setData(self.freqs[2:],values[2,1:])
         self.curved.setData(self.freqs[2:],values[3,1:])
          
@@ -334,6 +349,15 @@ class ConfigureTimes(QtGui.QWidget):
         self.accuracy_label.setText('Accuracy (ms): ')
         self.accuracy = QtGui.QLineEdit(self)
         self.accuracy.setText(str(acc*1000))
+        
+        self.apd_time_label = QtGui.QLabel(self)
+        self.apd_time_label.setText('APD Time (s): ')
+        self.apd_time = QtGui.QLineEdit(self)
+        self.apd_time.setText(str(_session.apdtime))
+        self.apd_accuracy_label = QtGui.QLabel(self)
+        self.apd_accuracy_label.setText('APD Accuracy (us): ')
+        self.apd_accuracy = QtGui.QLineEdit(self)
+        self.apd_accuracy.setText(str(_session.apdacc*1000000))
          
         self.contin_runs = QtGui.QCheckBox('Continuous runs', self)
         self.contin_runs.setChecked(True)
@@ -347,15 +371,23 @@ class ConfigureTimes(QtGui.QWidget):
         self.layout.addWidget(self.time,0,1)
         self.layout.addWidget(self.accuracy_label,1,0)
         self.layout.addWidget(self.accuracy,1,1)
-        self.layout.addWidget(self.contin_runs,2,0)
-        self.layout.addWidget(self.apply_button,3,0,1,2)
-        self.layout.addWidget(self.run_button,4,0,1,2)
+        self.layout.addWidget(self.apd_time_label,2,0)
+        self.layout.addWidget(self.apd_time,2,1)
+        self.layout.addWidget(self.apd_accuracy_label,3,0)
+        self.layout.addWidget(self.apd_accuracy,3,1)        
+        self.layout.addWidget(self.contin_runs,4,0)
+        self.layout.addWidget(self.apply_button,5,0,1,2)
+        self.layout.addWidget(self.run_button,6,0,1,2)
          
     def SetTimes(self):
         new_time = float(self.time.text())
         new_accuracy = float(self.accuracy.text())/1000
+        new_apd_time = float(self.apd_time.text())
+        new_apd_accuracy = float(self.apd_accuracy.text())/1000000
         _session.time = new_time
         _session.accuracy = new_accuracy
+        _session.apdtime = new_apd_time
+        _session.apdacc = new_apd_accuracy
         _session.runs = self.contin_runs.isChecked()
         self.emit( QtCore.SIGNAL('Times'), new_time, new_accuracy, _session.runs)
 
@@ -463,8 +495,48 @@ class monitor_values(QtGui.QWidget):
             elif name == "APD 1":
                 final_data.append(data)
         self.emit( QtCore.SIGNAL('TimeTraces'), final_data)
-                
- 
+
+class Apd_Timetrace(QtGui.QWidget):
+    """ Simple class for showing the timetrace of the APD. 
+    """
+    def __init__(self,parent=None):
+        QtGui.QWidget.__init__(self, parent)
+        self.setWindowTitle('APD Fast Timetrace')      
+        
+        self.workThread = APDThread()
+        self.connect(self.workThread, QtCore.SIGNAL('APD'),self.updateGUI)
+        
+        self.layout = QtGui.QGridLayout(self)
+        apd = pg.PlotWidget()
+        self.layout.addWidget(apd,0,0,12,11)
+        num_points = int(_session.apdtime/_session.apdacc)
+        x = np.linspace(0, _session.apdtime, num_points)
+        y = np.zeros(num_points)
+        self.curveapd = apd.plot(x,y,symbol='o',pen=None) 
+        apd.setLabel('left','Counts',units='#')
+        apd.setLabel('bottom','Time',units='s')
+        
+        
+        
+        self.triggerAPD = QtGui.QPushButton('Run',self)
+        self.triggerAPD.clicked[bool].connect(self.start_timetrace)
+        
+        self.layout.addWidget(self.triggerAPD,12,11,1,1)
+        
+#         self.connect(QtGui.QShortcut(QtGui.QKeySequence(QtCore.Qt.Key_S), self), QtCore.SIGNAL('activated()'), self.fileSave)
+    
+    def updateGUI(self,t,c):
+        """ Updates the timetrace with the values of t and c.
+        """
+        print('Update APD')
+        time = t*_session.apdacc
+        self.curveapd.setData(time,c)
+    
+    def start_timetrace(self):
+        """ Triggers the working thread. 
+        """
+        self.workThread.start()
+        
 class workThread(QtCore.QThread):
     def __init__(self):
         QtCore.QThread.__init__(self)
@@ -514,8 +586,23 @@ class workThread(QtCore.QThread):
          
         self.emit( QtCore.SIGNAL('QPD'), freqs, data, values)
         return 
+    
+class APDThread(QtCore.QThread):
+    def __init__(self):
+        QtCore.QThread.__init__(self)
 
-
+    def __del__(self):
+        self.wait()
+    
+    def run(self):
+        """ Triggers the ADwin for acquiring an APD fast timetrace. 
+            Returns a list of two arrays, with the arrival time and the number of counts.
+        """
+        apd1 = _session.device['apd1']
+        t,c = _session.adw.get_fast_timetrace(apd1, _session.apdtime, _session.apdacc)
+        self.emit(QtCore.SIGNAL('APD'),np.array(t),np.array(c))
+        return
+        
 if __name__ == "__main__":   
     from lib.xml2dict import device
     _session.time = 1
