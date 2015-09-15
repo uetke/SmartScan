@@ -8,4 +8,6 @@ Thumbs.db
 .T90
 .T99
 .T98
-.BAK
+*.BAK
+*.T9*
+*.log

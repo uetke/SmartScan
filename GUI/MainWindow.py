@@ -35,7 +35,7 @@ except AttributeError:
 class InitWindow(QMainWindow):
     def __init__(self,*args):
         QMainWindow.__init__(self, *args)
-        self._session = {} # Dictionary to store session variables
+        self._session = {} # Dictionary to store _session variables
         
         self.init = Configuration_Window()
         self.init.setupUi(self)

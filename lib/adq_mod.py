@@ -143,7 +143,7 @@ class adq(ADwin,ADwinDebug):
         """ Gets a timetrace with a dedicated high-priority process. 
             Only works for a counter.
         """
-        self.load('lib/ADwinsrc/fast_timetrace.T98')
+        self.load('lib/ADwinsrc/fast_timetrace.T98') # Does it need to happen here?
         delay = m.floor(acc/25e-9)
         port = detect.properties['Input']['Hardware']['PortID']
         self.set_par(par.properties['Port'],int(port))
@@ -174,10 +174,10 @@ class adq(ADwin,ADwinDebug):
      
     def get_QPD(self,detect,duration=1,acc=.0005):
         """ Gets timetraces of 3 analog channels with high temporal accuracy.
-            It uses a dedicated high-priority process called qpd.T97 that has configured
-            the ports to which each signal was plugged. 
-            TODO: Be able to send port information as variables
-            Returns a 3 x num_ticks array
+            It uses a modified version of the routine used for acquiring a timetrace of
+            several inputs. It is not yet set to work with variable gains, and it only
+            acquires at 16-bit resolution. 
+            RETURNS: a list of numpy arrays with the respective timetraces
         """
         if not type(detect)== type([]):
             detect = list(detect)
@@ -197,17 +197,22 @@ class adq(ADwin,ADwinDebug):
             self.adw.Set_Processdelay(9, delay)
         
         self.start(9)
+        intermediate_data = np.zeros(1)
         while bool(self.adw.Process_Status(9)):
-            time.sleep(0.1)
+            time.sleep(.25)
+            intermediate_data = np.append(intermediate_data, np.array(list(self.get_fifo(fifo.properties['Scan_data']))))
             
-        array = np.array(list(self.get_fifo(fifo.properties['Scan_data'])))
+        
+        intermediate_data = np.append(intermediate_data, np.array(list(self.get_fifo(fifo.properties['Scan_data']))))
+        array = intermediate_data
+        
         split_data = []
         
         for i in range(len(detect)):
             split_data.append(array[i*num_ticks:(i+1)*num_ticks-1])
             
-        index = np.arange(num_ticks)*(delay*25e-9)
-        return split_data,index
+        #index = np.arange(num_ticks)*(delay*25e-9)
+        return split_data#,index
          
     def get_timetrace_static(self,detect,duration=1,acc=None):
         """gets the timetrace data from the adwin with the duration in seconds

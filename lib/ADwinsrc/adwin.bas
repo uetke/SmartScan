@@ -5,10 +5,11 @@
 ' Control_long_Delays_for_Stop   = No
 ' Priority                       = High
 ' Version                        = 1
-' ADbasic_Version                = 5.0.8
+' ADbasic_Version                = 6.0.0
 ' Optimize                       = Yes
 ' Optimize_Level                 = 1
-' Info_Last_Save                 = MN97  PHYSICS\carattino
+' Stacksize                      = 1000
+' Info_Last_Save                 = MEETPC113  MEETPC113\Aquiles
 '<Header End>
 #include c:\adwin\adbasic\inc\adwgcnt.inc
 dim new_timer as integer
@@ -59,6 +60,7 @@ init:
     cur_pix[j] = 0
     increment[j] = data_199[j+9]
   NEXT j
+  j = 1
 event:
   SelectCase par_80
     case 1
@@ -81,14 +83,17 @@ event:
     case 33
       'For acquiring signals of several devices, but keeping in mind higher temporal accuracy'
       'The acquisition is done in series (first one device, then another, etc.'
-      for j=1 to par_71
-        do 
-          data_200 = input(data_198[2*j-1],data_198[2*j])
-          Inc i
-        until (i = par_78)
-        i = 1  
-      next j
-      
+ 
+      data_200 = input(data_198[2*j-1],data_198[2*j])
+      Inc i
+      if(i = par_78+1) then
+        Inc j
+        i = 1        
+        if (j=Par_71+1) then
+          end
+        endif
+      endif
+
       
     case 4
       'doing a scan'
