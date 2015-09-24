@@ -10,7 +10,7 @@
 <Device Name='Lock-in' Type='Analog' Description='a lock-in amplifier'>
 <Input>
 <Calibration Unit="Volts" Slope="3276.8" Offset="32768"/>
-<Hardware PortID="1"/>
+<Hardware PortID="2"/>
 </Input>
 </Device>
 <Device Name='Power Meter' Type='Analog' Description='Power Meter'>
