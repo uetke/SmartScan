@@ -4,6 +4,7 @@
 .settings/
 .log
 __pycache__/
+myenv
 Thumbs.db
 .T90
 .T99
