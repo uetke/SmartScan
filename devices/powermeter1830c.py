@@ -23,6 +23,7 @@ class PowerMeter1830c(MessageBasedDriver):
     DEFAULTS = {'ASRL': {'write_termination': '\n',
                          'read_termination': '\n',
                          'baud_rate': 9600,
+                         'data_bits': 8,
                          'parity': constants.Parity.none,
                          'stop_bits': constants.StopBits.one,
                          'encoding': 'ascii',
