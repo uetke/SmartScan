@@ -17,10 +17,9 @@ class Monitor(QtGui.QMainWindow):
     """ Monitor of the relevant signals.
     """
     def __init__(self,parent=None):
-        super(TimeTraces,self).__init__()
+        super(Monitor,self).__init__()
         self.setWindowTitle('Signal Monitor')
         self.setGeometry(30,30,550,900)
-        self.setWindowTitle('Monitor')
 
         self.timetraces = MonitorWidget()
         self.APD = APD()
