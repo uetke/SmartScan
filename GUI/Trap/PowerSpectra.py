@@ -173,6 +173,10 @@ class PowerSpectraWidget(QtGui.QWidget):
         pz.enableAutoRange('xy', True)
         diff.enableAutoRange('xy',True)
 
+        self.px = px
+        self.py = py
+        self.pz = pz
+        self.diff = diff
 
 class workThread(QtCore.QThread):
     def __init__(self):
