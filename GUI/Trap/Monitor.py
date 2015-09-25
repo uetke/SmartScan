@@ -9,6 +9,7 @@ import sys
 import pyqtgraph as pg
 from PyQt4.Qt import QApplication
 
+import _session
 from GUI.Trap.APD import APD
 from GUI.Trap.PowerSpectra import PowerSpectra
 from GUI.Trap.ConfigWindow import ConfigWindow

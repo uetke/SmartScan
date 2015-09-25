@@ -8,6 +8,8 @@ import sys
 import pyqtgraph as pg
 import _session
 from PyQt4.Qt import QApplication
+import os
+from datetime import datetime
 
 class APD(QtGui.QMainWindow):
     """ Main window for the APD timetrace.

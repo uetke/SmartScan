@@ -9,8 +9,8 @@ import sys
 import pyqtgraph as pg
 import os
 from datetime import datetime
-import _session
 
+import _session
 from lib.xml2dict import variables
 from matplotlib.backend_bases import CloseEvent
 
