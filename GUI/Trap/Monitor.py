@@ -13,6 +13,7 @@ import _session
 from GUI.Trap.APD import APD
 from GUI.Trap.PowerSpectra import PowerSpectra
 from GUI.Trap.ConfigWindow import ConfigWindow
+from lib.xml2dict import variables
 
 class Monitor(QtGui.QMainWindow):
     """ Monitor of the relevant signals.
