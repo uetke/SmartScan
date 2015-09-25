@@ -1,8 +1,8 @@
 from __future__ import division
 
 from lantz.messagebased import MessageBasedDriver
-from lantz.action import Action
-from lantz.feat import Feat, DictFeat
+from lantz import Action
+from lantz import Feat, DictFeat
 # from lantz import Q_
 
 import numpy as np
@@ -11,30 +11,71 @@ import numpy as np
 class funcgen(MessageBasedDriver):
     """The agilent 33220a function generator"""
 
-    DEFAULTS = {'USB': {'manufacturer_id': 2391,
-                        'model_code': 1031,
-                         'timeout': 2000
-                         'encoding': 'ascii'
+    MANUFACTURER_ID = '0x0957'
+    MODEL_CODE = '0x0407'
+
+    DEFAULTS = {'USB': {'write_termination': '\n',
+                        'read_termination': '\n',
+                        'timeout': 2000,
+                        'encoding': 'ascii'
                         }}
-
-    # freqlimits = {'SIN':(1e-6,20e6),'SQUare':(1e-6,20e6),'RAMP':(1e-6,200e3),'PULS':(500e-6,5e6)}
-    # def __init__(self, port):
-    #     """initialization of the class"""
-    #     super().__init__(port)
-    #     super().initialize() # Automatically open the port
-    #     print(self.idn())
-    #     self.TIMEOUT = 20
-    #     V = Q_(1, 'V')
-    #     Hz = Q_(1, 'Hz')
-    #     self.func = 'SIN'  #Options are SIN,SQUare,RAMP,PULS,DC
-    #     self.freq = 550e3 * Hz
-    #     self.ampl = 5 * V #Amplitude peak2peak in volt min=10mVpp, max=10Vpp
-    #     self.offset = 2.5 * V #Offset of the signal |offset| <= 10 - Vpp/2
-    #     self.apply(self.func, self.freq, self.ampl, self.offset)
-
+    @Feat()
     def idn(self):
-        return self.query('*IDN?\n')
+        return self.query('*IDN?')
 
+    @Feat()
+    def func(self):
+        """ Return the function type.
+        """
+        return self.query('FUNC?')
+
+    @func.setter
+    def func(self,functype):
+        """ Sets the function type.
+        """
+        self.write('FUNC {}'.format(functype))
+
+    @Feat(units='Hz')
+    def freq(self):
+        """ Return the frequency.
+        """
+        return self.query('FREQ?')
+
+    @freq.setter
+    def freq(self,value):
+        """ Set the frequency.
+        """
+        self.write('FREQ {} Hz'.format(value))
+
+    @Feat(units='V')
+    def volt(self):
+        """ Return the amplitude.
+        """
+        return self.query('VOLT?')
+
+    @volt.setter
+    def volt(self,value):
+        """ Sets the output voltage.
+        """
+        self.write('VOLT {} VPP'.format(value))
+
+    @Feat(units='V')
+    def offset(self):
+        """ Return the offset.
+        """
+        return self.query('VOLT:OFFS?')
+
+    @offset.setter
+    def offset(self,value):
+        """ Sets the offset
+        """
+        self.write('VOLT:OFFS {}'.format(value))
+
+    @Action(values={True:'ON', False:'OFF'})
+    def output(self,value):
+        """ Turns the output on or off.
+        """
+        self.write('OUTP {}'.format(value))
     # def apply(self,func=None,freq=None,ampl=None,offset=None):
     #     if not func==None:
     #         self.set_function_type(func)

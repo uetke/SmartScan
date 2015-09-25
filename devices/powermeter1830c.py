@@ -41,7 +41,7 @@ class PowerMeter1830c(MessageBasedDriver):
 
     @attenuator.setter
     def attenuator(self, value):
-        self.send('A{}'.format(value))
+        self.write('A{}'.format(value))
 
     @Feat(values={True: 1, False: 0})
     def beeper(self):
@@ -51,7 +51,7 @@ class PowerMeter1830c(MessageBasedDriver):
 
     @beeper.setter
     def beeper(self,value):
-        self.send('B{}'.format(value))
+        self.write('B{}'.format(value))
 
     @Feat
     def data(self):
@@ -67,7 +67,7 @@ class PowerMeter1830c(MessageBasedDriver):
 
     @echo.setter
     def echo(self,value):
-        self.send('E{}'.format(value))
+        self.write('E{}'.format(value))
 
     @Feat(values={'Slow': 1, 'Medium': 2, 'Fast': 3})
     def filter(self):
@@ -80,7 +80,7 @@ class PowerMeter1830c(MessageBasedDriver):
 
     @filter.setter
     def filter(self,value):
-        self.send('F{}'.format(value))
+        self.write('F{}'.format(value))
 
     @Feat(values={True: 1, False: 0})
     def go(self):
@@ -90,7 +90,7 @@ class PowerMeter1830c(MessageBasedDriver):
 
     @go.setter
     def go(self,value):
-        self.send('G{}'.format(value))
+        self.write('G{}'.format(value))
 
     @Feat(values={'Off': 0, 'Medium': 1, 'High': 2})
     def keypad(self):
@@ -100,7 +100,7 @@ class PowerMeter1830c(MessageBasedDriver):
 
     @keypad.setter
     def keypad(self,value):
-        self.send('K{}'.format(value))
+        self.write('K{}'.format(value))
 
     @Feat(values={True: 1, False: 0})
     def lockout(self):
@@ -110,14 +110,14 @@ class PowerMeter1830c(MessageBasedDriver):
 
     @lockout.setter
     def lockout(self,value):
-        self.send('L{}'.format(value))
+        self.write('L{}'.format(value))
 
     @Action()
     def autocalibration(self):
         """ Autocalibration of the power meter. This procedure disconnects the input signal.
             It should be performed at least 60 minutes after warm-up.
         """
-        self.send('O')
+        self.write('O')
 
     @Feat(values=set(range(0,9)))
     def range(self):
@@ -128,14 +128,14 @@ class PowerMeter1830c(MessageBasedDriver):
 
     @range.setter
     def range(self,value):
-        self.send('R{}'.format(value))
+        self.write('R{}'.format(value))
 
     @Action()
     def store_reference(self):
         """ Sets the current input signal power level as the power reference level.
             Each time the S command is sent, the current input signal becomes the new reference level.
         """
-        self.send('S')
+        self.write('S')
 
     @Feat(values={'Watts': 1, 'dB': 2, 'dBm': 3, 'REL': 4})
     def units(self):
@@ -145,7 +145,7 @@ class PowerMeter1830c(MessageBasedDriver):
 
     @units.setter
     def units(self,value):
-        self.send('U{}'.format(value))
+        self.write('U{}'.format(value))
 
     @Feat(limits=(1,10000,1))
     def wavelength(self):
@@ -155,7 +155,7 @@ class PowerMeter1830c(MessageBasedDriver):
 
     @wavelength.setter
     def wavelength(self,value):
-        self.send('W{}'.format(int(value)))
+        self.write('W{}'.format(int(value)))
 
     @Feat(values={True: 1, False: 0})
     def zero(self):
@@ -165,7 +165,7 @@ class PowerMeter1830c(MessageBasedDriver):
 
     @zero.setter
     def zero(self,value):
-        self.send('Z{}'.format(value))
+        self.write('Z{}'.format(value))
 
 if __name__ == '__main__':
     import argparse
@@ -180,7 +180,7 @@ if __name__ == '__main__':
 
     with PowerMeter1830c.via_serial(args.port) as inst:
 
-                inst.lockout = True # Blocks the front panel
+        inst.lockout = True # Blocks the front panel
         inst.keypad = 'Off' # Switches the keypad off
         inst.attenuator = True # The attenuator is on
         inst.wavelength = 633 # Sets the wavelength to 633nm
