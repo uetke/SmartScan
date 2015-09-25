@@ -9,9 +9,9 @@ import sys
 import pyqtgraph as pg
 from PyQt4.Qt import QApplication
 
-from APD import APD
-from PowerSpectra import PowerSpectra
-from ConfigWindow import ConfigWindow
+from GUI.Trap.APD import APD
+from GUI.Trap.PowerSpectra import PowerSpectra
+from GUI.Trap.ConfigWindow import ConfigWindow
 
 class Monitor(QtGui.QMainWindow):
     """ Monitor of the relevant signals.
