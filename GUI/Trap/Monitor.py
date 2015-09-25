@@ -225,8 +225,10 @@ class MonitorWidget(QtGui.QWidget):
         lock.setLabel('bottom','time',units='Steps')
         self.qpdx = qpdx
         self.qpdy = qpdy
+        self.qpdz = qpdz
         self.diff = diff
         self.apd1 = apd1
+        self.lock = lock
 
         # Layout
         self.layout = QtGui.QGridLayout(self)
