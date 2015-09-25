@@ -54,6 +54,25 @@ class PowerSpectra(QtGui.QMainWindow):
         self.setStatusTip('Running...')
         self.is_running = False # Status of the thread
 
+        ##################
+        # Build the menu #
+        ##################
+        exitAction = QtGui.QAction(QtGui.QIcon('GUI/Icons/Signal-stop-icon.png'),'Exit',self)
+        exitAction.setShortcut('Ctrl+Q')
+        exitAction.setStatusTip('Quit the timetrace monitor in a safe way')
+        exitAction.triggered.connect(self.exit_safe)
+
+        saveAction = QtGui.QAction(QtGui.QIcon('GUI/Icons/floppy-icon.png'),'Save',self)
+        saveAction.setShortcut('Ctrl+S')
+        saveAction.setStatusTip('Saves the currently displayed data to a file')
+        saveAction.triggered.connect(self.fileSave)
+
+        self.statusBar()
+        menubar = self.menuBar()
+        fileMenu = menubar.addMenu('&File')
+        fileMenu.addAction(saveAction)
+        fileMenu.addAction(exitAction)
+        
     def stop_tr(self):
         """ Emmits a signal for stopping the timetraces.
         """

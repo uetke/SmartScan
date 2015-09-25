@@ -34,15 +34,15 @@ class APD(QtGui.QMainWindow):
         self.workThread = APDThread()
         self.connect(self.workThread, QtCore.SIGNAL('APD'),self.updateGUI)
         self.connect(self.workThread,  QtCore.SIGNAL('Stop_Tr'), self.stop_tr)
-        self.connect(QtGui.QShortcut(QtGui.QKeySequence(QtCore.Qt.Key_S), self), QtCore.SIGNAL('activated()'), self.fileSave)
+
         self.timetraces.triggerAPD.clicked[bool].connect(self.start_timetrace)
 
         exitAction = QtGui.QAction(QtGui.QIcon('GUI/Icons/Signal-stop-icon.png'),'Exit',self)
         exitAction.setShortcut('Ctrl+Q')
         exitAction.setStatusTip('Quit the timetrace monitor in a safe way')
-        exitAction.triggered.connect(self.exitSafe)
+        exitAction.triggered.connect(self.exit_safe)
 
-        saveAction = QtGui.QAction(QtGui.QIcon('GUI/Icons/floppy-icon.png'),'Exit',self)
+        saveAction = QtGui.QAction(QtGui.QIcon('GUI/Icons/floppy-icon.png'),'Save',self)
         saveAction.setShortcut('Ctrl+S')
         saveAction.setStatusTip('Saves the currently displayed data to a file')
         saveAction.triggered.connect(self.fileSave)
@@ -98,7 +98,7 @@ class APD(QtGui.QMainWindow):
         self.workThread.start()
         self.is_running = True
 
-    def exitSafe(self,event):
+    def exit_safe(self,event):
         """ Exits the application stopping the working Thread.
         """
         if _session.apdtime>5:

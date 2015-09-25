@@ -1,2 +1,2 @@
-global debug 
-debug = 1
+global debug
+debug = 0

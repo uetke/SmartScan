@@ -5,5 +5,6 @@ accuracy = 2
 apdacc = 100E-6
 apdtime = 1
 device = {}
-adw = adq(debug = 1)
+adw = adq(debug = 0)
 runs = True # Continuous runs of the acquisition
+timetrace_time = 15 # In seconds
