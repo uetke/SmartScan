@@ -2,16 +2,16 @@
 <Data>
 <Adwin>
 	<Device Name='APD 1' Type='Counter' Description='a device that counts the number of photons'>
-<Input>
-<Calibration Unit="counts" Slope="1" Offset="0"/>
-<Hardware PortID="1"/>
-</Input>
-</Device>
+		<Input>
+			<Calibration Unit="counts" Slope="1" Offset="0"/>
+			<Hardware PortID="1"/>
+		</Input>
+	</Device>
 <Device Name='Lock-in' Type='Analog' Description='a lock-in amplifier'>
-<Input>
-<Calibration Unit="Volts" Slope="3276.8" Offset="32768"/>
-<Hardware PortID="2"/>
-</Input>
+	<Input>
+		<Calibration Unit="Volts" Slope="3276.8" Offset="32768"/>
+		<Hardware PortID="2"/>
+	</Input>
 </Device>
 <Device Name='Power Meter' Type='Analog' Description='Power Meter'>
 <Input>
@@ -93,7 +93,7 @@
 <Serial>
 <Device Name='Lock-in' Type='analog' Description='SR844 lock-in amplifier'>
 <Output>
-<Calibration 
+<Calibration
 Init="{'sensitivity':'100 uV'
 ,'timeconstant':'3 ms'
 ,'filter_db_per_oct': '6 dB'
