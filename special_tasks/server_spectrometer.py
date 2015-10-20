@@ -2,7 +2,7 @@
 import socket
 import time
 import pickle
-# from .devices.acton import a500i as spectrometer
+from devices.acton import a500i as spectrometer
 #from .devices import acton as spect
 
 # create a socket object

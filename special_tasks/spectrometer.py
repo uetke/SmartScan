@@ -53,7 +53,7 @@ def trigger_spectrometer(adw,digin=1,digout=0,digcheck=2):
 
 class client_spectrometer():
     def __init__(self):
-        self.host = socket.gethostname()
+        self.host = '132.229.38.170'
         self.port = 12345                   # The same port as used by the server
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
