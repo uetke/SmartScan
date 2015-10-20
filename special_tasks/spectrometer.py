@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 """
     Collection of functions useful for controlling the Acton 500i spectrometer through the ADwin box.
+    It also includes a class for connected with the remote computer using sockets
 """
 import sys
 import os
 from numpy import savetxt
 from time import sleep
+import socket
+import pickle
 
 def abort(savedir,name,data,header):
     """ In case of aborting saves data variable to file. With the specified header.
@@ -47,3 +50,28 @@ def trigger_spectrometer(adw,digin=1,digout=0,digcheck=2):
     sleep(0.1) # Gives enough time to the spectrometer to re arm itself.
     if adw.get_digin(digcheck) == 1:
             raise Exception('Not Clearing digout')
+
+class client_spectrometer():
+    def __init__(self):
+        self.host = socket.gethostname()
+        self.port = 12345                   # The same port as used by the server
+        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    def goto(self,wl):
+        """ Sends the command for the spectrometer to go to a particular central
+            wavelength.
+        """"
+        self.s.connect((host, port))
+        msg = {'type': 'move','value':float(wl)}
+        msg = pickle.dumps(msg)
+        self.s.sendall(msg) # Message may be broken if the network is not stable
+
+        data = self.s.recv(8192)
+        try:
+            out = pickle.loads(data)
+            self.s.close()
+        except:
+            self.s.close()
+            raise Exception('Spectrometer didn\'t change position')
+
+        return float(out)
