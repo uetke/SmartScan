@@ -9,17 +9,17 @@ const int analogInPin = A0;  // Analog input pin to read the output of OpAmp
 int sensorValue = 0;        // value read 
 
 // Libraries for the DHT sensor
-#include <DHT.h>
-#define DHTPIN 2
-#define DHTTYPE DHT11   // DHT 11 
-DHT dht(DHTPIN, DHTTYPE);
+//#include <DHT.h>
+//#define DHTPIN 2
+//#define DHTTYPE DHT11   // DHT 11 
+//DHT dht(DHTPIN, DHTTYPE);
 
 // String to request a measurement from Python
 String readString;
 
 void setup() {
   Serial.begin(9600); 
-  dht.begin();
+  //dht.begin();
 }
 
 void loop() {
@@ -37,15 +37,15 @@ void loop() {
   if (readString == "0"){
     readString = "";
     // prints the humidity to the Serial Port
-    float h = dht.readHumidity();
-    Serial.print(h);
+    //float h = dht.readHumidity();
+    //Serial.print(h);
     Serial.print("\n");
   }
   else if (readString =="1"){
-    readString = "";
+    //readString = "";
     // prints the temperature to the Serial Port
-    float t = dht.readTemperature();
-    Serial.print(t);
+    //float t = dht.readTemperature();
+    //Serial.print(t);
     Serial.print("\n");
   }
   else if (readString =="2"){
