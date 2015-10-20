@@ -4,7 +4,7 @@ import numpy as np
 
 
 host = socket.gethostname()
-port = 1234                   # The same port as used by the server
+port = 12345                   # The same port as used by the server
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((host, port))
 msg = {'type': 'move','value':532}

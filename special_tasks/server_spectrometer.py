@@ -2,15 +2,21 @@
 import socket
 import time
 import pickle
+# from .devices.acton import a500i as spectrometer
 #from .devices import acton as spect
 
 # create a socket object
 serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 # get local machine name
-host = ''# socket.gethostname()
+# It will bind to any incoming connection. It may be a good idea to think about authentication?
 
-port = 1234
+host = ''# socket.gethostname()
+#TODO: Allow only connections from a certain IP on the network.
+#TODO: It is not as versatile as username/password, but guarantees non unwanted
+#TODO: interference.
+
+port = 12345
 
 # bind to the port
 serversocket.bind((host, port))
@@ -41,6 +47,8 @@ while True:
         elif data['type'] == 'stop':
             # break
             msg = 'Stopped'
+        else:
+            msg = 'Unrecognized command'
         msg = pickle.dumps(msg)
         conn.sendall(msg)
 
