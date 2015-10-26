@@ -43,25 +43,27 @@ def trigger_spectrometer(adw,digin=1,digout=0,digcheck=2):
     """
 
     adw.set_digout(digout)   # This triggers the spectrometer if it is set to +edge (as it should be!)
-    sleep(0.1)
+    print('Triggerring spectrometer')
+    sleep(0.5)
     while adw.get_digin(digin) or adw.get_digin(digcheck):
         sleep(0.1)
         adw.clear_digout(0) # Tries to clear the digout every time until the acquisition of the spectra is done
-    sleep(0.1) # Gives enough time to the spectrometer to re arm itself.
-    if adw.get_digin(digcheck) == 1:
+    sleep(1) # Gives enough time to the spectrometer to re arm itself.
+    if adw.get_digin(2) == 1:
             raise Exception('Not Clearing digout')
 
 class client_spectrometer():
     def __init__(self):
         self.host = '132.229.38.170'
         self.port = 12345                   # The same port as used by the server
-        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
 
     def goto(self,wl):
         """ Sends the command for the spectrometer to go to a particular central
             wavelength.
-        """"
-        self.s.connect((host, port))
+        """
+        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.s.connect((self.host, self.port))
         msg = {'type': 'move','value':float(wl)}
         msg = pickle.dumps(msg)
         self.s.sendall(msg) # Message may be broken if the network is not stable

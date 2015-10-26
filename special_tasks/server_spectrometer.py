@@ -2,7 +2,7 @@
 import socket
 import time
 import pickle
-from devices.acton import a500i as spectrometer
+from .devices.acton import a500i as spectrometer
 #from .devices import acton as spect
 
 # create a socket object
@@ -39,7 +39,7 @@ while True:
         if data['type'] == 'move':
             wl = data['value']
             print('Going to %s'%data['value'])
-            #spectrometer.goto(wl)
+            spectrometer.goto(wl)
             msg = wl
         elif data['type'] == 'query':
             wl = spectrometer.getwl()

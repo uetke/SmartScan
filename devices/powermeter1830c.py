@@ -172,7 +172,7 @@ if __name__ == '__main__':
     import lantz.log
 
     parser = argparse.ArgumentParser(description='Test Kentech HRI')
-    parser.add_argument('-p', '--port', type=str, default='1',
+    parser.add_argument('-p', '--port', type=str, default='5',
                         help='Serial port to connect to')
 
     args = parser.parse_args()

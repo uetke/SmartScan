@@ -13,6 +13,12 @@
 		<Hardware PortID="2"/>
 	</Input>
 </Device>
+<Device Name='Temperature' Type='Analog' Description='Pt100 with bridge'>
+	<Input>
+		<Calibration Unit="Volts" Slope="3276.8" Offset="32768"/>
+		<Hardware PortID="9"/>
+	</Input>
+</Device>
 <Device Name='Power Meter' Type='Analog' Description='Power Meter'>
 <Input>
 <Calibration Unit="Volts" Slope="3276.8" Offset="32768"/>
