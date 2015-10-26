@@ -7,6 +7,7 @@
 // to the pins used:
 const int analogInPin = A0;  // Analog input pin to read the output of OpAmp
 int sensorValue = 0;        // value read 
+float out = 0;
 
 // Libraries for the DHT sensor
 //#include <DHT.h>
@@ -19,6 +20,7 @@ String readString;
 
 void setup() {
   Serial.begin(9600); 
+  //analogReference(EXTERNAL); // use AREF for reference voltage
   //dht.begin();
 }
 
@@ -52,6 +54,9 @@ void loop() {
     readString = "";
     // prints the analog value to the Serial Port
     int v = analogRead(analogInPin);
+    out = 3.3*v/1023;
+    Serial.print(out);
+    Serial.print("\t");
     Serial.print(v);
     Serial.print("\n");
   }
