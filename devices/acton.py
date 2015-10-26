@@ -34,13 +34,15 @@ class a500i(MessageBasedDriver):
     def goto(self,wl):
         """ Goes to the desired wavelength value. At maximum motor speed
         """
-        return self.write('%s GOTO'%wl)
+        return self.write('%s GOTO'%(wl))
 
     @Feat(limits=(0,2000,.001))
     def nm(self):
         """ Gets the current central wavelength.
         """
-        return float(self.query('?NM'))
+        ans = self.query('?NM')
+        ans.split(' ')
+        return float(ans[1])
 
     @nm.setter
     def nm(self,wl):
@@ -95,18 +97,21 @@ if __name__ == '__main__':
     args = parser.parse_args()
     lantz.log.log_to_socket(lantz.log.DEBUG)
 
-    with PowerMeter1830c.via_serial(args.port) as inst:
+    with a500i.via_serial(args.port) as inst:
 
-        inst.lockout = True # Blocks the front panel
-        inst.keypad = 'Off' # Switches the keypad off
-        inst.attenuator = True # The attenuator is on
-        inst.wavelength = 633 # Sets the wavelength to 633nm
-        inst.units = "Watts" # Sets the units to Watts
-        inst.filter = 'Slow' # Averages 16 measurements
+        # inst.lockout = True # Blocks the front panel
+        # inst.keypad = 'Off' # Switches the keypad off
+        # inst.attenuator = True # The attenuator is on
+        # inst.wavelength = 633 # Sets the wavelength to 633nm
+        # inst.units = "Watts" # Sets the units to Watts
+        # inst.filter = 'Slow' # Averages 16 measurements
+        #
+        # if not inst.go:
+        #     inst.go = True # If the instrument is not running, enables it
+        #
+        # inst.range = 0 # Auto-sets the range
 
-        if not inst.go:
-            inst.go = True # If the instrument is not running, enables it
-
-        inst.range = 0 # Auto-sets the range
-
-        print('The measured power is {} Watts'.format(inst.data))
+        print('The model is {}'.format(inst.idn()))
+        print('The central wavelength is %s'%(inst.nm()))
+        inst.goto(532.1)
+        print('The central wavelength is %s'%(inst.nm()))

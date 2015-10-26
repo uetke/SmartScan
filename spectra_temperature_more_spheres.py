@@ -1,11 +1,13 @@
+# This file is work in progress.
+# Do not run it!
 """
     spectra_temperature.py
     -------------
-    Acquires spectra of a particle while varying the temperature in the surrounding medium. 
-    Acquires a series of 532nm spectra, at different excitation powers. 
-    Loops until stopped. In between loops, the temperature has to be changed, the program refocus 
+    Acquires spectra of a particle while varying the temperature in the surrounding medium.
+    Acquires a series of 532nm spectra, at different excitation powers.
+    Loops until stopped. In between loops, the temperature has to be changed, the program refocus
     continuously on on of the particles to keep track of it, and adjusts the relative distances.
-    
+
     AUTHOR: Aquiles Carattino
     EMAIL: carattino@physics.leidenuniv.nl
 
@@ -18,7 +20,6 @@ import msvcrt
 import sys
 import os
 from datetime import datetime
-from spectrometer import abort, trigger_spectrometer
 import copy
 import matplotlib.pyplot as plt
 
@@ -32,31 +33,15 @@ for i in range(len(cwd)-1):
 if path not in sys.path:
     sys.path.insert(0, path)
 
-    
-from lib.adq_mod import adq
-from lib.xml2dict import device,variables
-from devices.powermeter1830c import powermeter1830c as pp
-from devices.arduino import arduino as ard
 
-class particle():
-    def __init__(self,coords):
-        self.xcenter = []
-        self.ycenter = []
-        self.zcenter = []
-        self.xcenter.append(coords[0])
-        self.ycenter.append(coords[1])
-        self.zcenter.append(coords[2])
-    
-    def get_center(self):
-        center = [self.xcenter[-1],self.ycenter[-1],self.zcenter[-1]]
-        return center
-    
-    def set_center(self,coords):
-        self.xcenter.append(coords[0])
-        self.ycenter.append(coords[1])
-        self.zcenter.append(coords[2])
-    
-if __name__ == '__main__': 
+from experiment import *
+
+
+
+if __name__ == '__main__':
+    # Initialize the class for the experiment
+    exp = experiment()
+
     # Coordinates of the particles
     pcle1 = [41.38, 44.32, 52.40]
     pcle2 = [58.13, 41.74, 52.10]
@@ -65,7 +50,7 @@ if __name__ == '__main__':
     #pcle5 = [52.97, 55.28, 49.00]
     #pcle6 = [53.80, 49.32, 49.00]
     #pcle7 = [55.88, 51.63, 49.00]
-    
+
     # Coordinates of the background
     bkg = [48.91, 49.15, 52.40]
     # Create array of particles
@@ -77,7 +62,7 @@ if __name__ == '__main__':
     #particles.append(particle(pcle5))
     #particles.append(particle(pcle6))
     #particles.append(particle(pcle7))
-    
+
     ##################################################################################
     #   The next few lines are for updating the coordinates of the particles         #
     #  in case there is the need for re_starting the program. Only the coordinates   #
@@ -85,7 +70,7 @@ if __name__ == '__main__':
     #  coordinates will be updated based on this one.                                #
     #  It has to be commented out for a normal execution.                            #
     ##################################################################################
-    
+
     #new_center_first_particle = [39.14999999999983,47.36000000000002,64.09999999999994] # Get this value from the keep_track_temp.
     #particles[0].set_center(new_center_first_particle)
     ## Update the coordinates of the other particles
@@ -99,37 +84,33 @@ if __name__ == '__main__':
     #    center[2] += dz
     #    particles[i+1].set_center(center)
     #/********************************************************************************/#
-    
+
     background = particle(bkg)
-    
-    number_of_spectra = 7 # Number of spectra for each temperature
-    number_of_accumulations = 3 # Accumulations of each spectra (for reducing noise in long-exposure images)
-    
+
+    exp.number_of_spectra = 7 # Number of spectra for each temperature
+    exp.number_of_accumulations = 3 # Accumulations of each spectra (for reducing noise in long-exposure images)
+
     #parameters for the refocusing on the particles
-    dims = [1,1,1.5]
-    accuracy = [0.1,0.1,0.1]
-    
+    exp.dims = [1,1,1.5]
+    exp.accuracy = [0.1,0.1,0.1]
+
     # Maximum and minimum laser intensities
-    
-    laser_min = 500 # In uW
-    laser_max = 3900 # In uW
-    laser_powers = np.linspace(laser_min,laser_max,number_of_spectra)
-    focusing_power = 1800 # In uW (The power used to refocus on the particles and to keep track during temperature changes)
-    
+    exp.laser_min = 500 # In uW
+    exp.laser_max = 3900 # In uW
+    exp.laser_powers = np.linspace(laser_min,laser_max,number_of_spectra)
+    exp.focusing_power = 1800 # In uW (The power used to refocus on the particles and to keep track during temperature changes)
+
     # How much time between refocusing
-    time_for_refocusing = 5*60 # In seconds
-    
-    #Parameters for keeping track of the particle
-    #dims_t = [0.4,0.4,0.8]
-    #accuracy_t = [0.05,0.05,0.1]
+    exp.time_for_refocusing = 5*60 # In seconds
+
     # Name that the files will have
-    name = 'spectra_temperature' 
+    name = 'spectra_temperature'
     name2 = 'spectra_temperature_keep_track'
     # Directory for saving the files
     savedir = 'D:\\Data\\' + str(datetime.now().date()) + '\\'
     if not os.path.exists(savedir):
         os.makedirs(savedir)
-        
+
     # Not overwrite
     i=1
     filename = '%s_%s.dat'%(name,i)
@@ -138,14 +119,14 @@ if __name__ == '__main__':
         filename = '%s_%s.dat' %(name,i)
     filename2 = '%s_%s.dat' %(name2,i)
     print('Data will be saved in %s'%(savedir+filename))
-    
+
     # Prepare the folder in network drive
     savedir2 = 'R:\\monos\\Aquiles\\Data\\' + str(datetime.now().date()) + '\\'
     if not os.path.exists(savedir2):
         os.makedirs(savedir2)
     print('Data will also be saved in %s'%(savedir2+filename))
-    
-        # Check if the calibration of the AOM was done today and import the data for it.
+
+    # Check if the calibration of the AOM was done today and import the data for it.
     if os.path.exists(savedir+'aom_calibration.txt'):
         print('Importing AOM calibration...')
         AOM_voltage = np.loadtxt(savedir+'aom_calibration2.txt').astype('float')[6:]
@@ -159,56 +140,40 @@ if __name__ == '__main__':
         plt.show(block=False)
     else:
         raise Exception('The AOM was not calibrated today, please do it before running this program...')
-    
-    
-    #init the Adwin program and also loading the configuration file for the devices
-    adw = adq() 
-    adw.proc_num = 9
-    counter = device('APD 1')
-    aom = device('AOM')
-    xpiezo = device('x piezo')
-    ypiezo = device('y piezo')
-    zpiezo = device('z piezo')
-    devs = [xpiezo,ypiezo,zpiezo]
-    
-    #Newport Power Meter
-    pmeter = pp(0)
-    pmeter.initialize()
-    pmeter.wavelength = 532
-    pmeter.attenuator = True
-    pmeter.filter = 'Medium' 
-    pmeter.go = True
-    pmeter.units = 'Watts' 
-    
-    # Initialize the Arduino Class
-    
-    arduino = ard('COM9')
-    
+
+
+
+
     data = np.zeros(12) # For storing Spectra
     data2 = np.zeros(7) # For storing tracking
     # For the spectra data
-    header = 'Time [s], Wavelength[nm], Type, Pcle, Temp[Arduino], X [uM], Y [uM], Z [uM], Power [muW], Counts, Room Temp [C], Humidity [%]' 
+    header = 'Time [s], Wavelength[nm], Type, Pcle, Temp[Arduino], X [uM], Y [uM], Z [uM], Power [muW], Counts, Room Temp [C], Humidity [%]'
     # For the keep track data
-    header2 = 'Time [s], X [uM], Y [uM], Z [uM], Power [muW], Counts, Temp [Arduino]' 
+    header2 = 'Time [s], X [uM], Y [uM], Z [uM], Power [muW], Counts, Temp [Arduino]'
     temperature = 1
     t_0 = time.time() # Initial time
-    
+
     acquire_spectra = True
-    
-    input('Press enter when 532nm is on and everything is ready')
-    
+
+    input('Press enter when WhiteLight is on and everything is ready')
+
     fl = open(savedir+filename2+'.temp','a') # Appends to previous files
     fl.write(header2)
     fl.write('\n')
     fl.flush()
-    
+
+    # Set the values of the AOM for taking several spectra
+    power_aom = []
+    for power in exp.laser_powers:
+        power_aom.append(np.polyval(P,laser_powers[m]))
+
     while acquire_spectra:
-        print('Aquiring 532nm data...')
-        temp = arduino.get_flowcell_temp()
-        print('Starting with Arduino temperature %s'%temp)
-        
-        pmeter.wavelength = 532
-        
+        print('Aquiring WhiteLight data...')
+        temp = exp.adw.adc(exp.temp)
+        print('Starting with temperature %s'%temp)
+
+        exp.pmeter.wavelength = 532
+
         for k in range(len(particles)):
             print('-> Particle %s out of %s'%(k+1,len(particles)))
             for m in range(number_of_spectra):
@@ -224,14 +189,14 @@ if __name__ == '__main__':
                 particles[k].set_center(center)
                 adw.go_to_position(devs,center)
                 power_aom = np.polyval(P,focusing_power)
-                adw.go_to_position([aom],[power_aom])               
-                
+                adw.go_to_position([aom],[power_aom])
+
                 power_aom = np.polyval(P,laser_powers[m])
                 adw.go_to_position([aom],[power_aom])
                 for j in range(number_of_accumulations):
                     print('    ---> Accumulation %s out of %s'%(j+1,number_of_accumulations))
                     trigger_spectrometer(adw)
-                    
+
                     # Saves the data of each triggering
                     dd,ii = adw.get_timetrace_static([counter],duration=1,acc=1)
                     t = time.time()-t_0
@@ -243,7 +208,7 @@ if __name__ == '__main__':
                         power = 0
                     new_data = [t,'532','spectra',k+1,temp,position[0],position[1],position[2],power,np.sum(dd),room_temp,humidity]
                     data = np.vstack([data,new_data])
-                                    
+
                     if (time.time()-time_last_refocus>time_for_refocusing) and (j<number_of_accumulations-1):
                         print('Focusing on particle %s'%(k+1))
                         position = adw.focus_full(counter,devs,center,dims,accuracy).astype('str')
@@ -253,14 +218,14 @@ if __name__ == '__main__':
                         particles[k].set_center(center)
                 try:
                     np.savetxt("%s%s" %(savedir,filename),data, fmt='%s', delimiter=",",header=header)
-                #    np.savetxt("%s%s" %(savedir2,filename),data, fmt='%s', delimiter=",",header=header)    
+                #    np.savetxt("%s%s" %(savedir2,filename),data, fmt='%s', delimiter=",",header=header)
                 except:
                     print("Problem saving data")
-            
+
         print('-> Time for backgrounds...')
         bkg_center = background.get_center()
         bkg_center[2] = particles[-1].get_center()[2] # Gets the Z position of the last particle
-        
+
         adw.go_to_position(devs,bkg_center)
         for m in range(number_of_spectra):
             power_aom = np.polyval(P,laser_powers[m])
@@ -282,22 +247,22 @@ if __name__ == '__main__':
                 data = np.vstack([data,new_data])
             try:
                 np.savetxt("%s%s" %(savedir,filename),data, fmt='%s', delimiter=",",header=header)
-            #    np.savetxt("%s%s" %(savedir2,filename),data, fmt='%s', delimiter=",",header=header) 
+            #    np.savetxt("%s%s" %(savedir2,filename),data, fmt='%s', delimiter=",",header=header)
             except:
-                print("Problem saving data")    
+                print("Problem saving data")
 
         print('Done with Arduino temperature %s.'%temp)
-        
+
         # Let's start focusing on the particle
         print('The program will start refocusing on the particle')
         i = 1
-        
+
         power_aom = np.polyval(P,focusing_power)
         adw.go_to_position([aom],[power_aom])
         adw.go_to_position([aom],[power_aom])
         center = particles[0].get_center() # Use the first particle for refocusing
         adw.go_to_position(devs,center)
-        
+
         keep_track = True
         while keep_track:
             print('Entering iteration %s...'%i)
@@ -314,7 +279,7 @@ if __name__ == '__main__':
                 power = 0
             # Take intensity
             dd,ii = adw.get_timetrace_static([counter],duration=1,acc=1)
-            
+
             t = time.time()-t_0
             temp = arduino.get_flowcell_temp()
             print('     --> Temperature: %s'%(temp))
@@ -334,7 +299,7 @@ if __name__ == '__main__':
                     key = msvcrt.getch()
                     if ord(key) == 113: #113 is ascii for letter q
                         keep_track = False
-                            
+
         # Once finished keeping track, update the centers of all particles checking the original deltas
         dx = particles[0].xcenter[-1]-particles[0].xcenter[0]
         dy = particles[0].ycenter[-1]-particles[0].ycenter[0]
@@ -345,16 +310,16 @@ if __name__ == '__main__':
             center[1] += dy
             center[2] += dz
             particles[i+1].set_center(center)
-            
+
         answer = input('Do you want to take more spectra at a different temperature?[y/n]')
         if answer == 'n':
             keep_track = False
             acquire_spectra = False
-        
-        
+
+
     fl.close()
     try:
         np.savetxt("%s%s" %(savedir,filename2),data2, fmt='%s', delimiter=",",header=header)
     except:
-        print('Problem saving local data for keeping track. Check temporar files')   
+        print('Problem saving local data for keeping track. Check temporar files')
     print('Program finish')
