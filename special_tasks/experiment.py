@@ -92,10 +92,10 @@ class experiment():
         if particle.get_type() == 'pcle':
             # Refocus on the particle
             print('\tFocusing')
-            #position = self.focus_full()
-            #time_last_refocus = time.time()
-            #self.center = position.astype('float')
-            #particle.set_center(self.center)
+            position = self.focus_full()
+            self.time_last_refocus = time.time()
+            self.center = position.astype('float')
+            particle.set_center(self.center)
         elif particle.get_type() == 'bkg':
             pass
         else:
@@ -112,12 +112,6 @@ class experiment():
                 values = how['values']
                 self.adw.go_to_position([dev],[values[m]])
                 self.accumulate_spectrometer(particle,wavelengths)
-                if (time.time()-time_last_refocus>=self.time_for_refocusing) and (particle.get_type() == 'pcle'):
-                    position = self.focus_full()
-                    time_last_refocus = time.time()
-                    self.center = position.astype('float')
-                    particle.set_center(self.center)
-                    self.adw.go_to_position(self.devs,self.center)
         return particle
 
     def focus_full(self):
@@ -127,6 +121,13 @@ class experiment():
         num_accumulations = len(wl)
         if num_accumulations >= 1:
             for wlength in wl:
+                if (time.time()-self.time_last_refocus>=self.time_for_refocusing) and (pcle.get_type() == 'pcle'):
+                    position = self.focus_full()
+                    self.time_last_refocus = time.time()
+                    self.center = position.astype('float')
+                    pcle.set_center(self.center)
+                    self.adw.go_to_position(self.devs,self.center)
+
                 self.client_spec.goto(wlength)
                 trigger_spectrometer(self.adw)
 
@@ -154,6 +155,16 @@ class experiment():
                 self.spec.update(values)
         else:
             raise Exception('The length of the accumulations is wrong')
+
+    def keep_track(self,particle):
+        # Take position
+        self.center = particle.get_center() # Use the first particle for refocusing
+        position = self.focus_full().astype('str')
+        center = position.astype('float')
+        self.adw.go_to_position(self.devs,center)
+        particle.set_center(center)
+
+        return particle
 
 class particle():
     def __init__(self,coords,tpe,num):

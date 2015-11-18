@@ -10,12 +10,13 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-today = 'D:\\Data\\2015-10-20\\'
+today = 'D:\\Data\\2015-11-10\\'
 
 if __name__ == '__main__':
-    name = 'spectra_temperature_keep_track_4.dat.temp'
+    name = 'keep_track_1.dat.temp'
     file = today+name
-    data = np.loadtxt(file,dtype='bytes',skiprows=1,delimiter =',').astype('str')
+    data = np.loadtxt(file,dtype='bytes',skiprows=1,delimiter =', ').astype('str')
+    print(data[1:,0])
     f1 = plt.figure()
     plt.plot(data[1:,0],data[1:,1],'o')
     plt.plot(data[1:,0],data[1:,2],'o')

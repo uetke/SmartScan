@@ -27,26 +27,24 @@ if __name__ == '__main__':
 
     # Coordinates of the particles
     pcle = 'pcle'
-    pcle1 = [41.38, 44.32, 52.40]
-    pcle2 = [58.13, 41.74, 52.10]
-    pcle3 = [41.90, 48.76, 52.20]
-    #pcle4 = [45.85, 53.86, 49.00]
+    pcle1 = [24.47, 45.21, 64.9]
+    # pcle2 = [45.96, 51.14, 49.70]
+    # pcle3 = [50.24, 51.92, 49.70]
+    # pcle4 = [58.65, 54.47, 49.70]
     #pcle5 = [52.97, 55.28, 49.00]
     #pcle6 = [53.80, 49.32, 49.00]
     #pcle7 = [55.88, 51.63, 49.00]
 
     # Coordinates of the background
-    bkg = [48.91, 49.15, 52.40]
+    bkg = [50.33, 46.11, 64.9]
 
     # Create array of particles
     particles = []
     particles.append(particle(pcle1,pcle,1))
-    particles.append(particle(pcle2,pcle,2))
-    particles.append(particle(pcle3,pcle,3))
-    #particles.append(particle(pcle4))
-    #particles.append(particle(pcle5))
-    #particles.append(particle(pcle6))
-    #particles.append(particle(pcle7))
+    # particles.append(particle(pcle2,pcle,2))
+    # particles.append(particle(pcle3,pcle,3))
+    # particles.append(particle(pcle4,pcle,4))
+
 
     ##################################################################################
     #   The next few lines are for updating the coordinates of the particles         #
@@ -56,13 +54,13 @@ if __name__ == '__main__':
     #  It has to be commented out for a normal execution.                            #
     ##################################################################################
 
-    #new_center_first_particle = [39.14999999999983,47.36000000000002,64.09999999999994] # Get this value from the keep_track_temp.
-    #particles[0].set_center(new_center_first_particle)
-    ## Update the coordinates of the other particles
-    #dx = particles[0].xcenter[-1]-particles[0].xcenter[0]
-    #dy = particles[0].ycenter[-1]-particles[0].ycenter[0]
-    #dz = particles[0].zcenter[-1]-particles[0].zcenter[0]
-    #for i in range(len(particles)-1):
+    # new_center_first_particle = [34.09, 41.47, 59.8] # Get this value from the keep_track_temp.
+    # particles[0].set_center(new_center_first_particle)
+    # # Update the coordinates of the other particles
+    # dx = particles[0].xcenter[-1]-particles[0].xcenter[0]
+    # dy = particles[0].ycenter[-1]-particles[0].ycenter[0]
+    # dz = particles[0].zcenter[-1]-particles[0].zcenter[0]
+    # for i in range(len(particles)-1):
     #    center = [particles[i+1].xcenter[0],particles[i+1].ycenter[0],particles[i+1].zcenter[0]]
     #    center[0] += dx
     #    center[1] += dy
@@ -70,7 +68,7 @@ if __name__ == '__main__':
     #    particles[i+1].set_center(center)
     #/********************************************************************************/#
     background = particle(bkg,'bkg',1)
-    exp.number_of_accumulations = 3 # Accumulations of each spectra (for reducing noise in long-exposure images)
+    exp.number_of_accumulations = 1 # Accumulations of each spectra (for reducing noise in long-exposure images)
     # Wavelengths for the acquisition at different central positions.
     spec_wl = [600, 610] # Minimum and maximum of the central wavelength
     #parameters for the refocusing on the particles
@@ -153,7 +151,8 @@ if __name__ == '__main__':
 
     fl.flush()
     fl.close()
-    fl = open(savedir+filename,'w') # Erases any previous content
-    pickle.dumps(exp.spec.data,fl)
+    fl = open(savedir+filename,'wb') # Erases any previous content
+    pickle.dump(exp.spec,fl)
     fl.close()
+    print('Saving all the experiment information to %s'%(savedir+filename))
     print('Program finish')

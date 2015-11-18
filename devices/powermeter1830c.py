@@ -27,7 +27,7 @@ class PowerMeter1830c(MessageBasedDriver):
                          'parity': constants.Parity.none,
                          'stop_bits': constants.StopBits.one,
                          'encoding': 'ascii',
-                         'timeout': 2000
+                         'timeout': 2500
                         }}
 
 
