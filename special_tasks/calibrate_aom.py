@@ -44,6 +44,7 @@ if __name__ == '__main__':
     aom = device('AOM')
     pmeter = pp.via_serial(1)
     pmeter.initialize()
+    time.sleep(0.5)
     pmeter.wavelength = 633
     pmeter.attenuator = True
 

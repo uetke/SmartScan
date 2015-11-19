@@ -18,7 +18,7 @@ dim data_198[1000] as long
 dim value, free, garbage as long
 dim i,j,dev_type, port, m, k as integer
 dim data_199[15] as long
-dim start[3], port[3], pix_dims[3], cur_pix[3], increment[3], old_timer[4] as long 'format is [x,y,z]" 
+dim start[3], port[3], pix_dims[3], cur_pix[3], increment[3], old_timer[4] as long 'format is [x,y,z]"
 dim pix_done, output , temp as integer
 
 Function input(dev_type,port) as long
@@ -27,8 +27,8 @@ Function input(dev_type,port) as long
     new_timer = cnt_readlatch(port)
     temp =  old_timer[port] - new_timer
     old_timer[port] = new_timer
-    input = temp 
-  else 
+    input = temp
+  else
     if (dev_type=17882988) then '17882988 is decimal for analo
       input = adc(port)
     endif
@@ -44,7 +44,7 @@ init:
   'cnt_mode(0)
   'cnt_set(15)
   'cnt_inputmode(0)
-  'cnt_enable(15) 
+  'cnt_enable(15)
   'FIFO_Clear(200)
   i = 1
   k = 1
@@ -66,35 +66,35 @@ event:
     case 1
       dac(par_74, par_75)
       end
-      
-    case 2 
+
+    case 2
       par_73 = adc(par_74)
       end
-      
+
     case 3
       for j=1 to par_71
         data_200 = input(data_198[2*j-1],data_198[2*j])
-      NEXT j 
+      NEXT j
       if (i = par_78) then
         end
       endif
       i = i + 1
-    
+
     case 33
       'For acquiring signals of several devices, but keeping in mind higher temporal accuracy'
       'The acquisition is done in series (first one device, then another, etc.'
- 
+
       data_200 = input(data_198[2*j-1],data_198[2*j])
       Inc i
       if(i = par_78+1) then
         Inc j
-        i = 1        
+        i = 1
         if (j=Par_71+1) then
           end
         endif
       endif
 
-      
+
     case 4
       'doing a scan'
       if (pix_done < 0) then
@@ -102,64 +102,56 @@ event:
         if (start[2]>-1) then
           dac(port[2],start[2])
         endif
-        if (start[3]>-1) then   
+        if (start[3]>-1) then
           dac(port[3],start[3])
         endif
         pix_done = 0
       else
-        if (k = 2) then
-          k = 1
-          for i=1 to par_71
-            data_200 = input(data_198[2*i-1],data_198[2*i])
-          NEXT i
-          pix_done = pix_done + 1
-          par_79 = pix_done
-          if (pix_done = pix_dims[1] * pix_dims[2] * pix_dims[3]) then
-            end
-          endif
-          if (cur_pix[1] < pix_dims[1]-1) then
-            cur_pix[1] = cur_pix[1] + 1
-            output = start[1] + increment[1]*cur_pix[1]
-            dac(port[1],output)
+        for i=1 to par_71
+          data_200 = input(data_198[2*i-1],data_198[2*i])
+        NEXT i
+        pix_done = pix_done + 1
+        par_79 = pix_done
+        if (pix_done = pix_dims[1] * pix_dims[2] * pix_dims[3]) then
+          end
+        endif
+        if (cur_pix[1] < pix_dims[1]-1) then
+          cur_pix[1] = cur_pix[1] + 1
+          output = start[1] + increment[1]*cur_pix[1]
+          dac(port[1],output)
+        else
+          if (cur_pix[2] < pix_dims[2]-1) then
+            cur_pix[2] = cur_pix[2] + 1
+            par_77 = cur_pix[1]
+            output = start[2] + increment[2]*cur_pix[2]
+            cur_pix[1] = 0
+            dac(port[1],start[1])
+            dac(port[2],output)
           else
-            if (cur_pix[2] < pix_dims[2]-1) then
-              cur_pix[2] = cur_pix[2] + 1
-              par_77 = cur_pix[1]
-              output = start[2] + increment[2]*cur_pix[2]
+            if (cur_pix[3] < pix_dims[3]-1) then
+              cur_pix[3] = cur_pix[3] + 1
+              output = start[3] + increment[3]*cur_pix[3]
               cur_pix[1] = 0
+              cur_pix[2] = 0
               dac(port[1],start[1])
-              dac(port[2],output)
-            else
-              if (cur_pix[3] < pix_dims[3]-1) then 
-                cur_pix[3] = cur_pix[3] + 1
-                output = start[3] + increment[3]*cur_pix[3]
-                cur_pix[1] = 0
-                cur_pix[2] = 0
-                dac(port[1],start[1])
-                dac(port[2],start[2])
-                dac(port[3],output)
-              endif
+              dac(port[2],start[2])
+              dac(port[3],output)
             endif
           endif
-        else
-          for i=1 to par_71
-            garbage = input(data_198[2*i-1],data_198[2*i])
-          NEXT i
-          k = 2
         endif
       endif
-     
-    
+
+
     case 5
       par_73 = digin_word()
       end
-    
+
     case 6
       set_digout(par_74)
       end
-    
-    case 7 
+
+    case 7
       clear_digout(par_74)
       end
-    
+
   EndSelect
