@@ -43,19 +43,22 @@ if __name__ == '__main__':
     print('Data will be saved in %s'%(savedir+filename))
     #init the Adwin programm and also loading the configuration file for the devices
     adw = adq() 
-    adw.load('lib/adbasic/fast_timetrace.T98')
+    adw.load('lib/ADwinsrc/fast_timetrace.T98')
     counter = device('APD 1')
     
-    timetrace_time = 3    # In seconds
-    integration_time = .001 # In seconds
+    timetrace_time = .01    # In seconds
+    integration_time = .000000025 # In seconds
     number_elements = int(timetrace_time/integration_time)
-    data = np.zeros([1,number_elements+1])
+    #data = np.zeros([1,number_elements+1])
    
     print('Acquiring Timetrace')
-    dd = adw.get_fast_timetrace(counter,duration=timetrace_time,acc=integration_time)
+    dd,cc = adw.get_fast_timetrace(counter,duration=timetrace_time,acc=integration_time)
     dd = np.array(dd)
+    cc = np.array(cc)
+    print(dd)
+    print(cc)
     data = dd
-   
+    data2 = cc
     header = "Fast Timetrace of APD"
     np.savetxt("%s%s" %(savedir,filename), data,fmt='%s', delimiter=",", header=header)   
     logger.info('Initial file saved as %s%s_init.txt' %(savedir,filename))

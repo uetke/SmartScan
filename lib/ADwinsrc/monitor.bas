@@ -6,10 +6,11 @@
 ' Priority                       = Low
 ' Priority_Low_Level             = 1
 ' Version                        = 1
-' ADbasic_Version                = 5.0.8
+' ADbasic_Version                = 6.0.0
 ' Optimize                       = Yes
 ' Optimize_Level                 = 2
-' Info_Last_Save                 = MEETPC113  MEETPC113\LION
+' Stacksize                      = 1000
+' Info_Last_Save                 = MEETPC113  MEETPC113\Aquiles
 '<Header End>
 
 #include c:\adwin\adbasic\inc\adwgcnt.inc
@@ -66,7 +67,15 @@ event:
   data_179 = count[2]
   data_180 = count[3]
   data_181 = count[4]
-  
+  data_173 = digin(0)
+  data_172 = digin(1)
+  data_171 = digin(2)
+  data_170 = digin(3)
+  data_169 = digin(4)
+  data_168 = digin(5)
+  data_167 = digin(6)
+  data_166 = digin(7)
+  data_165 = digin(8)
   for j = 1 to 16
     average[j] = 0
   NEXT j

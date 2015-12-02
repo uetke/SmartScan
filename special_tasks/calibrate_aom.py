@@ -9,7 +9,7 @@ import msvcrt
 import sys
 import os
 from lib.logger import get_all_caller,logger
-from devices.powermeter1830c import powermeter1830c as pp
+from devices.powermeter1830c import PowerMeter1830c as pp
 from time import sleep
 logger=logger(filelevel=20)
 
@@ -25,9 +25,9 @@ def abort(filename):
     np.savetxt("%s%s_abort.txt" %(savedir,filename), data,fmt='%s', delimiter=",", header=header)
     logger.info('Aborted file saved as %s%s_abort.txt' %(savedir,filename))
     sys.exit(0)
-        
-if __name__ == '__main__': 
-    #initialize the adwin and the devices   
+
+if __name__ == '__main__':
+    #initialize the adwin and the devices
     cwd = os.getcwd()
     savedir = 'D:\\Data\\' + str(datetime.now().date()) + '\\'
     print('For quiting press q')
@@ -36,22 +36,22 @@ if __name__ == '__main__':
 
     print('Data will be saved in %s'%(savedir))
     #init the Adwin programm and also loading the configuration file for the devices
-    adw = adq() 
+    adw = adq()
     xpiezo = device('x piezo')
     ypiezo = device('y piezo')
     zpiezo = device('z piezo')
     counter = device('APD 1')
     aom = device('AOM')
-    pmeter = pp(0)
+    pmeter = pp.via_serial(1)
     pmeter.initialize()
-    pmeter.wavelength = 532
+    time.sleep(0.5)
+    pmeter.wavelength = 633
     pmeter.attenuator = True
-    
+
     data = []
     aom_data = []
     adw.go_to_position([aom],[1.25])
-    plt.ion()
-    for i in range(20):
+    for i in range(19):
         power_aom = 2.5-i*2.5/20
         adw.go_to_position([aom],[power_aom])
         sleep(2)
@@ -59,11 +59,9 @@ if __name__ == '__main__':
         print('Power meter: %i uW'%(pmeter.data*1000000))
         print('AOM: %f'%(power_aom))
         aom_data.append(power_aom)
-        
-        plt.plot(np.array(aom_data),np.array(data))
-
         sleep(.1)
-        
+
+    plt.plot(np.array(aom_data),np.array(data))
     np.savetxt("%s\\aom_calibration.txt" %(savedir), data,fmt='%s', delimiter=",")
     np.savetxt("%s\\aom_calibration2.txt" %(savedir), aom_data,fmt='%s', delimiter=",")
     pmeter.finalize()

@@ -321,7 +321,7 @@ class adq(ADwin,ADwinDebug):
             self.start(9)
             self.wait(9)
             value = int(self.get_par(par.properties['Output_value']))
-            output = 20/gain*(value-32768)/65536
+            output = 20*(value-32768)/65536 # The gain is not yet implemented
             return output
         else:
             self.logger.error('The channel %s is out of range(0,16)' %channel)

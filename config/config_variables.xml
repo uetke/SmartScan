@@ -39,6 +39,14 @@ Analog13='194'
 Analog14='195'
 Analog15='196'
 Analog16='197'
-Scan_data='200'>
+Scan_data='200' 
+Digin1='173'
+Digin2='172'
+Digin3='171'
+Digin4='170'
+Digin5='169'
+Digin6='168'
+Digin7='167'
+Digin8='166'>
 </Fifo>
 </Variables>
