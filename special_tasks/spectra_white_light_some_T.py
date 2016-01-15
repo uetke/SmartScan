@@ -27,23 +27,34 @@ if __name__ == '__main__':
 
     # Coordinates of the particles
     pcle = 'pcle'
-    pcle1 = [32.08, 50.11, 51.20]
-    # pcle2 = [47.36, 43.09, 47.00]
-    # pcle3 = [48.04, 49.11, 47.00]
-    # pcle4 = [60.67, 38.33, 47.00]
-    #pcle5 = [52.97, 55.28, 49.00]
-    #pcle6 = [53.80, 49.32, 49.00]
-    #pcle7 = [55.88, 51.63, 49.00]
+    pcle1 = [32.0824267782, 61.3246861925, 49.5]
+    pcle2 = [48.6912133891, 68.1284518828, 49.5]
+    pcle3 = [59.9652719665, 67.3870292887, 49.5]
+    pcle4 = [59.569874477, 67.1317991632, 49.5]
+    pcle5 = [46.3761506276, 62.6937238494, 49.5]
+    pcle6 = [31.3317991632, 56.4083682008, 49.5]
+    pcle7 = [53.8029288703, 59.4464435146, 49.5]
+    pcle8 = [32.8916317992, 46.1619246862, 49.5]
+    pcle9 = [54.339748954, 31.8359832636, 49.5]
+    pcle10 = [41.5874476987, 37.7983263598, 49.5]
+    pcle11 = [41.9012552301, 31.4129707113, 49.6]
 
     # Coordinates of the background
-    bkg = [43.00, 41.00, 51.20]
+    bkg = [36.9665271967, 60.5648535565, 49.5]
 
     # Create array of particles
     particles = []
     particles.append(particle(pcle1,pcle,1))
-    # particles.append(particle(pcle2,pcle,2))
-    # particles.append(particle(pcle3,pcle,3))
-    # particles.append(particle(pcle4,pcle,4))
+    particles.append(particle(pcle2,pcle,2))
+    particles.append(particle(pcle3,pcle,3))
+    particles.append(particle(pcle4,pcle,4))
+    particles.append(particle(pcle5,pcle,5))
+    particles.append(particle(pcle6,pcle,6))
+    particles.append(particle(pcle7,pcle,7))
+    particles.append(particle(pcle8,pcle,8))
+    particles.append(particle(pcle9,pcle,9))
+    particles.append(particle(pcle10,pcle,10))
+    particles.append(particle(pcle11,pcle,11))
 
     background = particle(bkg,'bkg',1)
 
@@ -55,29 +66,29 @@ if __name__ == '__main__':
     #  It has to be commented out for a normal execution.                            #
     ##################################################################################
 
-    # new_center_first_particle = [28.46, 34.93, 50.5] # Get this value from the keep_track_temp.
-    # particles[0].set_center(new_center_first_particle)
-    # # Update the coordinates of the other particles
-    # dx = particles[0].xcenter[-1]-particles[0].xcenter[0]
-    # dy = particles[0].ycenter[-1]-particles[0].ycenter[0]
-    # dz = particles[0].zcenter[-1]-particles[0].zcenter[0]
-    # for i in range(len(particles)-1):
-    #    center = [particles[i+1].xcenter[0],particles[i+1].ycenter[0],particles[i+1].zcenter[0]]
-    #    center[0] += dx
-    #    center[1] += dy
-    #    center[2] += dz
-    #    particles[i+1].set_center(center)
-    # # Update background position
-    # center = [background.xcenter[0],background.ycenter[0],background.zcenter[0]]
-    # center[0] += dx
-    # center[1] += dy
-    # center[2] += dz
-    # background.set_center(center)
-    #/********************************************************************************/#
+    new_center_first_particle = [30.53, 60.42, 48.80] # Get this value from the keep_track_temp.
+    particles[0].set_center(new_center_first_particle)
+    # Update the coordinates of the other particles
+    dx = particles[0].xcenter[-1]-particles[0].xcenter[0]
+    dy = particles[0].ycenter[-1]-particles[0].ycenter[0]
+    dz = particles[0].zcenter[-1]-particles[0].zcenter[0]
+    for i in range(len(particles)-1):
+       center = [particles[i+1].xcenter[0],particles[i+1].ycenter[0],particles[i+1].zcenter[0]]
+       center[0] += dx
+       center[1] += dy
+       center[2] += dz
+       particles[i+1].set_center(center)
+    # Update background position
+    center = [background.xcenter[0],background.ycenter[0],background.zcenter[0]]
+    center[0] += dx
+    center[1] += dy
+    center[2] += dz
+    background.set_center(center)
+    # /********************************************************************************/#
 
     exp.number_of_accumulations = 5 # Accumulations of each spectra (for reducing noise in long-exposure images)
     # Wavelengths for the acquisition at different central positions.
-    spec_wl = [575, 595] # Minimum and maximum of the central wavelength
+    spec_wl = [670, 690] # Minimum and maximum of the central wavelength
     #parameters for the refocusing on the particles
     exp.dims = [1,1,1.5]
     exp.accuracy = [0.1,0.1,0.1]
@@ -171,7 +182,7 @@ if __name__ == '__main__':
         keep_track = True
         while keep_track:
             print('Entering iteration %s...'%i)
-            particles[0] = exp.keep_track(particles[0])
+            particles[0] = exp.keep_track(particles[9])
             temp = exp.adw.adc(exp.temp,2)
             position = particles[0].get_center()
             dd,ii = exp.adw.get_timetrace_static([exp.counter],duration=1,acc=1)
@@ -204,6 +215,13 @@ if __name__ == '__main__':
             center[1] += dy
             center[2] += dz
             particles[i+1].set_center(center)
+
+        # Update background position
+        center = [background.xcenter[0],background.ycenter[0],background.zcenter[0]]
+        center[0] += dx
+        center[1] += dy
+        center[2] += dz
+        background.set_center(center)
 
         answer = input('Do you want to take more spectra at a different temperature?[y/n]')
         if answer == 'n':

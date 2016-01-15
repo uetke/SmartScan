@@ -41,6 +41,7 @@ class Flipper():
             self.connected = True
             return True
         else:
+            self.connected = False
             return False
 
     def identify(self):
@@ -69,7 +70,7 @@ class Flipper():
 
         position = self.aptdll.FF_GetPosition(self.SerialNum)
         if position not in (1,2):
-            raise Exception('The flipper returned an invalid position: %s'%(position))
+            pass#raise Warning('The flipper returned an invalid position: %s'%(position))
         return position
 
     def goto(self,position):
@@ -99,12 +100,20 @@ class Flipper():
 if __name__ == '__main__':
     from time import sleep
 
-    inst = Flipper(SerialNum=b'37863346')
+    inst = Flipper(SerialNum=b'37863355')
     print(inst.identify()) # Makes the green LED blink
     sleep(1)
     print('Current position is %s'%(inst.getPos()))
-    print('Changing position...')
-    inst.changePos()
-    sleep(0.7)
-    print('The new position is %s'%inst.getPos())
+    change_pos = True
+    while change_pos:
+        p = int(input('Change the position [1,2,0=exit]'))
+        if p==1:
+            print('Changing position...')
+            inst.goto(p)
+        elif p==2:
+            print('Changing position...')
+            inst.goto(p)
+        else:
+            change_pos = False
+    print('The fianl position is %s'%inst.getPos())
     inst.close()

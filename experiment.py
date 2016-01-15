@@ -12,6 +12,7 @@ from lib.xml2dict import device,variables
 from special_tasks.spectrometer import abort, trigger_spectrometer, client_spectrometer
 from devices.powermeter1830c import PowerMeter1830c as pp
 from devices.arduino import arduino as ard
+from devices.flipper import Flipper
 
 class experiment():
     """ Defines a general class where all the variables for a possible experiment
@@ -69,6 +70,15 @@ class experiment():
             print('Problem with arduino')
 
 
+        # Initialize the motorized flipper mirror
+        try:
+            self.flipper = Flipper(b'37863355')
+            self.flipper_apd = 1 # Position going to the APD
+            self.flipper_spec = 2 # Position going to the spectrometer
+            self.flip = True
+        except:
+            print('Problem initializing the flipper mirror')
+            self.flip = False
 
 
     def acquire_spectra(self,particle,how,spec_wl):
@@ -114,7 +124,47 @@ class experiment():
                 self.accumulate_spectrometer(particle,wavelengths)
         return particle
 
+    def fixed_spectra(self,how,spec_wl):
+        """ Function for acquiring spectra of an array of particles. It will try to move the grating of the spectrometer.
+            ..how: Dictionary with the information on the type of spectra to acquire.
+                    how['type']: fixed, variable
+                                  fixed is used when no change in intensity is required.
+                                  variable is used when the intensity changes.
+                    how['device']: The decice to which to set a particular value.
+                                    This is to keep in mind the possibility of taking spectra with
+                                    two different lasers, for instance.
+                    how['values']: When used a type variable, the value to set to the device
+                    how['description']: Description for output to screen.
+            ..spec_wl: list with the min and max wavelengths to send to the spectrometer when
+                        accumulating
+        """
+        if self.flip:
+            if self.flipper_spec != self.flipper.getPos():
+                self.flipper.goto(self.flipper_spec)
+        wavelengths = np.linspace(spec_wl[0],spec_wl[-1],self.number_of_accumulations)
+        if how['type'] == 'fixed':
+            if self.number_of_accumulations >= 1:
+                for wlength in wavelengths:
+                    self.client_spec.goto(wlength)
+
+                    trigger_spectrometer(self.adw)
+            else:
+                raise Exception('The length of the accumulations is wrong')
+
+        elif how['type'] == 'variable':
+            print('Not yet properly implemented')
+
+        if self.flip:
+            if self.flipper_apd != self.flipper.getPos():
+                self.flipper.goto(self.flipper_apd)
+        return True
+
+
     def focus_full(self):
+        if self.flip:
+            if self.flipper_apd != self.flipper.getPos():
+                self.flipper.goto(self.flipper_apd)
+
         return self.adw.focus_full(self.counter,self.devs,self.center,self.dims,self.accuracy).astype('str')
 
     def accumulate_spectrometer(self,pcle,wl):
@@ -129,8 +179,12 @@ class experiment():
                     self.adw.go_to_position(self.devs,self.center)
 
                 self.client_spec.goto(wlength)
+                if self.flip:
+                    if self.flipper_spec != self.flipper.getPos():
+                        self.flipper.goto(self.flipper_spec)
                 trigger_spectrometer(self.adw)
-
+                if self.flip:
+                    self.flipper.goto(self.flipper_apd)
                 #####################################
                 # Saves the data of each triggering #
                 #####################################
