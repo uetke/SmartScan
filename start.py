@@ -1,5 +1,5 @@
 import sys, os, inspect
-
+from lib.adq_mod import adq
 def adding_to_path(folder):
     """ Simple function for adding a folder to the path of Python in order to have available for import.
     Each folder needs an __init__.py file to be considered as a module.
@@ -30,5 +30,14 @@ if __name__ == "__main__":
 
     from GUI.MainWindow import App
     global app
-    app = App(sys.argv)
+
+    ### Initialize the adwin class ###
+    session = {}
+    # These variables should be erased. They are being kept for legacy support.
+    dev_conf = 'config/config_devices.xml'
+    session['dev_conf'] = 'config/config_devices.xml'
+    par_conf = 'config/config_variables.xml'
+    _session['par_conf'] = 'config/config_variables.xml'
+    session['adw'] = adq(dev_num,model,debug)
+    app = App(session,sys.argv)
     app.exec_()

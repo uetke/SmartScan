@@ -21,8 +21,14 @@ data=variables('Data',filename=config_variables)
 fifo=variables('Fifo',filename=config_variables)
 
 class adq(ADwin,ADwinDebug):
-    def __init__(self,debug=0):
-        DEVICENUMBER = 1 # By default this is the number
+    def __init__(self,device_number,model,debug=0):
+        """ Class ADQ. Inherits main methods from ADwin class. Re implementes
+            few of them, mainly to keep a log of errors.
+            Takes as an input the Device Number that has to be passed to the ADwin Class.
+            It also takes as an argument the model of the adwin, to set the proper
+            time constants.
+        """
+        DEVICENUMBER = device_number # By default this is the number
         RAISE_EXCEPTIONS = 1
         if debug == 0:
             self.adw = ADwin(DEVICENUMBER, RAISE_EXCEPTIONS)
@@ -31,14 +37,22 @@ class adq(ADwin,ADwinDebug):
         self.scan_settings = dict()
         self.dev_value = dict()
         self.running = False
+        if model == 'gold':
+            self.model = model
+            self.time_high = 25e-9 # Timing high priority process.
+            self.time_low = 100e-9 # Timing low priority process
+            self.boot_program = 'c:\\adwin\\ADwin9.btl'
+        else:
+            raise Exception('Model not yet implemented')
+
         self.logger = logging.getLogger(get_all_caller())
-        self.logger.info('Init the class with process')
+        self.logger.info('Init the class')
 
     def boot(self):
         """ Boots the ADwin. """
         self.logger = logging.getLogger(get_all_caller())
         self.logger.info('Booted the Adwin')
-        self.adw.Boot('c:\\adwin\\ADwin9.btl')
+        self.adw.Boot(self.boot_program)
 
     def load(self,process):
         """ Loads the processes. """
@@ -143,34 +157,37 @@ class adq(ADwin,ADwinDebug):
         """ Gets a timetrace with a dedicated high-priority process.
             Only works for a counter.
         """
-        self.load('lib/ADwinsrc/fast_timetrace.T98') # Does it need to happen here?
-        delay = m.floor(acc/25e-9)
-        port = detect.properties['Input']['Hardware']['PortID']
-        self.set_par(par.properties['Port'],int(port))
-        num_ticks = int(duration / (delay * 25e-9))
-        print(num_ticks)
-        self.set_par(par.properties['Num_ticks'],num_ticks)
-        self.adw.Set_Processdelay(8,delay)
-        self.start(process=8)
-        t0 = time.time()
-        while time.time()-t0<duration:
-            print('Waiting %3.f more seconds... \n'%(duration-time.time()+t0))
-            time.sleep(0.25)
+        if self.model = 'gold':
+            self.load('lib/ADwinsrc/fast_timetrace.T98') # Does it need to happen here?
+            delay = m.floor(acc/25e-9)
+            port = detect.properties['Input']['Hardware']['PortID']
+            self.set_par(par.properties['Port'],int(port))
+            num_ticks = int(duration / (delay * 25e-9))
+            print(num_ticks)
+            self.set_par(par.properties['Num_ticks'],num_ticks)
+            self.adw.Set_Processdelay(8,delay)
+            self.start(process=8)
+            t0 = time.time()
+            while time.time()-t0<duration:
+                print('Waiting %3.f more seconds... \n'%(duration-time.time()+t0))
+                time.sleep(0.25)
 
-        num_ticks = self.get_par(par.properties['Pix_done'])
-        print(num_ticks)
-        # Starts at 2 to remove the initial pixel that has the wrong count
-        array = self.get_data(data.properties['Timetrace'], num_ticks)
-        array2 = self.get_data(data.properties['Time'], num_ticks)
+            num_ticks = self.get_par(par.properties['Pix_done'])
+            print(num_ticks)
+            # Starts at 2 to remove the initial pixel that has the wrong count
+            array = self.get_data(data.properties['Timetrace'], num_ticks)
+            array2 = self.get_data(data.properties['Time'], num_ticks)
 
-        data_c = []
-        data_t = []
+            data_c = []
+            data_t = []
 
-        for i in range(len(array)):
-            data_c.append(array[i])
-            data_t.append(array2[i])
+            for i in range(len(array)):
+                data_c.append(array[i])
+                data_t.append(array2[i])
 
-        return data_t,data_c
+            return data_t,data_c
+        else:
+            raise Exception('Not yet implemented for this model of ADwin')
 
     def get_QPD(self,detect,duration=1,acc=.0005):
         """ Gets timetraces of 3 analog channels with high temporal accuracy.
@@ -179,40 +196,43 @@ class adq(ADwin,ADwinDebug):
             acquires at 16-bit resolution.
             RETURNS: a list of numpy arrays with the respective timetraces
         """
-        if not type(detect)== type([]):
-            detect = list(detect)
-        dev_params = np.array([])
-        for i in detect:
-            dev_params = np.append(dev_params,[int(i.properties['Type'][:5],36),i.properties['Input']['Hardware']['PortID']])
+        if self.model == 'gold':
+            if not type(detect)== type([]):
+                detect = list(detect)
+            dev_params = np.array([])
+            for i in detect:
+                dev_params = np.append(dev_params,[int(i.properties['Type'][:5],36),i.properties['Input']['Hardware']['PortID']])
 
-        self.set_datalong(dev_params,data.properties['dev_params'])
-        self.set_par(par.properties['Num_devs'],len(detect))
-        self.set_par(par.properties['Case'],33)
+            self.set_datalong(dev_params,data.properties['dev_params'])
+            self.set_par(par.properties['Num_devs'],len(detect))
+            self.set_par(par.properties['Case'],33)
 
-        delay = m.floor(acc/25e-9)
-        num_ticks = int(duration / (delay * 25e-9))
-        self.set_par(par.properties['Num_ticks'],num_ticks)
+            delay = m.floor(acc/25e-9)
+            num_ticks = int(duration / (delay * 25e-9))
+            self.set_par(par.properties['Num_ticks'],num_ticks)
 
-        if acc!=None:
-            self.adw.Set_Processdelay(9, delay)
+            if acc!=None:
+                self.adw.Set_Processdelay(9, delay)
 
-        self.start(9)
-        intermediate_data = np.zeros(1)
-        while bool(self.adw.Process_Status(9)):
-            time.sleep(.25)
+            self.start(9)
+            intermediate_data = np.zeros(1)
+            while bool(self.adw.Process_Status(9)):
+                time.sleep(.25)
+                intermediate_data = np.append(intermediate_data, np.array(list(self.get_fifo(fifo.properties['Scan_data']))))
+
+
             intermediate_data = np.append(intermediate_data, np.array(list(self.get_fifo(fifo.properties['Scan_data']))))
+            array = intermediate_data
 
+            split_data = []
 
-        intermediate_data = np.append(intermediate_data, np.array(list(self.get_fifo(fifo.properties['Scan_data']))))
-        array = intermediate_data
+            for i in range(len(detect)):
+                split_data.append(array[i*num_ticks:(i+1)*num_ticks-1])
 
-        split_data = []
-
-        for i in range(len(detect)):
-            split_data.append(array[i*num_ticks:(i+1)*num_ticks-1])
-
-        #index = np.arange(num_ticks)*(delay*25e-9)
-        return split_data#,index
+            #index = np.arange(num_ticks)*(delay*25e-9)
+            return split_data#,index
+        else:
+            raise Exception('Not yet implemented for this model of ADwin')
 
     def get_timetrace_static(self,detect,duration=1,acc=None):
         """gets the timetrace data from the adwin with the duration in seconds
@@ -746,12 +766,14 @@ class adq(ADwin,ADwinDebug):
         """This couple of lines are for checking if LabView (Uberscan) is running
         if not then we need to initialize port 7. Otherwise port 7 will change its output
         to ~ -1.7V as soon as we set a other port."""
-
-        self.logger = logging.getLogger(get_all_caller())
-        self.load('lib/adbasic/init_port7.T99')
-        self.start(9)
-        self.wait(9)
-        self.logger.info('initialized port 7 to 0V')
+        if model == 'gold':
+            self.logger = logging.getLogger(get_all_caller())
+            self.load('lib/adbasic/init_port7.T99')
+            self.start(9)
+            self.wait(9)
+            self.logger.info('initialized port 7 to 0V')
+        else:
+            raise Exception('Not yet implemented in this model of ADwin')
 
 
 class inter_add_remove():
