@@ -37,7 +37,29 @@ if __name__ == "__main__":
     dev_conf = 'config/config_devices.xml'
     session['dev_conf'] = 'config/config_devices.xml'
     par_conf = 'config/config_variables.xml'
-    _session['par_conf'] = 'config/config_variables.xml'
+    session['par_conf'] = 'config/config_variables.xml'
+    session['device_names'] = device()
+    ad = device(type='',name='Adwin') # Get the Adwin model from the config file
+    model = ad.properties['model']
+    dev_num = ad.properties['device_number']
     session['adw'] = adq(dev_num,model,debug)
+    if self.adw.adw.Test_Version() != 1: # Not clear if this means the ADwin is booted or not
+        self.adw.boot()
+        self.adw.init_port7()
+        print('Booting the ADwin...')
+    if model == 'gold':
+        session['adw'].load('lib/adbasic/init_adwin.T98')
+        session['adw'].start(8)
+        session['adw'].wait(8)
+        session['adw'].load('lib/adbasic/monitor.T90')
+        session['adw'].load('lib/adbasic/adwin.T99')
+    elif model == 'goldII':
+        session['adw'].load('lib/adbasic/init_adwin.TB8')
+        session['adw'].start(8)
+        session['adw'].wait(8)
+        session['adw'].load('lib/adbasic/monitor.TB0')
+        session['adw'].load('lib/adbasic/adwin.TB9')
+    else:
+        raise Exception('Model of ADwin not recognized')
     app = App(session,sys.argv)
     app.exec_()

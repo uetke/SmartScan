@@ -157,7 +157,7 @@ class adq(ADwin,ADwinDebug):
         """ Gets a timetrace with a dedicated high-priority process.
             Only works for a counter.
         """
-        if self.model = 'gold':
+        if self.model == 'gold':
             self.load('lib/ADwinsrc/fast_timetrace.T98') # Does it need to happen here?
             delay = m.floor(acc/25e-9)
             port = detect.properties['Input']['Hardware']['PortID']

@@ -125,17 +125,6 @@ class MainWindow(QMainWindow):
         self.main.setupUi(self)
 
         self.adw = session['adw']
-        if self.adw.adw.Test_Version() != 1: # Not clear if this means the ADwin is booted or not
-            self.adw.boot()
-            self.adw.init_port7()
-            print('Booting the ADwin...')
-
-
-        self.adw.load('lib/adbasic/init_adwin.T98')
-        self.adw.start(8)
-        self.adw.wait(8)
-        self.adw.load('lib/adbasic/monitor.T90')
-        self.adw.load('lib/adbasic/adwin.T99')
         self.scanwindows = {}
         self.scanindex = 0
         self.monitor = {}

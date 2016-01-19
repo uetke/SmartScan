@@ -54,8 +54,8 @@ class variables():
                 self.properties[i]=int(self.properties[i])
             except:
                 pass
-            
-if __name__ == '__main__':            
+
+if __name__ == '__main__':
     fifo=variables('Fifo')
     #print(fifo.properties)
     counter = device()
