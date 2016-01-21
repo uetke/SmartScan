@@ -18,7 +18,7 @@ from lib.db_comm import db_comm
 
 from datetime import datetime
 
-from _private.set_debug import debug
+
 
 
 def _fromUtf8(s):

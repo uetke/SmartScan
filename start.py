@@ -1,5 +1,7 @@
 import sys, os, inspect
 from lib.adq_mod import adq
+from _private.set_debug import debug
+
 def adding_to_path(folder):
     """ Simple function for adding a folder to the path of Python in order to have available for import.
     Each folder needs an __init__.py file to be considered as a module.
@@ -43,7 +45,7 @@ if __name__ == "__main__":
     model = ad.properties['model']
     dev_num = ad.properties['device_number']
     session['adw'] = adq(dev_num,model,debug)
-    if self.adw.adw.Test_Version() != 1: # Not clear if this means the ADwin is booted or not
+    if self.adw.adw.Test_Version() != 1: 
         self.adw.boot()
         self.adw.init_port7()
         print('Booting the ADwin...')

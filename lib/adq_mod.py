@@ -21,8 +21,8 @@ data=variables('Data',filename=config_variables)
 fifo=variables('Fifo',filename=config_variables)
 
 class adq(ADwin,ADwinDebug):
-    def __init__(self,device_number,model,debug=0):
-        """ Class ADQ. Inherits main methods from ADwin class. Re implementes
+    def __init__(self,device_number=1,model='gold',debug=0):
+        """ Class ADQ. Inherits main methods from ADwin class. Re implements
             few of them, mainly to keep a log of errors.
             Takes as an input the Device Number that has to be passed to the ADwin Class.
             It also takes as an argument the model of the adwin, to set the proper
@@ -40,7 +40,7 @@ class adq(ADwin,ADwinDebug):
         if model == 'gold':
             self.model = model
             self.time_high = 25e-9 # Timing high priority process.
-            self.time_low = 100e-9 # Timing low priority process
+            self.time_low = 0.1e-3 # Timing low priority process
             self.boot_program = 'c:\\adwin\\ADwin9.btl'
         else:
             raise Exception('Model not yet implemented')
@@ -159,10 +159,10 @@ class adq(ADwin,ADwinDebug):
         """
         if self.model == 'gold':
             self.load('lib/ADwinsrc/fast_timetrace.T98') # Does it need to happen here?
-            delay = m.floor(acc/25e-9)
+            delay = m.floor(acc/self.time_high)
             port = detect.properties['Input']['Hardware']['PortID']
             self.set_par(par.properties['Port'],int(port))
-            num_ticks = int(duration / (delay * 25e-9))
+            num_ticks = int(duration / (delay * self.time_high))
             print(num_ticks)
             self.set_par(par.properties['Num_ticks'],num_ticks)
             self.adw.Set_Processdelay(8,delay)
@@ -207,8 +207,8 @@ class adq(ADwin,ADwinDebug):
             self.set_par(par.properties['Num_devs'],len(detect))
             self.set_par(par.properties['Case'],33)
 
-            delay = m.floor(acc/25e-9)
-            num_ticks = int(duration / (delay * 25e-9))
+            delay = m.floor(acc/self.time_high)
+            num_ticks = int(duration / (delay * self.time_high))
             self.set_par(par.properties['Num_ticks'],num_ticks)
 
             if acc!=None:
@@ -247,12 +247,12 @@ class adq(ADwin,ADwinDebug):
             dev_params = np.append(dev_params,[int(i.properties['Type'][:5],36),i.properties['Input']['Hardware']['PortID']])
         self.set_datalong(dev_params,data.properties['dev_params'])
         self.set_par(par.properties['Num_devs'],len(detect))
-        delay = m.floor(acc/25e-9)
-        num_ticks = int(duration / (delay * 25e-9))
+        delay = m.floor(acc/self.time_high)
+        num_ticks = int(duration / (delay * self.time_high))
         self.set_par(par.properties['Num_ticks'],num_ticks)
         self.set_par(par.properties['Case'],3)
         if acc!=None:
-            self.adw.Set_Processdelay(9, m.floor(acc/25e-9))
+            self.adw.Set_Processdelay(9, m.floor(acc/self.time_high))
         delay = self.adw.Get_Processdelay(9)
         self.logger.info('Making static timetrace with %s for %ss and precision of %ss' %(', '.join([ i.properties['Name'] for i in detect ]),duration,acc))
 
@@ -263,7 +263,7 @@ class adq(ADwin,ADwinDebug):
         split_data = []
         for i in range(len(detect)):
             split_data.append(array[i::len(detect)])
-        index = np.arange(num_ticks)*(delay*25e-9)
+        index = np.arange(num_ticks)*(delay*self.time_high)
         return split_data,index
 
     def get_timetrace_dynamic(self,detect,duration=1,acc=0.01):
@@ -275,7 +275,7 @@ class adq(ADwin,ADwinDebug):
         if not self.running:
             self.logger.info('Making dynamic timetrace with %s' %', '.join([ i.properties['Name'] for i in detect ]))
             self.logger.info('for %ss and precision of %ss' %(duration,acc))
-            self.adw.Set_Processdelay(9, m.floor(acc/25e-9))
+            self.adw.Set_Processdelay(9, m.floor(acc/self.time_high))
             num_ticks = int(duration / (acc))
             #self.set_par(par.properties['Dev_type'],int(detect.properties['Type'][:5],36))
             #self.set_par(par.properties['Port'],detect.properties['Input']['Hardware']['PortID'])
@@ -451,7 +451,7 @@ class adq(ADwin,ADwinDebug):
             self.set_datalong(np.append((port,start,pix),increment),data.properties['Scan_params'])
             total=int(np.prod(pix))
             self.set_par(par.properties['Case'],4)
-            self.adw.Set_Processdelay(9, int(speed*1e-3/25e-9))
+            self.adw.Set_Processdelay(9, int(speed*1e-3/self.time_high))
             self.start(9)
             while self.adw.Process_Status(9):
                 #number = self.get_par(par.properties['Pix_done'])
@@ -519,7 +519,7 @@ class adq(ADwin,ADwinDebug):
                 self.set_datalong(np.append((port,start,self.pix),increment),data.properties['Scan_params'])
                 total=int(np.prod(self.pix))
                 self.set_par(par.properties['Case'],4)
-                self.adw.Set_Processdelay(9, int(speed*1e-3/25e-9))
+                self.adw.Set_Processdelay(9, int(speed*1e-3/self.time_high))
                 self.start(9)
                 time.sleep(0.1)
                 self.running = bool(self.adw.Process_Status(9))
