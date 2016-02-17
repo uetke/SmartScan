@@ -2,19 +2,18 @@
 #-*- coding: utf-8 -*-
 
 from PyQt4 import QtCore, QtGui
-from PyQt4.Qt import QMainWindow,QApplication,SIGNAL,QStandardItem,QFileDialog
-
-from logbookguimainwindow import Ui_MainWindow as logbookGUI
+from PyQt4.Qt import QMainWindow,QApplication,SIGNAL,QTableWidgetItem
+from GUI.Logbook.logbookguimainwindow import Ui_MainWindow as logbookGUI
 
 from lib.db_comm import db_comm
 
 class logbookWindow(QMainWindow):
-    def __init__(self,session=None):
+    def __init__(self,session=None,*args):
         QMainWindow.__init__(self, *args)
         self.init = logbookGUI()
         self.init.setupUi(self)
         self.connect(self.init.buttonLogbook,SIGNAL("clicked()"),self.add_entry)
-        self.connect(self.inint.buttonUser,SIGNAL("clicked()"),self.add_user)
+        self.connect(self.init.buttonUser,SIGNAL("clicked()"),self.add_user)
         if session:
             self.db = session['db']
         else:
@@ -23,8 +22,10 @@ class logbookWindow(QMainWindow):
         self.users = self.db.get_users()
         self.setups = self.db.get_setups()
         self.entries = self.db.get_entries()
-        
-        self.ini.tableUsers.addrow('0')
+        ent = QTableWidgetItem('String')
+        self.init.tableUsers.setRowCount(3)
+        self.init.tableUsers.setItem(0,1,ent)
+        self.init.tableUsers.setShowGrid(True)
                 
         
     def add_entry(self):
