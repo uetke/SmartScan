@@ -14,9 +14,8 @@ class db_comm():
         """
         if not os.path.exists(db):
             print('Database does not exist')
-        else:
-            self.con = lite.connect(db)
-            self.cur = self.con.cursor()
+        self.con = lite.connect(db)
+        self.cur = self.con.cursor()
     
     def create_database(self):
         """ Function for creating the database. 
@@ -82,11 +81,25 @@ class db_comm():
         self.cur.execute(sql)
         return self.cur.fetchall()
     
+    def get_entries(self):
+        """ Returns a list of all the entries in the logbook. 
+        """
+        sql = 'SELECT Id, DATE, User, Entry, File, Detectors, Variables, Setup, Comments from Logbook'
+        self.cur.execute(sql)
+        return self.cur.fetchall()
+    
     def now(self):
         """ Returns the date formatted in a particular way to have entries
             consistent with each other. 
         """
         return datetime.now().strftime('%Y-%m-%d %H:%M')
+    
+    def run_sql(self,sql):
+        """ Runs arbitrary SQL code, for debugging purposes. 
+        """
+        self.cur.execute(sql)
+        return self.cur.fetchall()
+        
     
     def __del__(self):
         self.con.close()
