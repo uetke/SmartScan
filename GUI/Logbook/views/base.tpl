@@ -49,7 +49,7 @@
       
 	<footer class="footer">
       <div class="container">
-        <p class="text-muted">Place sticky footer content here.</p>
+        <p class="text-muted">This software was developped by people at the <a href="http://www.single-molecule.nl">Single-Molecule</a> group in Leiden.</p>
       </div>
     </footer>
     

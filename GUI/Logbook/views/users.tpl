@@ -12,7 +12,7 @@
 		<tbody>
 			% for user in users:
 			<tr><td>{{user['Date']}}</td><td>{{user['Name']}}</td></tr>
-			%
+			% end
 		</tbody>
 	</table>
 </div>

@@ -24,7 +24,7 @@
                 <td>{{entry['Variables']}}</td>
                 
             </tr>
-            %
+            % end
         </tbody>
     </table>
 </div>

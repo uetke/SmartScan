@@ -19,7 +19,7 @@
 				<td>{{setup['Description']}}</td>
 				<td>{{setup['File']}}</td>
 			</tr>
-			%
+			% end
 		</tbody>
 	</table>
 </div>

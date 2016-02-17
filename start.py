@@ -1,6 +1,7 @@
 import sys, os, inspect
 from lib.adq_mod import adq
 from _private.set_debug import debug
+from lib.xml2dict import device
 
 def adding_to_path(folder):
     """ Simple function for adding a folder to the path of Python in order to have available for import.
