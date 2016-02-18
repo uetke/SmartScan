@@ -1,5 +1,6 @@
 import sys, os, inspect
 from lib.adq_mod import adq
+from lib.xml2dict import device
 from _private.set_debug import debug
 
 def adding_to_path(folder):
@@ -45,9 +46,9 @@ if __name__ == "__main__":
     model = ad.properties['model']
     dev_num = ad.properties['device_number']
     session['adw'] = adq(dev_num,model,debug)
-    if self.adw.adw.Test_Version() != 1: 
-        self.adw.boot()
-        self.adw.init_port7()
+    if session['adw'].adw.Test_Version() != 1: 
+        session['adw'].boot()
+        session['adw'].init_port7()
         print('Booting the ADwin...')
     if model == 'gold':
         session['adw'].load('lib/adbasic/init_adwin.T98')

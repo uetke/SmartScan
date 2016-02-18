@@ -385,8 +385,9 @@ class ADwinDebug:
         #else:
             #self.dll.e_ADboot(Filename, self.DeviceNo, 100000, 0, self.__errPointer)
         #self.__checkError('Boot')
+        
         if not os.path.isfile(Filename):
-            raise Exception('%s does not exist'%Filename)
+            print('%s does not exist'%Filename)
 
     def Test_Version(self):
         '''Test_Version checks, if the correct operating system for the processor has been loaded 

@@ -766,14 +766,14 @@ class adq(ADwin,ADwinDebug):
         """This couple of lines are for checking if LabView (Uberscan) is running
         if not then we need to initialize port 7. Otherwise port 7 will change its output
         to ~ -1.7V as soon as we set a other port."""
-        if model == 'gold':
+        if self.model == 'gold':
             self.logger = logging.getLogger(get_all_caller())
             self.load('lib/adbasic/init_port7.T99')
             self.start(9)
             self.wait(9)
             self.logger.info('initialized port 7 to 0V')
         else:
-            raise Exception('Not yet implemented in this model of ADwin')
+            raise Warning('Not yet implemented in this model of ADwin')
 
 
 class inter_add_remove():
