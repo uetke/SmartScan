@@ -388,6 +388,7 @@ class ADwinDebug:
         
         if not os.path.isfile(Filename):
             print('%s does not exist'%Filename)
+#             raise Exception('%s does not exist'%Filename)
 
     def Test_Version(self):
         '''Test_Version checks, if the correct operating system for the processor has been loaded 
