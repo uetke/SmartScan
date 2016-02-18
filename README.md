@@ -20,5 +20,4 @@ Initially the program was meant to be developed following an MVC design, making 
 
 ### Who do I talk to? ###
 
-* Repo owner or admin
-* Other community or team contact
+You can always contact us at our website [Single-Molecule/SmartScan](https://www.single-molecule.nl/smart-scan/)
