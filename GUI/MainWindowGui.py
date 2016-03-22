@@ -146,7 +146,7 @@ class Ui_MainWindow(object):
         self.label_17.setObjectName(_fromUtf8("label_17"))
         self.Scan_gridLayout.addWidget(self.label_17, 2, 1, 1, 1)
         self.Scan_Delay_Range = QtGui.QDoubleSpinBox(self.gridLayoutWidget_3)
-        self.Scan_Delay_Range.setMinimum(1.0)
+        self.Scan_Delay_Range.setMinimum(0.01)
         self.Scan_Delay_Range.setMaximum(10000.0)
         self.Scan_Delay_Range.setProperty("value", 10.0)
         self.Scan_Delay_Range.setObjectName(_fromUtf8("Scan_Delay_Range"))

@@ -28,19 +28,6 @@ if __name__ == "__main__":
     _session.device['apd1'] = device('APD 1')
     _session.device['lock'] = device('Lock-in')
 
-
-    if _session.adw.adw.Test_Version() != 0: # Not clear if this means the ADwin is booted or not
-        _session.adw.boot()
-        _session.adw.init_port7()
-        print('Booting the ADwin...')
-
-
-    _session.adw.load('lib/adbasic/init_adwin.T98')
-    _session.adw.start(8)
-    _session.adw.wait(8)
-    _session.adw.load('lib/adbasic/monitor.T90')
-    _session.adw.load('lib/adbasic/adwin.T99')
-
     devices = []
     for i in _session.device:
         devices.append(_session.device[i])

@@ -85,6 +85,10 @@ class Monitor(QtGui.QMainWindow):
         exitAction.setShortcut('Ctrl+Q')
         exitAction.setStatusTip('Quit the program in a safe way')
         exitAction.triggered.connect(self.exit_safe)
+        
+        bootAdwin = QtGui.QAction('Boot Adwin',self)
+        bootAdwin.setStatusTip('Boots the ADwin and loads needed binaries')
+        bootAdwin.triggered.connect(self.bootAdwin)
 
         configureTimes = QtGui.QAction(QtGui.QIcon('GUI/Icons/pinion-icon.png'),'Configure',self)
         configureTimes.setShortcut('Ctrl+T')
@@ -130,6 +134,7 @@ class Monitor(QtGui.QMainWindow):
         fileMenu = menubar.addMenu('&File')
         fileMenu.addAction(saveAction)
         fileMenu.addAction(exitAction)
+        fileMenu.addAction(bootAdwin)
 
         confgMenu = menubar.addMenu('&Configure')
         confgMenu.addAction(configureTimes)
@@ -234,6 +239,22 @@ class Monitor(QtGui.QMainWindow):
         self.ConfigWindow.close()
         self.stop_timer()
         self.close()
+        
+    def bootAdwin(self):
+        """ Boots the ADwin and loads the necessary binary files. 
+            It is made a separate function to avoid booting and overriding what was achieved 
+            with the SmartScan.
+        """
+        if _session.adw.adw.Test_Version() != 0: # Not clear if this means the ADwin is booted or not
+            _session.adw.boot()
+            _session.adw.init_port7()
+            print('Booting the ADwin...')
+
+        _session.adw.load('lib/adbasic/init_adwin.T98')
+        _session.adw.start(8)
+        _session.adw.wait(8)
+        _session.adw.load('lib/adbasic/monitor.T90')
+        _session.adw.load('lib/adbasic/adwin.T99')
 
 class MonitorWidget(QtGui.QWidget):
     """ Widget for displaying the Timetraces.
