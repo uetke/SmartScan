@@ -7,7 +7,7 @@ Created on 18 sep. 2015
 from pyqtgraph.Qt import QtCore, QtGui
 
 class StartWindow(QtGui.QMainWindow):
-    """ Window that will contain the main controlers for the trap.
+    """ Window that will contain the main controllers for the trap.
     """
     def __init__(self):
         super(MainWindow,self).__init__()

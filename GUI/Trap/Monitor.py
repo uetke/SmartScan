@@ -14,6 +14,7 @@ import _session
 from GUI.Trap.APD import APD
 from GUI.Trap.PowerSpectra import PowerSpectra
 from GUI.Trap.ConfigWindow import ConfigWindow
+from GUI.Trap.value_monitor import ValueMonitor
 from lib.xml2dict import variables
 
 import copy
@@ -30,6 +31,7 @@ class Monitor(QtGui.QMainWindow):
         self.APD = APD()
         self.PowerSpectra = PowerSpectra()
         self.ConfigWindow = ConfigWindow()
+        self.ValueMonitor = ValueMonitor()
 
         self.setCentralWidget(self.timetraces)
 
@@ -61,12 +63,13 @@ class Monitor(QtGui.QMainWindow):
         self.fifo_name = ''
         self.ctimer = QtCore.QTimer()
         self.running = False
-        self.delay=400*0.1e-3
+        self.delay=400*0.1e-3 # This kind of things violate the new design of the adq_mod class
 
         QtCore.QObject.connect(self.ctimer,QtCore.SIGNAL("timeout()"),self.updateMon)
         QtCore.QObject.connect(self,QtCore.SIGNAL("TimeTraces"),self.updateTimes)
         QtCore.QObject.connect(self.PowerSpectra, QtCore.SIGNAL('Stop_Tr'),self.stop_timer)
         QtCore.QObject.connect(self.APD, QtCore.SIGNAL('Stop_Tr'),self.stop_timer)
+        QtCore.QObject.connect(self,QtCore.SIGNAL('MeanData'),self.ValueMonitor.UpdateValues)
 
 
         ###################
@@ -96,6 +99,11 @@ class Monitor(QtGui.QMainWindow):
         stopMonitor = QtGui.QAction('Stop Monitor',self)
         stopMonitor.setStatusTip('Stops running the monitor of signals')
         stopMonitor.triggered.connect(self.stop_timer)
+        
+        showValueMonitor = QtGui.QAction('Value Monitor',self)
+        showValueMonitor.setShortcut('Ctrl+V')
+        showValueMonitor.setStatusTip('Shows the Value Monitor')
+        showValueMonitor.triggered.connect(self.ValueMonitor.show)
 
         acquireTimetrace = QtGui.QAction('Power Spectra',self)
         acquireTimetrace.setStatusTip('Show the Power Spectra window')
@@ -129,6 +137,7 @@ class Monitor(QtGui.QMainWindow):
         monitorMenu = menubar.addMenu('&Monitor')
         monitorMenu.addAction(runMonitor)
         monitorMenu.addAction(stopMonitor)
+        monitorMenu.addAction(showValueMonitor)
 
         traceMenu = menubar.addMenu('&Timetraces')
         traceMenu.addAction(acquireTimetrace)
@@ -141,13 +150,16 @@ class Monitor(QtGui.QMainWindow):
 
     def updateMon(self):
         final_data = []
+        mean_data = []
         for i in range(len(self.devices)):
             fifo_name = '%s%i' %(self.devices[i].properties['Type'],self.devices[i].properties['Input']['Hardware']['PortID'])
             data = copy.copy(np.array([_session.adw.get_fifo(self.fifo.properties[fifo_name])]))
             calibration = self.devices[i].properties['Input']['Calibration']
             data = np.array((data-calibration['Offset'])/calibration['Slope'])
             final_data.append(data)
+            mean_data.append(np.mean(data))
         self.emit( QtCore.SIGNAL('TimeTraces'), final_data)
+        self.emit( QtCore.SIGNAL('MeanData'), mean_data) # For updating values in an external dialog
 
     def updateTimes(self,data):
         """ Updates the plots of the variances.
@@ -159,6 +171,8 @@ class Monitor(QtGui.QMainWindow):
             old_data = self.data[i]
             old_t = self.t[i]
             self.t[i] = np.append(self.t[i],xdata+max(self.t[i])+self.delay)
+            if self.devices[i].properties['Type']=='Counter':
+                var[i] /= self.delay
             self.data[i] = np.append(self.data[i],var[i])
             limit = _session.timetrace_time/self.delay
             self.t[i] = self.t[i][-limit:]
@@ -263,6 +277,6 @@ class MonitorWidget(QtGui.QWidget):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    mon = TimeTraces()
+    mon = Monitor()
     mon.show()
     sys.exit(app.exec_())

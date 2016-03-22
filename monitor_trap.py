@@ -2,7 +2,7 @@
 #-*- coding: utf-8 -*-
 ''' Starting point for the monitoring of the trap.
     This program is thought for taking advantage of the QPD and the Balanced Photo-Detector
-    In order to characterize the behavior of the trap at different contidions.
+    In order to characterize the behavior of the trap at different conditions.
 '''
 
 import sys
