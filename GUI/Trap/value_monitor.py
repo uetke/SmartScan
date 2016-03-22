@@ -87,7 +87,7 @@ class ValueMonitor(QtGui.QWidget):
         self.qpdy.display(data[1])
         self.qpdz.display(data[2])
         self.diff.display(data[3])
-        self.apd.display(data[4])
+        self.apd.display(int(data[4]))
         self.lock.display(data[5])
         
         

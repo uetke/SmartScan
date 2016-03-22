@@ -156,6 +156,9 @@ class Monitor(QtGui.QMainWindow):
             data = copy.copy(np.array([_session.adw.get_fifo(self.fifo.properties[fifo_name])]))
             calibration = self.devices[i].properties['Input']['Calibration']
             data = np.array((data-calibration['Offset'])/calibration['Slope'])
+            if self.devices[i].properties['Type']=='Counter':
+                data /= self.delay
+                
             final_data.append(data)
             mean_data.append(np.mean(data))
         self.emit( QtCore.SIGNAL('TimeTraces'), final_data)
@@ -171,13 +174,11 @@ class Monitor(QtGui.QMainWindow):
             old_data = self.data[i]
             old_t = self.t[i]
             self.t[i] = np.append(self.t[i],xdata+max(self.t[i])+self.delay)
-            if self.devices[i].properties['Type']=='Counter':
-                var[i] /= self.delay
             self.data[i] = np.append(self.data[i],var[i])
             limit = _session.timetrace_time/self.delay
             self.t[i] = self.t[i][-limit:]
             self.data[i] = self.data[i][-limit:]
-
+            
         self.varx.setData(self.t[0],self.data[0])
         self.vary.setData(self.t[1],self.data[1])
         self.varz.setData(self.t[2],self.data[2])
