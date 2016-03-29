@@ -124,13 +124,43 @@ class MainWindow(QMainWindow):
         self.main = Ui_MainWindow()
         self.main.setupUi(self)
 
+        #self.boot_menu = QtGui.QMenu('&Boot', self)
+        #self.boot_menu.addAction('&Boot', self.bootAdwin,
+        #                         QtCore.Qt.CTRL + QtCore.Qt.Key_B)
+        #self.main.menubar().addMenu(self.boot_menu)
+        
         self.adw = session['adw']
         self.scanwindows = {}
         self.scanindex = 0
         self.monitor = {}
 
         self.update_devices() # Generates the devices listed in the configuration file
+    
+    def bootAdwin(self):
+        """ Boots the ADwin. It was moved to a method to avoid restarting measurements.
+        """
+        if self._session['adw'].adw.Test_Version() != 1: 
+            self._session['adw'].boot()
+            self._session['adw'].init_port7()
+            print('Booting the ADwin...')
+        if model == 'gold':
+            self._session['adw'].load('lib/adbasic/init_adwin.T98')
+            self._session['adw'].start(8)
+            self._session['adw'].wait(8)
+            self._session['adw'].load('lib/adbasic/monitor.T90')
+            self._session['adw'].load('lib/adbasic/adwin.T99')
+        elif model == 'goldII':
+            self._session['adw'].load('lib/adbasic/init_adwin.TB8')
+            self._session['adw'].start(8)
+            self._session['adw'].wait(8)
+            self._session['adw'].load('lib/adbasic/monitor.TB0')
+            self._session['adw'].load('lib/adbasic/adwin.TB9')
+        else:
+            raise Exception('Model of ADwin not recognized')
 
+
+        
+        
     def update_devices(self):
         """ Updates the devices specified in the configuration file.
         It allows to update devices without restarting the UI.

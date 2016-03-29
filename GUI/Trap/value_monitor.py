@@ -18,7 +18,7 @@ class ValueMonitor(QtGui.QWidget):
     """
     def __init__(self,parent=None):
         QtGui.QWidget.__init__(self, parent)
-        self.setWindowTitle('Configure the times')
+        self.setWindowTitle('Values Monitor')
         self.setGeometry(30,30,400,400)
         self.layout = QtGui.QGridLayout(self)
         
@@ -60,7 +60,7 @@ class ValueMonitor(QtGui.QWidget):
         self.diff.display(0.001)
         
         self.lock_label = QtGui.QLabel(self)
-        self.lock_label.setText('Diff: ')
+        self.lock_label.setText('Lock-In: ')
         self.lock_label.setFont(newfont)
         self.lock = QtGui.QLCDNumber()
         self.lock.setDigitCount(5)
