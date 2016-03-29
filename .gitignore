@@ -13,3 +13,4 @@ Thumbs.db
 *.T9*
 *.log
 logbook.db
+config_devices.xml

@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Data>
+<Adwin Name='Adwin' model='gold' device_number="1">
+	<Device Name='APD 1' Type='Counter' Description='a device that counts the number of photons'>
+		<Input>
+			<Calibration Unit="counts" Slope="1" Offset="0"/>
+			<Hardware PortID="1"/>
+		</Input>
+	</Device>
+	<Device Name='Lock-in' Type='Analog' Description='a lock-in amplifier'>
+		<Input>
+			<Calibration Unit="Volts" Slope="3276.8" Offset="32768"/>
+			<Hardware PortID="2"/>
+		</Input>
+	</Device>
+	<Device Name='Temperature' Type='Analog' Description='Pt100 with bridge'>
+		<Input>
+			<Calibration Unit="Volts" Slope="3276.8" Offset="32768"/>
+			<Hardware PortID="9"/>
+		</Input>
+	</Device>
+<Device Name='Power Meter' Type='Analog' Description='Power Meter'>
+<Input>
+<Calibration Unit="Volts" Slope="3276.8" Offset="32768"/>
+<Hardware PortID="5"/>
+</Input>
+</Device>
+<Device Name='Monitor +' Type='Analog' Description='Balance +'>
+<Input>
+<Calibration Unit="Volts" Slope="3276.8" Offset="32768"/>
+<Hardware PortID="13"/>
+</Input>
+</Device>
+<Device Name='Monitor -' Type='Analog' Description='Balance -'>
+<Input>
+<Calibration Unit="Volts" Slope="3276.8" Offset="32768"/>
+<Hardware PortID="14"/>
+</Input>
+</Device>
+<Device Name='Diff' Type='Analog' Description='Balance'>
+<Input>
+<Calibration Unit="Volts" Slope="3276.8" Offset="32768"/>
+<Hardware PortID="15"/>
+</Input>
+</Device>
+<Device Name='QPD X' Type='Analog' Description='QPD X'>
+<Input>
+<Calibration Unit="Volts" Slope="3276.8" Offset="32768"/>
+<Hardware PortID="1"/>
+</Input>
+</Device>
+<Device Name='QPD Y' Type='Analog' Description='QPD Y'>
+<Input>
+<Calibration Unit="Volts" Slope="3276.8" Offset="32768"/>
+<Hardware PortID="4"/>
+</Input>
+</Device>
+<Device Name='QPD Z' Type='Analog' Description='QPD Z'>
+<Input>
+<Calibration Unit="Volts" Slope="3276.8" Offset="32768"/>
+<Hardware PortID="7"/>
+</Input>
+</Device>
+<Device Name='Thermocouple' Type='Analog' Description='Temperature Monitoring'>
+<Input>
+<Calibration Unit="Volts" Slope="3276.8" Offset="32768"/>
+<Hardware PortID="3"/>
+</Input>
+</Device>
+<Device Name='x piezo' Type='analog' Description='the x axis of the piezo'>
+<Output>
+<Calibration Init="50" Unit="μm" Slope="0.0030518" Offset="-100"/>
+<Limits Step="1" Min="32000" Max="65000"/>
+<Hardware PortID="8"/>
+</Output>
+</Device>
+<Device Name='y piezo' Type='analog' Description='the y axis of the piezo'>
+<Output>
+<Calibration Init="50" Unit="μm" Slope="0.0030518" Offset="-100"/>
+<Limits Step="1" Min="32000" Max="65000"/>
+<Hardware PortID="7"/>
+</Output>
+</Device>
+<Device Name='z piezo' Type='analog' Description='the z axis of the piezo'>
+<Output>
+<Calibration Init="50" Unit="μm" Slope="0.0030518" Offset="-100"/>
+<Limits Step="1" Min="32000" Max="65000"/>
+<Hardware PortID="6"/>
+</Output>
+</Device>
+<Device Name='AOM' Type='analog' Description='Controling Laser Power'>
+<Output>
+<Calibration Init="1.25" Unit="V" Slope="0.00030518" Offset="-10"/>
+<Limits Step="1" Min="14849" Max="49151"/>
+<Hardware PortID="3"/>
+</Output>
+</Device>
+</Adwin>
+<Serial>
+<Device Name='Lock-in' Type='analog' Description='SR844 lock-in amplifier'>
+<Output>
+<Calibration
+Init="{'sensitivity':'100 uV'
+,'timeconstant':'3 ms'
+,'filter_db_per_oct': '6 dB'
+,'front_output[1]': 'Display'
+,'reference_internal':False
+,'close_reserve_mode':'Low'
+,'display[1]':'Rv'}"/>
+<Hardware PortID="COM9"/>
+</Output>
+</Device>
+</Serial>
+</Data>

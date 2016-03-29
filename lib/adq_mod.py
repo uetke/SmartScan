@@ -9,7 +9,7 @@ import math as m
 import ctypes
 #import psutil
 from lib.xml2dict import device,variables
-import logging
+import logginggit remote
 from lib.logger import get_all_caller
 import copy
 
@@ -42,6 +42,11 @@ class adq(ADwin,ADwinDebug):
             self.time_high = 25e-9 # Timing high priority process.
             self.time_low = 0.1e-3 # Timing low priority process
             self.boot_program = 'c:\\adwin\\ADwin9.btl'
+		elif model == 'goldII':
+            self.model = model
+            self.time_high = 3.3333333e-9 # Timing high priority process.
+            self.time_low = 3.3333333e-9 # Timing low priority process
+            self.boot_program = 'c:\\adwin\\ADwin11.btl'
         else:
             raise Exception('Model not yet implemented')
 
