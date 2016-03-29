@@ -5,6 +5,7 @@ from PyQt4.Qt import QGridLayout
 import matplotlib
 import matplotlib.pyplot as plt
 import os
+import math as m
 from datetime import datetime
 
 #from matplotlib.figure import Figure
@@ -198,14 +199,17 @@ class MplCanvas(QtGui.QGraphicsObject):
         self.par = variables('Par')
         if MplAnimate.option[0]=='Monitor':
             #TODO: Verify the time delay for low priority processes.
-            self.delay=400*self.adw.time_low
+            self.delay = 10E-3 #in s
+            self.monitor_process_delay = m.floor(self.delay/self.adw.time_low)
+            self.adw.adw.Set_Processdelay(10,self.monitor_process_delay)
+            
+            #self.delay=400*self.adw.time_low
             self.detector = [device(parent.main.Monitor_comboBox.currentText())]
             self.fifo_name = '%s%i' %(self.detector[0].properties['Type'],self.detector[0].properties['Input']['Hardware']['PortID'])
             self.xlabel = "Time"
             self.xunit = ' s'
             self.ylabel = "%s" %parent.main.Monitor_comboBox.currentText()
             self.yunit = ' %s' %self.detector[0].properties['Input']['Calibration']['Unit']
-            #self.adw.load()
             self.adw.start(10)
 
         else:
@@ -373,7 +377,7 @@ class MplCanvas(QtGui.QGraphicsObject):
         self.plotwidget.plotItem.addItem(self.text)
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.monitor_plot)
-        self.timer.start(100)
+        self.timer.start(50)
         return self.timer
 
     def animate_plot(self):

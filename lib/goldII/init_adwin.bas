@@ -14,13 +14,15 @@
 #include c:\adwin\adbasic\Inc\ADwinGoldII.inc
 
 init:
-  globaldelay = 400 '= 40 ms
+  globaldelay = 40000 '= 40 ms
   ' init the counters
+  cnt_enable(0000b)
+  
   cnt_mode(1,0)
   cnt_mode(2,0)
   cnt_mode(3,0)
   cnt_mode(4,0)
-  
+  cnt_enable(1111b)
   
   Conf_DIO(1100b)
   FIFO_Clear(200)

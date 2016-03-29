@@ -15,3 +15,4 @@ Thumbs.db
 *.log
 logbook.db
 *config_devices.xml
+*.exe

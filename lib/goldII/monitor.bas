@@ -1,6 +1,6 @@
 '<ADbasic Header, Headerversion 001.001>
 ' Process_Number                 = 10
-' Initial_Processdelay           = 400
+' Initial_Processdelay           = 30000000
 ' Eventsource                    = Timer
 ' Control_long_Delays_for_Stop   = No
 ' Priority                       = Low
@@ -66,7 +66,7 @@ event:
   data_179 = count[2]
   data_180 = count[3]
   data_181 = count[4]
- 
+  
   for j = 1 to 16
     average[j] = 0
   NEXT j
@@ -80,18 +80,18 @@ event:
     set_mux2(c)  ' channel 2i +2, gain = 1
     io_sleep(200)' wait 60 us to settle MUX
     
-    start_conv(11000b)   ' start bith 12 bit ADCs
-    wait_eoc(11000b)     ' wait for both 12 bit ADCs
+
     for j = 1 to 20
-      
+      start_conv(11b)   ' start bith 12 bit ADCs
+      wait_eoc(11b)     ' wait for both 12 bit ADCs
       for n = 1 to 2      ' feed bith ADC values in corresponding arrays
 
-        value_adc[2*c+1] = read_adc(n)
+        value_adc[2*c+n] = read_adc(n)
         '   value =readdac(n) 'adc12 gives cross talk (is too fast ?)
       NEXT n
       average[2*c+1] = average[2*c+1] + value_adc[2*c+1]
       average[2*c+2] = average[2*c+2] + value_adc[2*c+2]
-      io_sleep(200)
+      'io_sleep(200)
     NEXT j
     average[2*c+1] = average[2*c+1]/20
     average[2*c+2] = average[2*c+2]/20
