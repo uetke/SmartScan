@@ -197,6 +197,8 @@ class MplCanvas(QtGui.QGraphicsObject):
         self.adw=session['adw']
         self.fifo = variables('Fifo')
         self.par = variables('Par')
+        self.continuous = False # Variable to know if starting continuous scans
+        
         if MplAnimate.option[0]=='Monitor':
             #TODO: Verify the time delay for low priority processes.
             self.delay = 10E-3 #in s
@@ -217,13 +219,13 @@ class MplCanvas(QtGui.QGraphicsObject):
             if not self.parent.main.Scan_Dropdown.button.isEnabled():
                 self.detector = [device(self.parent.main.Scan_Detector_comboBox.currentText())]
             else:
-                    i = 0
-                    self.parent.main.Scan_Dropdown.model
-                    self.detector = []
-                    while self.parent.main.Scan_Dropdown.model.item(i):
-                        if self.parent.main.Scan_Dropdown.model.item(i).checkState():
-                            self.detector.append(device(self.parent.main.Scan_Dropdown.model.item(i).text()))
-                        i += 1
+                i = 0
+                self.parent.main.Scan_Dropdown.model
+                self.detector = []
+                while self.parent.main.Scan_Dropdown.model.item(i):
+                    if self.parent.main.Scan_Dropdown.model.item(i).checkState():
+                        self.detector.append(device(self.parent.main.Scan_Dropdown.model.item(i).text()))
+                    i += 1
             self.direction_1 = self.parent.main.Scan_1st_comboBox.currentText()
 
             if self.parent.main.Scan_1st_comboBox.currentText()=='Time':
@@ -252,7 +254,7 @@ class MplCanvas(QtGui.QGraphicsObject):
                     self.ylabel = "%s" %parent.main.Scan_2nd_comboBox.currentText()
                     self.yunit = ' %s' %self.devs[1].properties['Output']['Calibration']['Unit']
 
-                if not self.parent.main.Scan_3rd_comboBox.currentText()=='None':
+                if not self.parent.main.Scan_3rd_comboBox.currentText()=='None' and not self.parent.main.Scan_3rd_comboBox.currentText()=='Time':
                     self.devs.append(device(self.parent.main.Scan_3rd_comboBox.currentText()))
                     self.center.append(self.parent.Controler[self.parent.main.Scan_3rd_comboBox.currentText()]['PosBox'].value())
                     self.dims.append(self.parent.main.Scan_3rd_Range.value())
@@ -272,16 +274,13 @@ class MplCanvas(QtGui.QGraphicsObject):
             data = copy.copy(self.adw.scan_dynamic(self.detector,self.devs,self.center,self.dims,self.accuracy,self.speed))
         elif self.MplAnimate.option[0]=='Scan':
             data = copy.copy(self.adw.scan_dynamic(self.detector,self.devs,self.center,self.dims,self.accuracy,self.speed))
+            if self.parent.main.Scan_2nd_comboBox.currentText()=='Time':
+                self.continuous = True
+                
         if type(data)==type(False) and data==0:
             self.MplAnimate.close()
             return False
-        if not bool(self.adw.adw.Process_Status(9)) and self.MplAnimate.option[0]=='Scan':
-            self.adw.running = False
-            self.timer.stop()
-            self._running = False
-            self.MplAnimate.MainWindow.StopScan()
-            if self.autosave:
-                self.MplAnimate.saveDialog(True)
+        
         for i in range(len(self.detector)):
             calibration = self.detector[i].properties['Input']['Calibration']
             data[i] = (data[i]-calibration['Offset'])/calibration['Slope']
@@ -296,6 +295,18 @@ class MplCanvas(QtGui.QGraphicsObject):
                     final_data.append(np.vstack((xdata,data[i])))
             else:
                 final_data.append(data[i])
+        
+        if not bool(self.adw.adw.Process_Status(9)) and self.MplAnimate.option[0]=='Scan':
+            self.adw.running = False
+            self.timer.stop()
+            self._running = False
+            self.MplAnimate.MainWindow.StopScan()
+            if self.autosave:
+                self.MplAnimate.saveDialog(True)
+            if self.continuous:
+                self.emit( QtCore.SIGNAL('ContinuousFinish'),None)
+                
+            
         return final_data
 
 
@@ -427,7 +438,7 @@ class MplCanvas(QtGui.QGraphicsObject):
         self.MplAnimate.setCentralWidget(self.form_widget)
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.func_scan)
-        self.timer.start(1000)
+        self.timer.start(500)
         return self.timer
 
     def mouseMoved(self,evt):

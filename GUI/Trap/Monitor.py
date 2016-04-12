@@ -9,6 +9,8 @@ import sys
 import pyqtgraph as pg
 from PyQt4.Qt import QApplication
 from datetime import datetime
+import json
+import pickle
 import os
 import _session
 from GUI.Trap.APD import APD
@@ -226,6 +228,15 @@ class Monitor(QtGui.QMainWindow):
             i += 1
         filename = filename+".dat"
         np.savetxt("%s%s" %(savedir,filename), self.data,fmt='%s', delimiter=",")
+        
+        # Saves the data to binary format. Sometimes (not sure why) the ascii data is not being save properly... 
+        # Only what would appear on the screen when printing self.data.
+        try:
+            np.save("%s%s" %(savedir,filename[:-4]), np.array(self.data))
+        except:
+            print('Error with Save')
+            print(sys.exc_info()[0])
+            
         print('Data saved in %s'%(savedir+filename) )
         return
 
