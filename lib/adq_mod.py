@@ -547,6 +547,7 @@ class adq(ADwin,ADwinDebug):
                 return False
 
         elif self.running:
+            self.running = bool(self.adw.Process_Status(9))
             self.logger.debug('Getting data from danamic scan')
             image = self.get_fifo(fifo.properties['Scan_data'])
             try:
