@@ -196,6 +196,7 @@ class MplCanvas(QtGui.QGraphicsObject):
         self.autosave = session['autoSave']
         self.adw=session['adw']
         self.fifo = variables('Fifo')
+        self.adw.adw.Fifo_Clear(self.fifo.properties['Scan_data'])
         self.par = variables('Par')
         self.continuous = False # Variable to know if starting continuous scans
         
@@ -259,6 +260,8 @@ class MplCanvas(QtGui.QGraphicsObject):
                     self.center.append(self.parent.Controler[self.parent.main.Scan_3rd_comboBox.currentText()]['PosBox'].value())
                     self.dims.append(self.parent.main.Scan_3rd_Range.value())
                     self.accuracy.append(self.parent.main.Scan_3rd_Accuracy.value())
+                elif self.parent.main.Scan_3rd_comboBox.currentText()=='Time':
+                    self.continuous = True
                 self.speed = self.parent.main.Scan_Delay_Range.value()
                 self.delay = self.speed
             self.fifo_name='scan_data'
@@ -273,9 +276,7 @@ class MplCanvas(QtGui.QGraphicsObject):
         elif self.MplAnimate.option[0]=='Scan' and self.parent.main.Scan_2nd_comboBox.currentText()=='None':
             data = copy.copy(self.adw.scan_dynamic(self.detector,self.devs,self.center,self.dims,self.accuracy,self.speed))
         elif self.MplAnimate.option[0]=='Scan':
-            data = copy.copy(self.adw.scan_dynamic(self.detector,self.devs,self.center,self.dims,self.accuracy,self.speed))
-            if self.parent.main.Scan_2nd_comboBox.currentText()=='Time':
-                self.continuous = True
+            data = copy.copy(self.adw.scan_dynamic(self.detector,self.devs,self.center,self.dims,self.accuracy,self.speed))               
                 
         if type(data)==type(False) and data==0:
             self.MplAnimate.close()
@@ -300,12 +301,14 @@ class MplCanvas(QtGui.QGraphicsObject):
             self.adw.running = False
             self.timer.stop()
             self._running = False
-            self.MplAnimate.MainWindow.StopScan()
-            if self.autosave:
-                self.MplAnimate.saveDialog(True)
             if self.continuous:
-                self.emit( QtCore.SIGNAL('ContinuousFinish'),None)
-                
+                print('MplAnimate 02')
+                self.MplAnimate.MainWindow.continuousScan()
+                #self.emit( QtCore.SIGNAL('ContinuousFinish'))
+            else:
+                self.MplAnimate.MainWindow.StopScan()
+                if self.autosave:
+                    self.MplAnimate.saveDialog(True)
             
         return final_data
 
@@ -413,7 +416,7 @@ class MplCanvas(QtGui.QGraphicsObject):
         #import pyqtgraph.multiprocess as mp
         #proc = mp.QtProcess()
         #rpg = proc._import('pyqtgraph')
-
+        self.adw.start_scan_dynamic(self.detector,self.devs,self.center,self.dims,self.accuracy,self.speed)
         self.imv = []
         self.vLine = []
         self.hLine = []
