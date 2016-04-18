@@ -302,7 +302,6 @@ class MplCanvas(QtGui.QGraphicsObject):
             self.timer.stop()
             self._running = False
             if self.continuous:
-                print('MplAnimate 02')
                 self.MplAnimate.MainWindow.continuousScan()
                 #self.emit( QtCore.SIGNAL('ContinuousFinish'))
             else:

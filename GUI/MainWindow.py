@@ -358,7 +358,6 @@ class MainWindow(QMainWindow):
                         self.continuousScans = True
                         self.continuousStopped = False
                         QtCore.QObject.connect(self.scan.widget, QtCore.SIGNAL("ContinuousFinish"), self.continuousScan)
-                        print('QtCore connect')
                         self.scan.setWindowTitle("Window %s: Scan with the %s Detector with on the x-axes %s" %(tuple([self.scanindex])+tuple(option.split(';'))))
                         self.scan.show()
                 else:
@@ -372,7 +371,6 @@ class MainWindow(QMainWindow):
             
 
     def StopScan(self):
-        print('StopScan')
         self.scan.animation.stop()
         self.adw.stop(9)
         self.adw.running = False
