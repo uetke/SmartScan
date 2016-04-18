@@ -24,21 +24,21 @@
 <Output>
 <Calibration Init="50" Unit="μm" Slope="0.0030518" Offset="-100"/>
 <Limits Step="1" Min="32000" Max="65000"/>
-<Hardware PortID="8"/>
+<Hardware PortID="1"/>
 </Output>
 </Device>
 <Device Name='y piezo' Type='analog' Description='the y axis of the piezo'>
 <Output>
 <Calibration Init="50" Unit="μm" Slope="0.0030518" Offset="-100"/>
 <Limits Step="1" Min="32000" Max="65000"/>
-<Hardware PortID="7"/>
+<Hardware PortID="2"/>
 </Output>
 </Device>
 <Device Name='z piezo' Type='analog' Description='the z axis of the piezo'>
 <Output>
 <Calibration Init="50" Unit="μm" Slope="0.0030518" Offset="-100"/>
 <Limits Step="1" Min="32000" Max="65000"/>
-<Hardware PortID="6"/>
+<Hardware PortID="3"/>
 </Output>
 </Device>
 <Device Name='AOM' Type='analog' Description='Controling Laser Power'>
