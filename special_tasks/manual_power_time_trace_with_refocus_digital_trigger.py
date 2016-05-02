@@ -18,7 +18,8 @@ from winsound import Beep
 
 # generate saving path
 savedir = 'D:\\Data\\' + str(datetime.now().date()) + '\\'
-t = datetime.now().strftime('%H_%M')
+t = datetime.now().strftime('%Hhs%Mm')
+
 if not os.path.exists(savedir):
     os.makedirs(savedir)
 print('Save directory: ' + savedir)
@@ -32,7 +33,7 @@ try:
     # set the configuration of power meter.
     pmeter.attenuator = False
     time.sleep(0.5)
-    pmeter.wavelength = 759
+    pmeter.wavelength = 532
     print('Wavelength = '+str(pmeter.wavelength)+' nm')
     time.sleep(0.5)
     print('Units = '+str(pmeter.units))
@@ -53,23 +54,24 @@ counter1 = device('APD 1')
 counter2 = device('APD 2')
 
 # define parameters for the time trace
-timetrace_time = 1 # In seconds
+timetrace_time = 2# In seconds
 integration_time = .05 # In seconds
 number_elements = int(timetrace_time/integration_time)
 
 # parameters for refocus
+experiment_label = 'Scattering_532nm'
 devs = [xpiezo,ypiezo,zpiezo]
-center = [56.64,53.73,51.35]
+center = [46.58,49.38,50.40]
 dims = [0.4,0.4,0.8]
 accuracy = [0.05,0.05,0.1]
     
 
-N=2# number of measurements to be done
+N=10# number of measurements to be done
 
 # min and max power to use in the sample (make sure it is lower than the threshold)
 # it is transformed to the power to be measured automatically.
-Pmin = 150
-Pmax = 250 # uw
+Pmin = 0.01
+Pmax = 0.3 # uw
 
 # inizialize
 pw =np.zeros((1,N)) # power at bfp
@@ -88,15 +90,15 @@ test = False
 # while in the measurement
 n=0
 print('First Measurement. Power to be set= %s uW'%(np.logspace(np.log10(Pmin*9),np.log10(Pmax*9),N)[n]))
+print('Waiting for triggger...')
 while n <N:
-    IN =int(input('0 o 1:' ))
-    # more needs to be done
-    #IN = adw.get_digin(2)
-    if IN == 1:
-        
+
+    if adw.get_digin(0):
+        print('Measurement started.')
+        Beep(440,200)
         # refocus 
         if test==False:
-            print('Refocusing')
+            print('Refocusing on pcle')
             position = adw.focus_full(counter1,devs,center,dims,accuracy).astype('str')
             xp[0,n]=position[0]
             yp[0,n]=position[1]
@@ -108,8 +110,8 @@ while n <N:
         pw[0,n]=pw_now/9 # power at bfp
         print('Measured Power =%s uW'%(str(pw_now)))
         
-        filename_p = 'Meas_at_'+t+'_TimeTrace_Pcle_Power='+str(pw_now)+'uW.dat'
-        filename_b = 'Meas_at_'+t+'_TimeTrace_Bkg_Power='+str(pw_now)+'uW.dat'
+        filename_p = experiment_label +'Meas_at_'+t+'_TimeTrace_Pcle_Power='+str(pw_now)+'uW.dat'
+        filename_b = experiment_label +'Meas_at_'+t+'_TimeTrace_Bkg_Power='+str(pw_now)+'uW.dat'
         # # time trace and save on the particle
         print('Taking time trace on the particle')
         dd,ii = adw.get_timetrace_static([counter1,counter2],duration=timetrace_time,acc=integration_time)
@@ -125,7 +127,7 @@ while n <N:
         print('Taking time trace BKG')
         if test==False:
             bkg_position = [xp[0,n]+1,yp[0,n]+1,zp[0,n]]
-            print('BKG position = '+str(bkg_position))
+            print('BKG position = '+str(bkg_position)+'um')
             adw.go_to_position(devs,bkg_position)
             time.sleep(0.1)
         dd,ii = adw.get_timetrace_static([counter1,counter2],duration=timetrace_time,acc=integration_time)
@@ -136,10 +138,11 @@ while n <N:
         if test==False:
             header = "(Row1: TimeTrace1 (counts), Row2: TimeTrace1 (counts)) integration time: %f seconds"%(integration_time)
             np.savetxt("%s%s" %(savedir,filename_b), dd,fmt='%s', delimiter=",", header=header)
+
+        Beep(440,200)
+        Beep(560,200)
+        Beep(440,200)
         
-        
-        Beep(440,500)
-        Beep(560,500)
         n=n+1
         if n < N:
             print('Measurement number =%s out of %s. Power to be set= %s uW'%(n+1,N,np.logspace(np.log10(Pmin*9),np.log10(Pmax*9),N)[n]))
@@ -152,8 +155,8 @@ pmeter.finalize()
 
 if test==False:
     header2 = "(Power (uW), Avg counter1 (cps),Avg counter2 (cps), Std counter1 (cps), std counter1 (cps)"
-    np.savetxt("%s%s" %(savedir,'Meas_at_'+t+'_Pcle_averaged.dat'),  np.concatenate((np.transpose(pw),np.transpose(data),np.transpose(edata)),axis=1),fmt='%s', delimiter=",", header=header2)    
-    np.savetxt("%s%s" %(savedir,'Meas_at_'+t+'_Bkg_averaged.dat'),  np.concatenate((np.transpose(pw),np.transpose(bkg),np.transpose(ebkg)),axis=1),fmt='%s', delimiter=",", header=header2)    
+    np.savetxt("%s%s" %(savedir,experiment_label +'Meas_at_'+t+'_Pcle_averaged.dat'),  np.concatenate((np.transpose(pw),np.transpose(data),np.transpose(edata)),axis=1),fmt='%s', delimiter=",", header=header2)    
+    np.savetxt("%s%s" %(savedir,experiment_label +'Meas_at_'+t+'_Bkg_averaged.dat'),  np.concatenate((np.transpose(pw),np.transpose(bkg),np.transpose(ebkg)),axis=1),fmt='%s', delimiter=",", header=header2)    
 
     
 # plot 
