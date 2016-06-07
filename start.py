@@ -46,11 +46,12 @@ if __name__ == "__main__":
     model = ad.properties['model']
     dev_num = int(ad.properties['device_number'])
     session['adw'] = adq(dev_num,model,debug)
-    if session['adw'].adw.Test_Version() != 1: 
+    if session['adw'].adw.Test_Version() != 0: 
         session['adw'].boot()
-        session['adw'].init_port7()
+        
         print('Booting the ADwin...')
     if model == 'gold':
+        session['adw'].init_port7()
         session['adw'].load('lib/adbasic/init_adwin.T98')
         session['adw'].start(8)
         session['adw'].wait(8)

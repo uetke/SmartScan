@@ -42,6 +42,11 @@ class adq(ADwin,ADwinDebug):
             self.time_high = 25e-9 # Timing high priority process.
             self.time_low = 0.1e-3 # Timing low priority process
             self.boot_program = 'c:\\adwin\\ADwin9.btl'
+        elif model == 'goldII':
+            self.model = model
+            self.time_high = 3.3333333e-9 # Timing high priority process.
+            self.time_low = 3.3333333e-9 # Timing low priority process
+            self.boot_program = 'c:\\adwin\\ADwin11.btl'
         else:
             raise Exception('Model not yet implemented')
 
@@ -540,8 +545,98 @@ class adq(ADwin,ADwinDebug):
             else:
                 self.logger.error("Not all input arrays have the same length or are longer the 3")
                 return False
-
+                
         elif self.running:
+            self.running = bool(self.adw.Process_Status(9))
+            self.logger.debug('Getting data from danamic scan')
+            image = self.get_fifo(fifo.properties['Scan_data'])
+            try:
+                image = np.append(self.excess_data,image)
+            except:
+                pass
+            for i in range(len(detect)):
+                temp = self.scan_image[i].flatten()
+                index = np.isnan(temp).argmax()
+                length = np.min((len(temp[index:])*len(detect),np.floor(len(image)/len(detect))*len(detect)))
+                temp[index:index+length/len(detect)] = image[i:length:len(detect)]
+                self.scan_image[i] = np.squeeze(temp.reshape((self.pix[::-1])))
+            self.excess_data = image[length:]
+            return self.scan_image
+                
+    def start_scan_dynamic(self,detect,devs,center,dims,accuracy,speed=10):
+        """a function that does a scan. The number of axes you can choose yourself.
+        detect: a device(s) that does the detection of your signal
+        devs: array devices which you are using,
+        center: array of starting piont of the center (unit of the device),
+        dims: array of the dimensions (unit of the device),
+        accuracy: array of accuracy value (unit of the device),
+        speed: the duration of one pixel (ms)"""
+        self.logger = logging.getLogger(get_all_caller())
+
+        if not self.running:
+            self.adw.Fifo_Clear(fifo.properties['Scan_data'])
+            devs = np.array(devs)
+            center = np.array(center)
+            dims = np.array(dims)
+            accuracy = np.array(accuracy)
+            if not type(detect) == type([]):
+                detect = [detect]
+            if len(devs)==len(center)==len(dims)==len(accuracy)<=3:
+                self.logger.info('Making a dynamic scan')
+                port=np.zeros(3)
+                pix=(np.array(dims)/np.array(accuracy)).astype('int')
+                increment=np.zeros(3)
+                start=-np.ones(3)
+                for i in range(len(devs)):
+                    port[i]=devs[i].properties['Output']['Hardware']['PortID']
+                    calibration=devs[i].properties['Output']['Calibration']
+                    start[i]=(center[i]-calibration['Offset']-dims[i]/2)/calibration['Slope']
+                    increment[i]=int(accuracy[i]/calibration['Slope'])
+                    min = devs[i].properties['Output']['Limits']['Min']
+                    max = devs[i].properties['Output']['Limits']['Max']
+                    if (start[i]<min or max<start[i]+pix[i]*increment[i]):
+                        self.logger.error('Error boundaries of device %s exceeded' %devs[i].properties['Name'])
+                        self.logger.error('Value %s is out of range(%s,%s)' %(start[i],min,max))
+                        return False
+                    self.logger.info('Range(%s,%s) for device %s' %(center[i]-dims[i]/2,center[i]+dims[i]/2,devs[i].properties['Name']))
+                    self.scan_settings[devs[i].properties['Name']+'_start']=center[i]-dims[i]/2
+                    self.scan_settings[devs[i].properties['Name']+'_accuracy']=accuracy[i]
+                #self.set_par(par.properties['Port'],detect.properties['Input']['Hardware']['PortID'])
+                #self.set_par(par.properties['Dev_type'],int(detect.properties['Type'][:5],36))
+                dev_params = np.array([])
+                for i in detect:
+                    dev_params = np.append(dev_params,[int(i.properties['Type'][:5],36),i.properties['Input']['Hardware']['PortID']])
+                self.set_datalong(dev_params,data.properties['dev_params'])
+                self.set_par(par.properties['Num_devs'],len(detect))
+                self.pix=np.append(pix,np.ones(3-len(pix)))
+                self.set_datalong(np.append((port,start,self.pix),increment),data.properties['Scan_params'])
+                total=int(np.prod(self.pix))
+                self.set_par(par.properties['Case'],4)
+                self.adw.Set_Processdelay(9, int(speed*1e-3/self.time_high))
+                self.start(9)
+                time.sleep(0.1)
+                self.running = bool(self.adw.Process_Status(9))
+                temp = np.zeros(total)
+                temp[:] = np.nan
+                image = self.get_fifo(fifo.properties['Scan_data'])
+                self.scan_image = []
+                for i in range(len(detect)):
+                    index = np.isnan(temp).argmax()
+                    length = np.min((len(temp[index:])*len(detect),np.floor(len(image)/len(detect))*len(detect)))
+                    temp[index:index+length/len(detect)] = image[i:length:len(detect)]
+                    self.scan_image.append(np.squeeze(temp.reshape((self.pix[::-1]))))
+                    temp = np.zeros(total)
+                    temp[:]=np.nan
+                self.excess_data = image[length:] or np.array([])
+                return self.scan_image
+
+            else:
+                self.logger.error("Not all input arrays have the same length or are longer the 3")
+                return False
+                
+    def get_scan_dynamic(self,detect,devs,center,dims,accuracy,speed=10):
+        if self.running:
+            self.running = bool(self.adw.Process_Status(9))
             self.logger.debug('Getting data from danamic scan')
             image = self.get_fifo(fifo.properties['Scan_data'])
             try:

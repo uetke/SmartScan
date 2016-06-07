@@ -5,6 +5,7 @@ from PyQt4.Qt import QGridLayout
 import matplotlib
 import matplotlib.pyplot as plt
 import os
+import math as m
 from datetime import datetime
 
 #from matplotlib.figure import Figure
@@ -195,17 +196,23 @@ class MplCanvas(QtGui.QGraphicsObject):
         self.autosave = session['autoSave']
         self.adw=session['adw']
         self.fifo = variables('Fifo')
+        self.adw.adw.Fifo_Clear(self.fifo.properties['Scan_data'])
         self.par = variables('Par')
+        self.continuous = False # Variable to know if starting continuous scans
+        
         if MplAnimate.option[0]=='Monitor':
             #TODO: Verify the time delay for low priority processes.
-            self.delay=400*self.adw.time_low
+            self.delay = 10E-3 #in s
+            self.monitor_process_delay = m.floor(self.delay/self.adw.time_low)
+            self.adw.adw.Set_Processdelay(10,self.monitor_process_delay)
+            
+            #self.delay=400*self.adw.time_low
             self.detector = [device(parent.main.Monitor_comboBox.currentText())]
             self.fifo_name = '%s%i' %(self.detector[0].properties['Type'],self.detector[0].properties['Input']['Hardware']['PortID'])
             self.xlabel = "Time"
             self.xunit = ' s'
             self.ylabel = "%s" %parent.main.Monitor_comboBox.currentText()
             self.yunit = ' %s' %self.detector[0].properties['Input']['Calibration']['Unit']
-            #self.adw.load()
             self.adw.start(10)
 
         else:
@@ -213,13 +220,13 @@ class MplCanvas(QtGui.QGraphicsObject):
             if not self.parent.main.Scan_Dropdown.button.isEnabled():
                 self.detector = [device(self.parent.main.Scan_Detector_comboBox.currentText())]
             else:
-                    i = 0
-                    self.parent.main.Scan_Dropdown.model
-                    self.detector = []
-                    while self.parent.main.Scan_Dropdown.model.item(i):
-                        if self.parent.main.Scan_Dropdown.model.item(i).checkState():
-                            self.detector.append(device(self.parent.main.Scan_Dropdown.model.item(i).text()))
-                        i += 1
+                i = 0
+                self.parent.main.Scan_Dropdown.model
+                self.detector = []
+                while self.parent.main.Scan_Dropdown.model.item(i):
+                    if self.parent.main.Scan_Dropdown.model.item(i).checkState():
+                        self.detector.append(device(self.parent.main.Scan_Dropdown.model.item(i).text()))
+                    i += 1
             self.direction_1 = self.parent.main.Scan_1st_comboBox.currentText()
 
             if self.parent.main.Scan_1st_comboBox.currentText()=='Time':
@@ -248,11 +255,13 @@ class MplCanvas(QtGui.QGraphicsObject):
                     self.ylabel = "%s" %parent.main.Scan_2nd_comboBox.currentText()
                     self.yunit = ' %s' %self.devs[1].properties['Output']['Calibration']['Unit']
 
-                if not self.parent.main.Scan_3rd_comboBox.currentText()=='None':
+                if not self.parent.main.Scan_3rd_comboBox.currentText()=='None' and not self.parent.main.Scan_3rd_comboBox.currentText()=='Time':
                     self.devs.append(device(self.parent.main.Scan_3rd_comboBox.currentText()))
                     self.center.append(self.parent.Controler[self.parent.main.Scan_3rd_comboBox.currentText()]['PosBox'].value())
                     self.dims.append(self.parent.main.Scan_3rd_Range.value())
                     self.accuracy.append(self.parent.main.Scan_3rd_Accuracy.value())
+                elif self.parent.main.Scan_3rd_comboBox.currentText()=='Time':
+                    self.continuous = True
                 self.speed = self.parent.main.Scan_Delay_Range.value()
                 self.delay = self.speed
             self.fifo_name='scan_data'
@@ -267,17 +276,12 @@ class MplCanvas(QtGui.QGraphicsObject):
         elif self.MplAnimate.option[0]=='Scan' and self.parent.main.Scan_2nd_comboBox.currentText()=='None':
             data = copy.copy(self.adw.scan_dynamic(self.detector,self.devs,self.center,self.dims,self.accuracy,self.speed))
         elif self.MplAnimate.option[0]=='Scan':
-            data = copy.copy(self.adw.scan_dynamic(self.detector,self.devs,self.center,self.dims,self.accuracy,self.speed))
+            data = copy.copy(self.adw.scan_dynamic(self.detector,self.devs,self.center,self.dims,self.accuracy,self.speed))               
+                
         if type(data)==type(False) and data==0:
             self.MplAnimate.close()
             return False
-        if not bool(self.adw.adw.Process_Status(9)) and self.MplAnimate.option[0]=='Scan':
-            self.adw.running = False
-            self.timer.stop()
-            self._running = False
-            self.MplAnimate.MainWindow.StopScan()
-            if self.autosave:
-                self.MplAnimate.saveDialog(True)
+        
         for i in range(len(self.detector)):
             calibration = self.detector[i].properties['Input']['Calibration']
             data[i] = (data[i]-calibration['Offset'])/calibration['Slope']
@@ -292,6 +296,19 @@ class MplCanvas(QtGui.QGraphicsObject):
                     final_data.append(np.vstack((xdata,data[i])))
             else:
                 final_data.append(data[i])
+        
+        if not bool(self.adw.adw.Process_Status(9)) and self.MplAnimate.option[0]=='Scan':
+            self.adw.running = False
+            self.timer.stop()
+            self._running = False
+            if self.continuous:
+                self.MplAnimate.MainWindow.continuousScan()
+                #self.emit( QtCore.SIGNAL('ContinuousFinish'))
+            else:
+                self.MplAnimate.MainWindow.StopScan()
+                if self.autosave:
+                    self.MplAnimate.saveDialog(True)
+            
         return final_data
 
 
@@ -398,7 +415,7 @@ class MplCanvas(QtGui.QGraphicsObject):
         #import pyqtgraph.multiprocess as mp
         #proc = mp.QtProcess()
         #rpg = proc._import('pyqtgraph')
-
+        self.adw.start_scan_dynamic(self.detector,self.devs,self.center,self.dims,self.accuracy,self.speed)
         self.imv = []
         self.vLine = []
         self.hLine = []
@@ -423,7 +440,7 @@ class MplCanvas(QtGui.QGraphicsObject):
         self.MplAnimate.setCentralWidget(self.form_widget)
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.func_scan)
-        self.timer.start(1000)
+        self.timer.start(500)
         return self.timer
 
     def mouseMoved(self,evt):

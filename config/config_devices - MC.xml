@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Data>
+<Adwin Name='Adwin' model='goldII' device_number="1">
+	<Device Name='APD 1' Type='Counter' Description='a device that counts the number of photons'>
+		<Input>
+			<Calibration Unit="counts" Slope="1" Offset="0"/>
+			<Hardware PortID="1"/>
+		</Input>
+	</Device>
+    <Device Name='APD 2' Type='Counter' Description='a device that counts the number of photons'>
+		<Input>
+			<Calibration Unit="counts" Slope="1" Offset="0"/>
+			<Hardware PortID="2"/>
+		</Input>
+	</Device>
+<Device Name='Power Meter' Type='Analog' Description='Power Meter'>
+<Input>
+<Calibration Unit="Volts" Slope="3276.8" Offset="32768"/>
+<Hardware PortID="1"/>
+</Input>
+
+</Device>
+<Device Name='x piezo' Type='analog' Description='the x axis of the piezo'>
+<Output>
+<Calibration Init="50" Unit="μm" Slope="0.0030518" Offset="-100"/>
+<Limits Step="1" Min="32000" Max="65000"/>
+<Hardware PortID="1"/>
+</Output>
+</Device>
+<Device Name='y piezo' Type='analog' Description='the y axis of the piezo'>
+<Output>
+<Calibration Init="50" Unit="μm" Slope="0.0030518" Offset="-100"/>
+<Limits Step="1" Min="32000" Max="65000"/>
+<Hardware PortID="2"/>
+</Output>
+</Device>
+<Device Name='z piezo' Type='analog' Description='the z axis of the piezo'>
+<Output>
+<Calibration Init="50" Unit="μm" Slope="0.0030518" Offset="-100"/>
+<Limits Step="1" Min="32000" Max="65000"/>
+<Hardware PortID="3"/>
+</Output>
+</Device>
+<Device Name='AOM' Type='analog' Description='Controling Laser Power'>
+<Output>
+<Calibration Init="1.25" Unit="V" Slope="0.00030518" Offset="-10"/>
+<Limits Step="1" Min="14849" Max="49151"/>
+<Hardware PortID="4"/>
+</Output>
+</Device>
+</Adwin>
+<Serial>
+<Device Name='Lock-in' Type='analog' Description='SR844 lock-in amplifier'>
+<Output>
+<Calibration
+Init="{'sensitivity':'100 uV'
+,'timeconstant':'3 ms'
+,'filter_db_per_oct': '6 dB'
+,'front_output[1]': 'Display'
+,'reference_internal':False
+,'close_reserve_mode':'Low'
+,'display[1]':'Rv'}"/>
+<Hardware PortID="COM9"/>
+</Output>
+</Device>
+</Serial>
+</Data>

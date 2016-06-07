@@ -20,7 +20,6 @@ from datetime import datetime
 
 
 
-
 def _fromUtf8(s):
     return s
 
@@ -134,29 +133,31 @@ class MainWindow(QMainWindow):
         self.scanindex = 0
         self.monitor = {}
 
+        self.continuousScans = False # In case a continuous scan trace is triggered
+        self.continuousStopped = False
         self.update_devices() # Generates the devices listed in the configuration file
     
-    def bootAdwin(self):
-        """ Boots the ADwin. It was moved to a method to avoid restarting measurements.
-        """
-        if self._session['adw'].adw.Test_Version() != 1: 
-            self._session['adw'].boot()
-            self._session['adw'].init_port7()
-            print('Booting the ADwin...')
-        if model == 'gold':
-            self._session['adw'].load('lib/adbasic/init_adwin.T98')
-            self._session['adw'].start(8)
-            self._session['adw'].wait(8)
-            self._session['adw'].load('lib/adbasic/monitor.T90')
-            self._session['adw'].load('lib/adbasic/adwin.T99')
-        elif model == 'goldII':
-            self._session['adw'].load('lib/adbasic/init_adwin.TB8')
-            self._session['adw'].start(8)
-            self._session['adw'].wait(8)
-            self._session['adw'].load('lib/adbasic/monitor.TB0')
-            self._session['adw'].load('lib/adbasic/adwin.TB9')
-        else:
-            raise Exception('Model of ADwin not recognized')
+#     def bootAdwin(self):
+#         """ Boots the ADwin. It was moved to a method to avoid restarting measurements.
+#         """
+#         if self._session['adw'].adw.Test_Version() != 1: 
+#             self._session['adw'].boot()
+#             self._session['adw'].init_port7()
+#             print('Booting the ADwin...')
+#         if model == 'gold':
+#             self._session['adw'].load('lib/adbasic/init_adwin.T98')
+#             self._session['adw'].start(8)
+#             self._session['adw'].wait(8)
+#             self._session['adw'].load('lib/adbasic/monitor.T90')
+#             self._session['adw'].load('lib/adbasic/adwin.T99')
+#         elif model == 'goldII':
+#             self._session['adw'].load('lib/adbasic/init_adwin.TB8')
+#             self._session['adw'].start(8)
+#             self._session['adw'].wait(8)
+#             self._session['adw'].load('lib/adbasic/monitor.TB0')
+#             self._session['adw'].load('lib/adbasic/adwin.TB9')
+#         else:
+#             raise Exception('Model of ADwin not recognized')
 
 
         
@@ -243,6 +244,8 @@ class MainWindow(QMainWindow):
                 QtCore.QObject.connect(self.Controler[i['Name']]['MinButton'], QtCore.SIGNAL("clicked()"), self.ChangePos)
                 QtCore.QObject.connect(self.Controler[i['Name']]['PosBox'],QtCore.SIGNAL("valueChanged(double)"),self.ChangePos)
                 k +=1
+        
+        self.main.Scan_3rd_comboBox.addItem(_translate("MainWindow", 'Time', None))
 
         self.connect(self.main.Monitor_pushButton, SIGNAL("clicked()"), self.Monitor)
         QtCore.QObject.connect(self.main.Scan_Detector_comboBox, QtCore.SIGNAL("currentIndexChanged(int)"), self.ChangeUnit)
@@ -303,8 +306,24 @@ class MainWindow(QMainWindow):
             self.main.Scan_Dropdown.button.setEnabled(False)
             self.main.Scan_Detector_UnitLabel.setEnabled(True)
 
+    def continuousScan(self):
+        """ Method for acquiring a 2D scan continuously (one after the other).
+            This method is triggered only after the first 2D scan was acquired.
+        """
+        print(self.continuousScans)
+        print(self.continuousStopped)
+        # If the scannes where stopped by the button:
+        if self.continuousStopped:
+            self.continuousScans = False
+            self.continuousStopped = False
+            self.scan.widget.continuous = False
+        else:
+            print('Cont02')
+            self.StartScan()
+        
 
     def StartScan(self):
+        print('StartScan')
         self.main.Controler_BusyLabel.setText(_translate("MainWindow", "Busy", None))
         self.main.Scan_start_pushButton.setEnabled(False)
         self.main.Controler_Refocus.setEnabled(False)
@@ -318,23 +337,43 @@ class MainWindow(QMainWindow):
         if not self.main.Scan_2nd_comboBox.currentText()=='None':
             option += ' and on the y-axes the %s.' %self.main.Scan_2nd_comboBox.currentText()
         if self.main.Scan_1st_comboBox.currentText()=='Time':
-            timeindex = 'Timetrace%s' %self.scanindex
+            self.scanindex += 1
+            timeindex = self.scanindex
             self.scan = MplAnimate(self,option,['Scan','Line'],self._session,timeindex)
             self.scanwindows[timeindex] = self.scan
         else:
+            if not self.continuousScans:
+                self.scanindex += 1
+                
             if self.main.Scan_2nd_comboBox.currentText()=='None':
                 self.scan = MplAnimate(self,option,['Scan','Line'],self._session,self.scanindex)
                 self.main.Controler_Select_scan.addItem(_translate("MainWindow", 'Window %s'%self.scanindex, None))
                 self.scanwindows[self.scanindex] = self.scan
             else:
-                self.scan = MplAnimate(self,option,['Scan','Imshow'],self._session,self.scanindex)
-                self.main.Controler_Select_scan.addItem(_translate("MainWindow", 'Window %s'%self.scanindex, None))
-                self.scanwindows[self.scanindex] = self.scan
-        self.scan.setWindowTitle("Window %s: Scan with the %s Detector with on the x-axes %s" %(tuple([self.scanindex])+tuple(option.split(';'))))
-        self.scanindex += 1
-        self.scan.show()
+                if not self.continuousScans:
+                    self.scan = MplAnimate(self,option,['Scan','Imshow'],self._session,self.scanindex)
+                    self.main.Controler_Select_scan.addItem(_translate("MainWindow", 'Window %s'%self.scanindex, None))
+                    self.scanwindows[self.scanindex] = self.scan
+                    if self.main.Scan_3rd_comboBox.currentText()=='Time':
+                        self.continuousScans = True
+                        self.continuousStopped = False
+                        QtCore.QObject.connect(self.scan.widget, QtCore.SIGNAL("ContinuousFinish"), self.continuousScan)
+                        self.scan.setWindowTitle("Window %s: Scan with the %s Detector with on the x-axes %s" %(tuple([self.scanindex])+tuple(option.split(';'))))
+                        self.scan.show()
+                else:
+                    self.scan.widget.animate_scan()
+                    
+        if not self.continuousScans:
+            print(self.scanindex)
+            self.scanwindows[self.scanindex].setWindowTitle("Window %s: Scan with the %s Detector with on the x-axes %s" %(tuple([self.scanindex])+tuple(option.split(';'))))
+            self.scanwindows[self.scanindex].show()
+            
+            
 
     def StopScan(self):
+        self.scan.animation.stop()
+        self.adw.stop(9)
+        self.adw.running = False
         self.main.Controler_BusyLabel.setText(_translate("MainWindow", "", None))
         self.main.Scan_start_pushButton.setEnabled(True)
         self.main.Controler_Refocus.setEnabled(True)
@@ -343,8 +382,9 @@ class MainWindow(QMainWindow):
             self.Controler[name]['AddButton'].setEnabled(True)
             self.Controler[name]['MinButton'].setEnabled(True)
             self.Controler[name]['PosBox'].setEnabled(True)
-        self.scan.animation.stop()
-        self.adw.stop(9)
+
+        self.continuousStopped = True
+        self.continuousScans = False
 #         self.main.Controler_Select_scan.clear()
 #         for key in self.scanwindows.keys():
 #             if not str(key).startswith('T'):
@@ -446,6 +486,7 @@ class MainWindow(QMainWindow):
     def closeEvent(self, ce):
         self.fileQuit()
         ce.ignore()
+
 
 class EditConfig(QtGui.QDialog):
     """ Dialog for editing the default values of the application.

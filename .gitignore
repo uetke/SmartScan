@@ -11,5 +11,8 @@ Thumbs.db
 .T98
 *.BAK
 *.T9*
+*.TB*
 *.log
 logbook.db
+*config_devices.xml
+*.exe
