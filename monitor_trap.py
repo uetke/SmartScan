@@ -18,6 +18,7 @@ if __name__ == "__main__":
     _session.accuracy = 0.05
     _session.apdtime = 1.5
     _session.apdacc = 50E-6
+    _session.monitor_timeresol = 100 # In ms
 
     _session.device['qpdx'] = device('QPD X')
     _session.device['qpdy'] = device('QPD Y')
@@ -27,13 +28,16 @@ if __name__ == "__main__":
     _session.device['monitor'] = device('Diff')
     _session.device['apd1'] = device('APD 1')
     _session.device['lock'] = device('Lock-in')
-
+    _session.device['xpiezo'] = device('x piezo')
+    _session.device['ypiezo'] = device('y piezo')
+    _session.device['zpiezo'] = device('z piezo')
+    
     devices = []
     for i in _session.device:
         devices.append(_session.device[i])
 
     _session.devices = devices
     app = QtGui.QApplication(sys.argv)
-    test = Monitor()
-    test.show()
+    signMonitor = Monitor()
+    signMonitor.show()
     app.exec_()

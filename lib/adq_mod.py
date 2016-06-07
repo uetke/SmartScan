@@ -158,7 +158,7 @@ class adq(ADwin,ADwinDebug):
             Only works for a counter.
         """
         if self.model == 'gold':
-            self.load('lib/ADwinsrc/fast_timetrace.T98') # Does it need to happen here?
+            self.load('lib/adbasic/fast_timetrace.T98') # Does it need to happen here?
             delay = m.floor(acc/self.time_high)
             port = detect.properties['Input']['Hardware']['PortID']
             self.set_par(par.properties['Port'],int(port))

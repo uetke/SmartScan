@@ -18,7 +18,7 @@ from GUI.Trap.PowerSpectra import PowerSpectra
 from GUI.Trap.ConfigWindow import ConfigWindow
 from GUI.Trap.value_monitor import ValueMonitor
 from lib.xml2dict import variables
-
+import math as m
 import copy
 
 class Monitor(QtGui.QMainWindow):
@@ -65,14 +65,15 @@ class Monitor(QtGui.QMainWindow):
         self.fifo_name = ''
         self.ctimer = QtCore.QTimer()
         self.running = False
-        self.delay=400*0.1e-3 # This kind of things violate the new design of the adq_mod class
+        self.delay = m.floor(_session.monitor_timeresol/1000/_session.adw.time_low) # In Adwin units
+        self.timeDelay = _session.monitor_timeresol/1000 # In seconds
 
         QtCore.QObject.connect(self.ctimer,QtCore.SIGNAL("timeout()"),self.updateMon)
         QtCore.QObject.connect(self,QtCore.SIGNAL("TimeTraces"),self.updateTimes)
         QtCore.QObject.connect(self.PowerSpectra, QtCore.SIGNAL('Stop_Tr'),self.stop_timer)
         QtCore.QObject.connect(self.APD, QtCore.SIGNAL('Stop_Tr'),self.stop_timer)
         QtCore.QObject.connect(self,QtCore.SIGNAL('MeanData'),self.ValueMonitor.UpdateValues)
-
+        QtCore.QObject.connect(self.ConfigWindow,QtCore.SIGNAL('Times'),self.updateParameters)
 
         ###################
         # Define the menu #
@@ -154,6 +155,11 @@ class Monitor(QtGui.QMainWindow):
         apdMenu = menubar.addMenu('&APD')
         apdMenu.addAction(showAPD)
         apdMenu.addAction(triggerAPD)
+        
+        ####
+        # Define some parameters
+        ####
+        self.runningTimeResol = _session.monitor_timeresol
 
     def updateMon(self):
         final_data = []
@@ -164,7 +170,7 @@ class Monitor(QtGui.QMainWindow):
             calibration = self.devices[i].properties['Input']['Calibration']
             data = np.array((data-calibration['Offset'])/calibration['Slope'])
             if self.devices[i].properties['Type']=='Counter':
-                data /= self.delay
+                data /= self.timeDelay
                 
             final_data.append(data)
             mean_data.append(np.mean(data))
@@ -177,12 +183,12 @@ class Monitor(QtGui.QMainWindow):
         #Check the sizes of the variances
         var = copy.copy(data)
         for i in range(len(var)):
-            xdata = np.arange(len(var[i][0]))*self.delay
+            xdata = np.arange(len(var[i][0]))*self.timeDelay
             old_data = self.data[i]
             old_t = self.t[i]
-            self.t[i] = np.append(self.t[i],xdata+max(self.t[i])+self.delay)
+            self.t[i] = np.append(self.t[i],xdata+max(self.t[i])+self.timeDelay)
             self.data[i] = np.append(self.data[i],var[i])
-            limit = _session.timetrace_time/self.delay
+            limit = _session.timetrace_time/self.timeDelay
             self.t[i] = self.t[i][-limit:]
             self.data[i] = self.data[i][-limit:]
             
@@ -201,8 +207,9 @@ class Monitor(QtGui.QMainWindow):
                 print('Cant update while power spectra or APD is running.')
             else:
                 # Starts the process inside the ADwin
+                _session.adw.adw.Set_Processdelay(10,self.delay)
                 _session.adw.start(10)
-                self.ctimer.start(100)
+                self.ctimer.start(_session.monitor_timeresol*1.2)
                 self.running = True
         else:
             self.stop_timer()
@@ -239,7 +246,17 @@ class Monitor(QtGui.QMainWindow):
             
         print('Data saved in %s'%(savedir+filename) )
         return
-
+        
+    def updateParameters(self):
+        """ Updates the relevant parameters for the monitor timetrace. 
+        """
+        if self.timeDelay != _session.monitor_timeresol/1000:
+            # Calculate new time resolution in ADw cycles.
+            self.delay = m.floor(_session.monitor_timeresol/1000/_session.adw.time_low)
+            self.timeDelay = _session.monitor_timeresol/1000
+            _session.adw.adw.Set_Processdelay(10,self.delay)
+        
+        
     def exit_safe(self):
         """ Exits the application.
         """
