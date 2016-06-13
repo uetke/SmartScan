@@ -23,16 +23,16 @@ plt.ion() # enables interactive plot to show big numbers.
 timetrace_time = 10# In seconds
 integration_time = .05 # In seconds
 number_elements = int(timetrace_time/integration_time)
-
+W = 770
 # parameters for refocus
-experiment_label = 'THG_perylene_Tisa759nm_solution'
-
-
-N=15             # number of measurements to be done
+experiment_label = 'S1605_14_Tisa%snm_solution'%(W)
+print(experiment_label)
+input('Cont')
+N=10             # number of measurements to be done
 # min and max power to use in the sample (make sure it is lower than the threshold)
 # it is transformed to the power to be measured automatically.
-Pmin = 1
-Pmax = 500 # uw at BFP
+Pmin = 200
+Pmax = 3000 # uw at BFP
 pw_to_set= np.logspace(np.log10(Pmin*9),np.log10(Pmax*9),N)
 
 # for testing
@@ -58,9 +58,9 @@ try:
     time.sleep(0.5)
 
     # set the configuration of power meter.
-    pmeter.attenuator = False
+    pmeter.attenuator = True
     time.sleep(0.5)
-    pmeter.wavelength = 759
+    pmeter.wavelength = W
     print('Wavelength = '+str(pmeter.wavelength)+' nm')
     time.sleep(0.5)
     print('Units = '+str(pmeter.units))
@@ -103,7 +103,7 @@ while n <N:
     if adw.get_digin(0):
         plt.close()
         print('Measurement started.')
-        Beep(440,200)
+        Beep(440,800)
                
         pw_now=(pmeter.data*1000000)
         pw[0,n]=pw_now/9 # power at bfp
@@ -120,7 +120,6 @@ while n <N:
         if test==False: # save timetrace 
             header = "(Row1: TimeTrace1 (counts), Row2: TimeTrace1 (counts)) integration time: %f seconds"%(integration_time)
             np.savetxt("%s%s" %(savedir,filename_p), dd,fmt='%s', delimiter=",", header=header)
-        
         
         Beep(440,250)
         Beep(560,250)
@@ -146,11 +145,7 @@ pmeter.finalize()
 
 if test==False:
     header2 = "Power (uW), Avg counter1 (cps),Avg counter2 (cps), Std counter1 (cps), std counter2 (cps)"
-    np.savetxt("%s%s" %(savedir,experiment_label +'_Meas_at_'+t+'_Pcle_averaged.dat'),  np.concatenate((np.transpose(pw),np.transpose(data),np.transpose(edata)),axis=1),fmt='%s', delimiter=",", header=header2)    
-    np.savetxt("%s%s" %(savedir,experiment_label +'_Meas_at_'+t+'_Bkg_averaged.dat'),  np.concatenate((np.transpose(pw),np.transpose(bkg),np.transpose(ebkg)),axis=1),fmt='%s', delimiter=",", header=header2)    
-    
-    header3 = "pw (uW), xp (um), yp (um), zp (um),"
-    np.savetxt("%s%s" %(savedir,experiment_label +'_Meas_at_'+t+'_Final_Pcle_position.dat'),  np.concatenate((np.transpose(pw),np.transpose(xp),np.transpose(yp),np.transpose(zp)),axis=1),fmt='%s', delimiter=",", header=header3)    
+    np.savetxt("%s%s" %(savedir,experiment_label +'_Meas_at_'+t+'_averaged.dat'),  np.concatenate((np.transpose(pw),np.transpose(data),np.transpose(edata)),axis=1),fmt='%s', delimiter=",", header=header2)    
     
     
 
