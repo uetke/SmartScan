@@ -371,42 +371,74 @@ class adq(ADwin,ADwinDebug):
     def get_digin(self,port):
         """ Gets the value of the digin port"""
         self.logger = logging.getLogger(get_all_caller())
-        if 0<=port<16:
-            self.logger.info('Getting data from digital port %s' %port)
-            self.set_par(par.properties['Case'],5)
-            self.start(9)
-            self.wait(9)
-            digin_data = self.get_par(par.properties['Output_value'])
-            digin_data = bin(digin_data)[2:]
-            digin_data = '0'*(16-len(digin_data)) + digin_data
-            return int(digin_data[-port-1])
-        else:
-            self.logger.error('The port %s is out of range(0,16)' %port)
-
+        if self.model == 'gold':
+            if 0<=port<16:
+                self.logger.info('Getting data from digital port %s' %port)
+                self.set_par(par.properties['Case'],5)
+                self.start(9)
+                self.wait(9)
+                digin_data = self.get_par(par.properties['Output_value'])
+                digin_data = bin(digin_data)[2:]
+                digin_data = '0'*(16-len(digin_data)) + digin_data
+                return int(digin_data[-port-1])
+            else:
+                self.logger.error('The port %s is out of range(0,16)' %port)
+        elif self.model == 'goldII':
+            if 0<=port<32:
+                self.logger.info('Getting data from digital port %s' %port)
+                self.set_par(par.properties['Case'],5)
+                self.start(9)
+                self.wait(9)
+                digin_data = self.get_par(par.properties['Output_value']) # this need to be revised
+                digin_data = bin(digin_data)[2:]
+                digin_data = '0'*(32-len(digin_data)) + digin_data
+                return int(digin_data[-port-1])
+            else:
+                self.logger.error('The port %s is out of range(0,32)' %port)
+                
     def set_digout(self,port):
         """ Sets the digout port to 1"""
         self.logger = logging.getLogger(get_all_caller())
-        if 0<=port<16:
-            self.logger.debug('Setting digital port %s to 1' %port)
-            self.set_par(par.properties['Case'],6)
-            self.set_par(par.properties['Port'],port)
-            self.start(9)
-            self.wait(9)
-        else:
-            self.logger.error('The port %s is out of range(0,16)' %port)
-
+        if self.model == 'gold':
+            if 0<=port<16:
+                self.logger.debug('Setting digital port %s to 1' %port)
+                self.set_par(par.properties['Case'],6)
+                self.set_par(par.properties['Port'],port)
+                self.start(9)
+                self.wait(9)
+            else:
+                self.logger.error('The port %s is out of range(0,16)' %port)
+        elif self.model == 'goldII':
+            if 0<=port<32:
+                self.logger.debug('Setting digital port %s to 1' %port)
+                self.set_par(par.properties['Case'],6)
+                self.set_par(par.properties['Port'],port)
+                self.start(9)
+                self.wait(9)
+            else:
+                self.logger.error('The port %s is out of range(0,32)' %port)
 
     def clear_digout(self,port):
         """ Sets the digout port to 0"""
         self.logger = logging.getLogger(get_all_caller())
-        if 0<=port<16:
-            self.logger.debug('Setting digital port %s to 0' %port)
-            self.set_par(par.properties['Case'],7)
-            self.set_par(par.properties['Port'],port)
-            self.start(9)
-            self.wait(9)
-        else:
-            self.logger.error('The port %s is out of range(0,16)' %port)
+        if self.model == 'gold':
+            if 0<=port<16:
+                self.logger.debug('Setting digital port %s to 0' %port)
+                self.set_par(par.properties['Case'],7)
+                self.set_par(par.properties['Port'],port)
+                self.start(9)
+                self.wait(9)
+            else:
+                self.logger.error('The port %s is out of range(0,16)' %port)
+        elif self.model == 'goldII':
+            if 0<=port<32:
+                self.logger.debug('Setting digital port %s to 0' %port)
+                self.set_par(par.properties['Case'],7)
+                self.set_par(par.properties['Port'],port)
+                self.start(9)
+                self.wait(9)
+            else:
+                self.logger.error('The port %s is out of range(0,32)' %port)
 
     def scan_static(self,detect,devs,center,dims,accuracy,speed=10):
         """ A function that does a scan. The number of axes you can choose yourself.
