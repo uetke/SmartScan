@@ -25,16 +25,16 @@ integration_time = .05 # In seconds
 number_elements = int(timetrace_time/integration_time)
 
 # parameters for refocus
-experiment_label = 'THG_perylene_Tisa759nm'
-center = [34.37,67.00,53.61]
+experiment_label = 'S1605_14_EuComplex_300uM_532nm'
+center = [55.92,47.18,83.14]
 dims = [0.5,0.5,0.8]
 accuracy = [0.05,0.05,0.1]
 
-N=15             # number of measurements to be done
+N=5             # number of measurements to be done
 # min and max power to use in the sample (make sure it is lower than the threshold)
 # it is transformed to the power to be measured automatically.
-Pmin = 1
-Pmax = 150 # uw at BFP
+Pmin = 20
+Pmax = 300 # uw at BFP
 pw_to_set= np.logspace(np.log10(Pmin*9),np.log10(Pmax*9),N)
 
 # for testing
@@ -60,9 +60,9 @@ try:
     time.sleep(0.5)
 
     # set the configuration of power meter.
-    pmeter.attenuator = False
+    pmeter.attenuator = True
     time.sleep(0.5)
-    pmeter.wavelength = 759
+    pmeter.wavelength = 532
     print('Wavelength = '+str(pmeter.wavelength)+' nm')
     time.sleep(0.5)
     print('Units = '+str(pmeter.units))
