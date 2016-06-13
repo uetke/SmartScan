@@ -29,7 +29,7 @@ def adding_to_path(folder):
         return True
 
 if __name__ == "__main__":
-    adding_to_path(['GUI', 'lib', '_private'])
+    adding_to_path(['GUI', 'lib', '_private', 'special_tasks'])
 
     from GUI.MainWindow import App
     global app
