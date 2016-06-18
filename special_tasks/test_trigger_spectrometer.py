@@ -6,6 +6,5 @@ from time import sleep
 # inizialize adwin
 adw = adq(model='goldII')
 adw.clear_digout(16)
-n=0
 print('trigger test')
 trigger_spectrometer(adw,digin=2,digout=16,digcheck=3)
