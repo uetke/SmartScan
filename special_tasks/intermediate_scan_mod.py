@@ -22,7 +22,7 @@ if __name__ == '__main__':
     fifo=variables('Fifo')
 
     #filename = tkinter.filedialog.askopenfilename(initialdir="D:\\Data",title='Please select a directory')
-    filename= 'D:\\Data\\2016-06-15\\NR_complex_PMMA_1mM_739nm_100uW_20x20_image_01.dat'
+    filename= 'D:\\Data\\2016-06-18\\s_1606_21_NR_PMMA_film_532nm_20uW_20x20um_10ms_image_02.dat'
     image = np.loadtxt('%s' %(filename),dtype='bytes',delimiter =',').astype('float')
     
     f = open('%s'%(filename),'r')
@@ -83,13 +83,13 @@ if __name__ == '__main__':
         os.makedirs(savedir)
     i=1
     filename = name    
-    while os.path.exists(savedir+filename+"_good1.txt"):
+    while os.path.exists(savedir+filename+"_positions.txt"):
         filename = '%s_%s' %(name,i)
         i += 1
         
     header = "type,x-pos,y-pos,z-pos,first scan time" + ",time_%s"*(len(data[0,:])-5) %tuple(range((len(data[0,:])-5)))
-    np.savetxt("%s%s_good.txt" %(savedir,filename), data,fmt='%s', delimiter=",", header=header)   
+    np.savetxt("%s%s_positions.txt" %(savedir,filename), data,fmt='%s', delimiter=",", header=header)   
     logger.info('Coordinates file saved as %s%s_good.txt' %(savedir,filename))
-    print('Coordinates file saved as %s%s_good.txt\n' %(savedir,filename))
+    print('Coordinates file saved as %s%s_positions.txt\n' %(savedir,filename))
     print('Now is time to continue with continue_scan_mod.py\n')
     print('Program finished')
