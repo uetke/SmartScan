@@ -41,9 +41,10 @@ def trigger_spectrometer(adw,digin=1,digout=0,digcheck=2):
                 Connect digin to SCAN
                 Connect digout to External Sync
     """
-
+    
     adw.set_digout(digout)   # This triggers the spectrometer if it is set to +edge (as it should be!)
     print('Triggerring spectrometer')
+    
     sleep(0.5)
     while adw.get_digin(digin) or adw.get_digin(digcheck):
         sleep(0.1)
