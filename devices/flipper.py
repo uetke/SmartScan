@@ -7,7 +7,6 @@ Only copying the dll doesn't satisfy all the dependences. Apparently a full inst
 into the details."""
 
 from ctypes import c_long, c_buffer, c_float, windll, pointer
-
 import os
 
 
@@ -17,7 +16,7 @@ class Flipper():
         self.Connected = False
         self.SerialNum = SerialNum
         dllname = 'Thorlabs.MotionControl.FilterFlipper.dll'
-        self.aptdll = windll.LoadLibrary(dllname)
+        self.aptdll = windll.LoadLibrary('Thorlabs.MotionControl.FilterFlipper.dll')
         if self.initializeHardwareDevice():
             print('Flipper initialized')
         else:
@@ -100,7 +99,7 @@ class Flipper():
 if __name__ == '__main__':
     from time import sleep
 
-    inst = Flipper(SerialNum=b'37863355')
+    inst = Flipper(SerialNum=b'37863346')
     print(inst.identify()) # Makes the green LED blink
     sleep(1)
     print('Current position is %s'%(inst.getPos()))
@@ -115,5 +114,5 @@ if __name__ == '__main__':
             inst.goto(p)
         else:
             change_pos = False
-    print('The fianl position is %s'%inst.getPos())
+    print('The final position is %s'%inst.getPos())
     inst.close()
