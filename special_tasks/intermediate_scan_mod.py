@@ -21,8 +21,8 @@ if __name__ == '__main__':
     data=variables('Data')
     fifo=variables('Fifo')
 
-    filename = tkinter.filedialog.askopenfilename(initialdir="D:\\Data",title='Please select a directory')
-    
+    #filename = tkinter.filedialog.askopenfilename(initialdir="D:\\Data",title='Please select a directory')
+    filename= 'D:\\Data\\2016-06-15\\NR_complex_PMMA_1mM_739nm_100uW_20x20_image_01.dat'
     image = np.loadtxt('%s' %(filename),dtype='bytes',delimiter =',').astype('float')
     
     f = open('%s'%(filename),'r')
@@ -83,7 +83,7 @@ if __name__ == '__main__':
         os.makedirs(savedir)
     i=1
     filename = name    
-    while os.path.exists(savedir+filename+"_good.txt"):
+    while os.path.exists(savedir+filename+"_good1.txt"):
         filename = '%s_%s' %(name,i)
         i += 1
         
