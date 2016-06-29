@@ -37,21 +37,22 @@ if __name__ == '__main__':
         intensity = np.loadtxt(savedir+'aom_calibration.txt').astype('float')[6:]
         P = np.polyfit(intensity,AOM_voltage,2)
         print(P)
-        # plt.plot(intensity,AOM_voltage,'.')
-        # plt.plot(intensity,np.polyval(P,intensity))
-        # plt.ylabel('AOM voltage (V)')
-        # plt.xlabel('Laser intensity (uW)')
-        # plt.show()
+        #plt.plot(intensity,AOM_voltage,'.')
+        #plt.plot(intensity,np.polyval(P,intensity))
+        #plt.ylabel('AOM voltage (V)')
+        #plt.xlabel('Laser intensity (uW)')
+        #plt.show()
     else:
         raise Exception('The AOM was not calibrated today, please do it before running this program...')
 
-    number_of_times = 10
+    number_of_times = 11
     laser_min = 10 # In uW
     laser_max = 150 # In uW
     laser_powers = np.linspace(laser_min,laser_max,number_of_times)
-
+    print('633 laser powers to be used:')
+    print(laser_powers)
     #initialize the adwin and the devices
-    name = 'power_intensity'
+    name = 'power_intensity_trap'
 
     i=1
     filename = '%s_%s.dat'%(name,i)
@@ -63,66 +64,61 @@ if __name__ == '__main__':
     print('Data will be saved in %s'%(savedir+filename))
     #init the Adwin programm and also loading the configuration file for the devices
     adw = adq()
-    xpiezo = device('x piezo')
-    ypiezo = device('y piezo')
-    zpiezo = device('z piezo')
     counter = device('APD 1')
+    counter2 = device('APD 2')
+    qpdx = device('QPD X')
+    qpdy = device('QPD Y')
+    qpdz = device('QPD Z')
+    bpd = device('Diff')
     aom = device('AOM')
 
-    devs = [xpiezo,ypiezo,zpiezo]
+    
+    devs = [counter,counter2,qpdx,qpdy,qpdz,bpd]
 
-    Beep(840,200)
+    Beep(840,50)
+    #Beep(800,50)
+    #Beep(780,50)
+    #Beep(760,50)
     #Newport Power Meter
-    pmeter = pp.via_serial(1)
+    pmeter = pp.via_serial(16)
     pmeter.initialize()
-    pmeter.wavelength = 633
+    pmeter.wavelength = 1064
     pmeter.attenuator = True
     pmeter.filter = 'Medium'
     pmeter.go = True
     pmeter.units = 'Watts'
 
-    timetrace_time = 2 # In seconds
-    integration_time = .01 # In seconds
+    timetrace_time = 5 # In seconds
+    integration_time = .0001 # In seconds
     number_elements = int(timetrace_time/integration_time)
 
-    data = np.zeros([number_of_times*2,number_elements+1]) # The first element will be the power
-
+    data = np.zeros([6,number_of_times,number_elements+1]) # The first element will be the power
+    
     for m in range(number_of_times):
-        # power_aom = 1.5-m*1.5/number_of_spectra
-        power_aom = np.polyval(P,laser_powers[m])
-        adw.go_to_position([aom],[power_aom])
-        dd,ii = adw.get_timetrace_static([counter],duration=timetrace_time,acc=integration_time)
-        if m==0:
-            time.sleep(1)
-        try:
-            power = pmeter.data*1000000
-        except:
-            power = 0
-        data[m,0] = (str(power))
-        data[m,1:] = np.array(dd)
-        print('Power %s uW'%(str(power)))
-        print('Done with %i'%(m))
-
-    for m in range(number_of_times):
-        # power_aom = 1.5-m*1.5/number_of_spectra
-        power_aom = np.polyval(P,laser_powers[-m-1])
-        adw.go_to_position([aom],[power_aom])
-        dd,ii = adw.get_timetrace_static([counter],duration=timetrace_time,acc=integration_time)
-        if m==0:
-            time.sleep(1)
-        try:
-            power = pmeter.data*1000000
-        except:
-            power = 0
-        data[number_of_times+m,0] = (str(power))
-        data[number_of_times+m,1:] = np.array(dd)
-        print('Power %s uW'%(str(power)))
-        print('Done with %i'%(number_of_times-m))
-
-
-
-    header = "(Power in uW,timetrace) integration time: %f seconds"%(integration_time)
-    np.savetxt("%s%s" %(savedir,filename), data,fmt='%s', delimiter=",", header=header)
+        i = 0
+        for dev in devs:
+            # power_aom = 1.5-m*1.5/number_of_spectra
+            power_aom = np.polyval(P,laser_powers[m])
+            adw.go_to_position([aom],[power_aom])
+            dd,ii = adw.get_timetrace_static([dev],duration=timetrace_time,acc=integration_time)
+            if m==0:
+                time.sleep(1)
+            try:
+                power = pmeter.data*1000000
+            except:
+                power = 0
+            data[i,m,0] = (str(power))
+            data[i,m,1:] = np.array(dd)
+            i+=1
+            print('633 power %s uW'%(str(laser_powers[m])))
+            print('Done with %s'%(dev.properties['Name']))
+            print('1064 power %s mW'%(str(power/1000)))
+            print('----------------------------------------')
+            
+    power_aom = np.polyval(P,50) # Sets back the 633 power to a reasonable value
+    adw.go_to_position([aom],[power_aom])
+    header = "(Trap Power in uW,timetrace) integration time: %f seconds"%(integration_time)
+    np.save("%s%s" %(savedir,filename), data)#,fmt='%s', delimiter=",", header=header)
     logger.info('Final file saved as %s%s' %(savedir,filename))
     logger.info('Finished acquiring several sepctra completed')
     Beep(440,200)

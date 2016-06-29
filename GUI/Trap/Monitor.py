@@ -17,6 +17,7 @@ from GUI.Trap.APD import APD
 from GUI.Trap.PowerSpectra import PowerSpectra
 from GUI.Trap.ConfigWindow import ConfigWindow
 from GUI.Trap.value_monitor import ValueMonitor
+from GUI.Trap.lockIn import LockIn
 from lib.xml2dict import variables
 import math as m
 import copy
@@ -34,7 +35,7 @@ class Monitor(QtGui.QMainWindow):
         self.PowerSpectra = PowerSpectra()
         self.ConfigWindow = ConfigWindow()
         self.ValueMonitor = ValueMonitor()
-
+        self.LockIn = LockIn()
         self.setCentralWidget(self.timetraces)
 
         # The devices to analize
@@ -72,6 +73,7 @@ class Monitor(QtGui.QMainWindow):
         QtCore.QObject.connect(self,QtCore.SIGNAL("TimeTraces"),self.updateTimes)
         QtCore.QObject.connect(self.PowerSpectra, QtCore.SIGNAL('Stop_Tr'),self.stop_timer)
         QtCore.QObject.connect(self.APD, QtCore.SIGNAL('Stop_Tr'),self.stop_timer)
+        QtCore.QObject.connect(self.LockIn, QtCore.SIGNAL('Stop_Tr'),self.stop_timer)
         QtCore.QObject.connect(self,QtCore.SIGNAL('MeanData'),self.ValueMonitor.UpdateValues)
         QtCore.QObject.connect(self.ConfigWindow,QtCore.SIGNAL('Times'),self.updateParameters)
 
@@ -131,6 +133,14 @@ class Monitor(QtGui.QMainWindow):
         triggerAPD = QtGui.QAction('Trigger APD',self)
         triggerAPD.setStatusTip('Triggers time resolution APD timetrace')
         triggerAPD.triggered.connect(self.APD.start_timetrace)
+        
+        showLock = QtGui.QAction('Lock-In',self)
+        showLock.setStatusTip('Shows the Lock-In timetrace')
+        showLock.triggered.connect(self.LockIn.show)
+        
+        triggerLock = QtGui.QAction('Trigger lock in',self)
+        triggerLock.setStatusTip('Acquires Lock In signal with high temporal resolution')
+        triggerLock.triggered.connect(self.LockIn.show)
 
         self.statusBar()
         menubar = self.menuBar()
@@ -155,6 +165,10 @@ class Monitor(QtGui.QMainWindow):
         apdMenu = menubar.addMenu('&APD')
         apdMenu.addAction(showAPD)
         apdMenu.addAction(triggerAPD)
+        
+        lockMenu = menubar.addMenu('&Lock-In')
+        lockMenu.addAction(showLock)
+        lockMenu.addAction(triggerLock)
         
         ####
         # Define some parameters
