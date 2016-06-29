@@ -340,6 +340,7 @@ class MonitorWidget(QtGui.QWidget):
         self.layout.addWidget(self.lock, 2, 1)
 
 if __name__ == "__main__":
+	print('Inside main')
     app = QApplication(sys.argv)
     mon = Monitor()
     mon.show()

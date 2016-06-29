@@ -47,7 +47,7 @@ def trigger_spectrometer(adw,digin=1,digout=0,digcheck=2):
     sleep(0.5)
     while adw.get_digin(digin) or adw.get_digin(digcheck):
         sleep(0.1)
-        adw.clear_digout(0) # Tries to clear the digout every time until the acquisition of the spectra is done
+        adw.clear_digout(digout) # Tries to clear the digout every time until the acquisition of the spectra is done
     sleep(1) # Gives enough time to the spectrometer to re arm itself.
     if adw.get_digin(2) == 1:
             raise Exception('Not Clearing digout')
