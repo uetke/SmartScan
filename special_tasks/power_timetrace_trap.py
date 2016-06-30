@@ -55,10 +55,10 @@ if __name__ == '__main__':
     name = 'power_intensity_trap'
 
     i=1
-    filename = '%s_%s.dat'%(name,i)
+    filename = '%s_%s.dat.npy'%(name,i)
     while os.path.exists(savedir+filename):
         i += 1
-        filename = '%s_%s.dat' %(name,i)
+        filename = '%s_%s.dat.npy' %(name,i)
 
     logger.info('%s\\%s.log' %(savedir,filename))
     print('Data will be saved in %s'%(savedir+filename))
@@ -92,7 +92,7 @@ if __name__ == '__main__':
     integration_time = .0001 # In seconds
     number_elements = int(timetrace_time/integration_time)
 
-    data = np.zeros([6,number_of_times,number_elements+1]) # The first element will be the power
+    data = np.zeros([6,number_of_times,number_elements+2]) # The first element will be the power
     
     for m in range(number_of_times):
         i = 0
@@ -108,7 +108,8 @@ if __name__ == '__main__':
             except:
                 power = 0
             data[i,m,0] = (str(power))
-            data[i,m,1:] = np.array(dd)
+            data[i,m,1] = str(laser_powers[m])
+            data[i,m,2:] = np.array(dd)
             i+=1
             print('633 power %s uW'%(str(laser_powers[m])))
             print('Done with %s'%(dev.properties['Name']))
