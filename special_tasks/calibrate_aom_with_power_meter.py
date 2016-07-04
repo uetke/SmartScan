@@ -23,7 +23,7 @@ time.sleep(0.5)
 # set the configuration of power meter.
 pmeter.attenuator = False
 time.sleep(0.5)
-pmeter.wavelength = 671
+pmeter.wavelength = 785
 print('Wavelength = '+str(pmeter.wavelength)+' nm')
 time.sleep(0.5)
 print('Units = '+str(pmeter.units))
@@ -32,11 +32,11 @@ print('Range = '+str(pmeter.range))
 time.sleep(0.5)
 
 # inizialize adwin
-adw = adq()
-aom = device('AOM')
-adw.go_to_position([aom],[0])
+adw = adq(model='goldII')
+aom = device('AOM Ti:Sa')
+adw.go_to_position([aom],[0.01])
 time.sleep(1)
-v_aom = np.linspace(0,3,50)
+v_aom = np.linspace(0.01,10,50)
 
 # for to get the data
 data = [];
@@ -44,6 +44,7 @@ data = [];
 print('Runnin the for...')
 
 for a in v_aom:
+    print('Voltage to be set ' + str(a))
     adw.go_to_position([aom],[a])
     time.sleep(2)
     data.append(pmeter.data*1000000) # the data is now in uW
@@ -52,7 +53,7 @@ for a in v_aom:
 print('For done!')
 
 # save
-np.savetxt("%s\\aom_calibration2.txt" %(savedir), (v_aom,data),fmt='%s', delimiter=',')
+np.savetxt("%s\\aom_tisa_calibration.txt" %(savedir), (v_aom,data),fmt='%s', delimiter=',')
 
 # finalize
 pmeter.finalize()    
