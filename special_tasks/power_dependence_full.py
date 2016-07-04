@@ -257,8 +257,7 @@ while n <N:
 # finalize power meter
 pmeter.finalize()   
 flipper.close()
-
-print('End')
+print('Program finished')
 
 
 
