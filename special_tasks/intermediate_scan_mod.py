@@ -22,7 +22,7 @@ if __name__ == '__main__':
     fifo=variables('Fifo')
 
     #filename = tkinter.filedialog.askopenfilename(initialdir="D:\\Data",title='Please select a directory')
-    filename= 'D:\\Data\\2016-06-18\\s_1606_21_NR_PMMA_film_532nm_20uW_20x20um_10ms_image_02.dat'
+    filename= 'D:\\Data\\2016-06-24\\s_1606_21_NR_PMMA_film_532_23uW_20x20um_10ms_02.dat'
     image = np.loadtxt('%s' %(filename),dtype='bytes',delimiter =',').astype('float')
     
     f = open('%s'%(filename),'r')
