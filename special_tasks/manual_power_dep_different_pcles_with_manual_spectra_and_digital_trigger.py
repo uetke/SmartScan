@@ -104,89 +104,70 @@ bkg=np.zeros((2,N))
 ebkg = np.zeros((2,N))
 
 ## measure dark
-
-# # time trace and save on the particle
 input('close the shutter for the laser and press enter to take an initial time trace of dark counts')
-dd,ii = adw.get_timetrace_static([counter1,counter2],duration=timetrace_time,acc=integration_time)
-filename_p = experiment_label +'_Meas_at_'+t+'_TimeTrace_dark.dat'
-if test==False: # save timetrace plce
-    header = "(Row1: TimeTrace1 (counts), Row2: TimeTrace1 (counts)) integration time: %f seconds"%(integration_time)
-    np.savetxt("%s%s" %(savedir,filename_p), dd,fmt='%s', delimiter=",", header=header)
+print('taking dark time trace')
+a1,a2 = adw.lifetime(apd1,apd2,aom,duration=duration,acc=integration_time,on_time=on_time,times=N)
 
-input('take a dark spectra (label as 00) and then press enter...')
+filename = experiment_label +'_Meas_at_'+t+'_TimeTrace_dark.dat'
+print(filename)
+header = "(Row1: TimeTrace1 (counts),Row2: TimeTrace2 (counts)) integration_time= %e sec. duration= %f sec. on_time= %f sec. times= %f ."%(integration_time,duration,on_time,N)
+np.savetxt("%s%s" %(savedir,filename), data,fmt='%s', delimiter=",", header=header)
 
-
-    
+   
 # while in the measurement
 n=0
-print('First Measurement. Power to be set= %s uW'%(pw_to_set[n]))
-print('Waiting for triggger...')
 
-# shows a plot with the number to be set in big fontsize
-fig = plt.figure()
-ax = fig.add_subplot(111)
-ax.text(0,0.5,'P =%.2e'%(pw_to_set[n])+' uW',fontsize=55)
-plt.show()
-plt.pause(0.0001)
-print('Waiting for signal...')
 
 while n <N:
     sleep(0.1)
-    if adw.get_digin(0):
-        plt.close()
-        print('Measurement started.')
-        Beep(440,200)
-        for nn in range(len(particles)):
-            # go to the particle 
-            if test==False:
-                print('going to pcle')
-                adw.go_to_position(devs,particles[nn])
-                time.sleep(0.1)
-                print('PCLE position = '+str(particles[nn])+'um')
-            
-            pw_now=(pmeter.data*1000000)
-            pw[0,n]=pw_now/9 # power at bfp
-            print('Measured Power =%s uW'%(str(pw_now)))
-            
-            filename_p = experiment_label +'_Meas_at_'+t+'_TimeTrace_Pcle'+str(nn)+'_Measured_Power='+str(pw_now)+'uW.dat'
-            filename_b = experiment_label +'_Meas_at_'+t+'_TimeTrace_Bkg'+str(nn)+'_Measured_Power='+str(pw_now)+'uW.dat'
-            # # time trace and save on the particle
-            print('Started time trace on the particle '+str(nn))
-            dd,ii = adw.get_timetrace_static([counter1,counter2],duration=timetrace_time,acc=integration_time)
-            print('Ended time trace on the particle '+str(nn))
+    print('Measurement started.')
+    for nn in range(len(particles)):
+        # go to the particle 
+        if test==False:
+            print('going to pcle')
+            adw.go_to_position(devs,particles[nn])
+            time.sleep(0.1)
+            print('PCLE position = '+str(particles[nn])+'um')
+        
+        pw_now=(pmeter.data*1000000)
+        pw[0,n]=pw_now/9 # power at bfp
+        print('Measured Power =%s uW'%(str(pw_now)))
+        
+        filename_p = experiment_label +'_Meas_at_'+t+'_TimeTrace_Pcle'+str(nn)+'_Measured_Power='+str(pw_now)+'uW.dat'
+        filename_b = experiment_label +'_Meas_at_'+t+'_TimeTrace_Bkg'+str(nn)+'_Measured_Power='+str(pw_now)+'uW.dat'
+        # # time trace and save on the particle
+        print('Started time trace on the particle '+str(nn))
+        a1,a2 = adw.lifetime(apd1,apd2,aom,duration=duration,acc=integration_time,on_time=on_time,times=N)
+        print('Ended time trace on the particle '+str(nn))
 
-            # append data pcle
-            if nn==1:
-                data[:,n]=np.mean(dd,axis=1)/integration_time
-                edata[:,n]=np.std(dd,axis=1)/integration_time
-            if test==False: # save timetrace plce
-                header = "(Row1: TimeTrace1 (counts), Row2: TimeTrace1 (counts)) integration time: %f seconds"%(integration_time)
-                np.savetxt("%s%s" %(savedir,filename_p), dd,fmt='%s', delimiter=",", header=header)
-            ## spectra
-            input('take the spectra on the PCLE' + str(nn)+ 'and THEN press enter to continue...')
-            
-            
-            
-            # # time trace and save BKG
-            print('Going to the BKG Position')
-            if test==False:
-                bkg_position = [particles[nn][0]+2,particles[nn][1]+2,particles[nn][2]]
-                print('BKG position = '+str(bkg_position)+'um')
-                adw.go_to_position(devs,bkg_position)
-                time.sleep(0.1)
-            print('Started time trace on the BKG '+str(nn))
-            dd,ii = adw.get_timetrace_static([counter1,counter2],duration=timetrace_time,acc=integration_time)
-            print('Ended time trace on the BKG '+str(nn))
-            # append data bgg
-            if nn==1:
-                bkg[:,n]=np.mean(dd,axis=1)/integration_time
-                ebkg[:,n]=np.std(dd,axis=1)/integration_time
-            if test==False:
-                header = "(Row1: TimeTrace1 (counts), Row2: TimeTrace1 (counts)) integration time: %f seconds"%(integration_time)
-                np.savetxt("%s%s" %(savedir,filename_b), dd,fmt='%s', delimiter=",", header=header)
-            input('take the spectra on the BKG' + str(nn)+ 'and then press enter to continue...')
-            print('done with this PARTICLE at this power')
-            print('------------------------')
+        if test==False: # save timetrace plce
+            header = "(Row1: TimeTrace1 (counts), Row2: TimeTrace1 (counts)) integration time: %f seconds"%(integration_time)
+            np.savetxt("%s%s" %(savedir,filename_p), dd,fmt='%s', delimiter=",", header=header)
+        ## spectra
+        input('take the spectra on the PCLE' + str(nn)+ 'and THEN press enter to continue...')
+        
+        
+        
+        # # time trace and save BKG
+        print('Going to the BKG Position')
+        if test==False:
+            bkg_position = [particles[nn][0]+2,particles[nn][1]+2,particles[nn][2]]
+            print('BKG position = '+str(bkg_position)+'um')
+            adw.go_to_position(devs,bkg_position)
+            time.sleep(0.1)
+        print('Started time trace on the BKG '+str(nn))
+        dd,ii = adw.get_timetrace_static([counter1,counter2],duration=timetrace_time,acc=integration_time)
+        print('Ended time trace on the BKG '+str(nn))
+        # append data bgg
+        if nn==1:
+            bkg[:,n]=np.mean(dd,axis=1)/integration_time
+            ebkg[:,n]=np.std(dd,axis=1)/integration_time
+        if test==False:
+            header = "(Row1: TimeTrace1 (counts), Row2: TimeTrace1 (counts)) integration time: %f seconds"%(integration_time)
+            np.savetxt("%s%s" %(savedir,filename_b), dd,fmt='%s', delimiter=",", header=header)
+        input('take the spectra on the BKG' + str(nn)+ 'and then press enter to continue...')
+        print('done with this PARTICLE at this power')
+        print('------------------------')
             
         Beep(440,250)
         Beep(560,250)
