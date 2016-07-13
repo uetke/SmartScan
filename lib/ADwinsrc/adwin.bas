@@ -46,12 +46,12 @@ init:
   'cnt_inputmode(0)
   'cnt_enable(15)
   'FIFO_Clear(200)
-  i = 1
+  i = 0
   k = 1
-  for j=1 to 4
-    old_timer[j] = 0
-    free = input(21314873,j)
-  NEXT j
+  'for j=1 to 4
+  '  old_timer[j] = 0
+  '  free = input(21314873,j)
+  'NEXT j
   pix_done = -1
   for j=1 to 3
     port[j]=data_199[j]
@@ -72,14 +72,23 @@ event:
       end
 
     case 3
-      for j=1 to par_71
-        data_200 = input(data_198[2*j-1],data_198[2*j])
-      NEXT j
-      if (i = par_78) then
-        end
+      if (pix_done < 0) then
+        for j=1 to 4
+          old_timer[j] = input(21314873,j)
+          free = input(21314873,j)
+        NEXT j
+        pix_done = 0
+      else
+        for j=1 to par_71
+          data_200 = input(data_198[2*j-1],data_198[2*j])
+        NEXT j
+        pix_done = pix_done + 1
+        par_79 = pix_done
+        if (pix_done = par_78) then
+          end
+        endif
       endif
-      i = i + 1
-
+      
     case 33
       'For acquiring signals of several devices, but keeping in mind higher temporal accuracy'
       'The acquisition is done in series (first one device, then another, etc.'
@@ -99,6 +108,11 @@ event:
       'doing a scan'
       if (pix_done < 0) then
         dac(port[1],start[1])
+        for j=1 to 4
+          old_timer[j] = input(21314873,j)
+          free = input(21314873,j)
+        NEXT j
+        j = 1
         if (start[2]>-1) then
           dac(port[2],start[2])
         endif

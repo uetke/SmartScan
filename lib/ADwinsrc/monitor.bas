@@ -12,7 +12,6 @@
 ' Stacksize                      = 1000
 ' Info_Last_Save                 = MEETPC113  MEETPC113\Aquiles
 '<Header End>
-
 #include c:\adwin\adbasic\inc\adwgcnt.inc
 
 dim data_178[2003] as float as fifo 'counters
@@ -60,7 +59,6 @@ event:
     new_timer[j] = cnt_readlatch(j)
     count[j] = old_timer[j] - new_timer[j]
     old_timer[j] = new_timer[j]
-  
   NEXT j  
   
   data_178 = count[1]
