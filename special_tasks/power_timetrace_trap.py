@@ -48,6 +48,10 @@ if __name__ == '__main__':
     number_of_times = 11
     laser_min = 10 # In uW
     laser_max = 150 # In uW
+    timetrace_time = 5 # In seconds
+    integration_time = .0001 # In seconds
+    
+    
     laser_powers = np.linspace(laser_min,laser_max,number_of_times)
     print('633 laser powers to be used:')
     print(laser_powers)
@@ -88,11 +92,10 @@ if __name__ == '__main__':
     pmeter.go = True
     pmeter.units = 'Watts'
 
-    timetrace_time = 5 # In seconds
-    integration_time = .0001 # In seconds
+
     number_elements = int(timetrace_time/integration_time)
 
-    data = np.zeros([6,number_of_times,number_elements+2]) # The first element will be the power
+    data = np.zeros([len(devs),number_of_times,number_elements+2]) # The first element will be the power
     
     for m in range(number_of_times):
         i = 0
