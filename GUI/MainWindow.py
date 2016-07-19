@@ -10,6 +10,7 @@ from GUI.MplAnimate import MplAnimate
 # from Configuration_Window import Ui_MainWindow as Configuration_Window
 from GUI.starting_window import Ui_MainWindow as Configuration_Window
 from GUI.MainWindowGui import Ui_MainWindow
+from GUI.flipperGUI import flippers
 from lib.xml2dict import device
 import numpy as np
 from lib.adq_mod import adq
@@ -276,6 +277,10 @@ class MainWindow(QMainWindow):
                                  QtCore.Qt.CTRL + QtCore.Qt.Key_F5)
         self.edit_menu.addAction('&Edit Defaults',self.edit_defaults,
                                  QtCore.Qt.CTRL + QtCore.Qt.Key_E)
+        
+        self.extras_menu = QtGui.QMenu('&Extras',self)
+        self.extras_menu.addAction('&Flippers', self.showFlippers)
+        self.menuBar().addMenu(self.extras_menu)
 
         self.menuBar().addSeparator()
         self.menuBar().addMenu(self.edit_menu)
@@ -305,6 +310,12 @@ class MainWindow(QMainWindow):
             self.main.Scan_Detector_comboBox.setEnabled(True)
             self.main.Scan_Dropdown.button.setEnabled(False)
             self.main.Scan_Detector_UnitLabel.setEnabled(True)
+    
+    def showFlippers(self):
+        """ Shows the flippers GUI. 
+        """
+        self.flippersGUI = flippers()
+        self.flippersGUI.show()
 
     def continuousScan(self):
         """ Method for acquiring a 2D scan continuously (one after the other).
