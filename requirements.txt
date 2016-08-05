@@ -1,0 +1,10 @@
+numpy
+scipy
+matplotlib
+sphinx
+pyqt
+pyqtgraph
+pyserial
+pyusb
+colorama
+lantz>=0.3
