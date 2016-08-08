@@ -115,7 +115,6 @@ class MainWindow(QMainWindow):
     def __init__(self,session,*args):
         self._session = session
         self.dev_conf = session['dev_conf']
-        self.par_conf = session['par_conf']
         self.directory = session['directory']
         self.description = session['description']
         self.autoSave = session['autoSave']

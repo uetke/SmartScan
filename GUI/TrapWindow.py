@@ -445,7 +445,7 @@ class monitor_values(QtGui.QWidget):
         
         QtCore.QObject.connect(self.ctimer,QtCore.SIGNAL("timeout()"),self.updateMeans)
         
-        self.fifo=variables('Fifo')
+        self.fifo=VARIABLES['fifo']
         self.fifo_name = ''
         
     def start_timer(self):
@@ -471,7 +471,7 @@ class monitor_values(QtGui.QWidget):
         final_data = []
         for i in range(len(self.detector)):
             self.fifo_name = '%s%i' %(self.detector[i].properties['Type'],self.detector[i].properties['Input']['Hardware']['PortID'])
-            data = np.array([self.adw.get_fifo(self.fifo.properties[self.fifo_name])])
+            data = np.array([self.adw.get_fifo(VARIABLES['fifo'][self.fifo_name])])
             calibration = self.detector[i].properties['Input']['Calibration']
             data = (data-calibration['Offset'])/calibration['Slope']
             

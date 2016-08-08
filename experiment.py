@@ -8,7 +8,8 @@ import time
 
 from devices import *
 from lib.adq_mod import adq
-from lib.xml2dict import device,variables
+from lib.xml2dict import device
+from lib.config import VARIABLES
 from special_tasks.spectrometer import abort, trigger_spectrometer, client_spectrometer
 from devices.powermeter1830c import PowerMeter1830c as pp
 from devices.arduino import arduino as ard
