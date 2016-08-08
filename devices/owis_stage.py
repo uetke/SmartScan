@@ -15,6 +15,7 @@ from enum import Enum
 from lantz import Q_, Action, Feat, DictFeat
 from lantz.messagebased import MessageBasedDriver
 
+
 class LStepStage(MessageBasedDriver):
     """Driver for an OWIS linear stage.
     Does not implement the full LSTEP instruction set.
@@ -41,7 +42,7 @@ class LStepStage(MessageBasedDriver):
         self._number_of_axes = len(self.axes)
         self.velocity_factors = [None] * self._number_of_axes
         self.refresh('dimensions')
-    
+
     @Feat()
     def ver(self):
         return self.query('?ver')
@@ -70,7 +71,6 @@ class LStepStage(MessageBasedDriver):
     @property
     def number_of_axes(self):
         return self._number_of_axes
-    
 
     @DictFeat(keys=('X', 'Y', 'Z', 'A'))
     def axis(self, axis):
@@ -127,7 +127,7 @@ class LStepStage(MessageBasedDriver):
         if unit == 'microstep':
             return n
         else:
-            return Q_(n, unit)        
+            return Q_(n, unit)
 
     @Action()
     def move_absolute(self, axis, destination):
@@ -185,7 +185,6 @@ class LStepStage(MessageBasedDriver):
             raise ValueError('Invalid arguments: {}'.format(args))
 
         self.write('{} {}'.format(command, ' '.join(command_args)))
-
 
     def _in_unit_as_number(self, value, unit):
         if unit == 'microstep':
@@ -309,7 +308,7 @@ class LStepStage(MessageBasedDriver):
 
     @trigger_signal_length.setter
     def trigger_signal_length(self, sig):
-        if not (0 <= sig <=5):
+        if not (0 <= sig <= 5):
             raise ValueError("trigger signal out of range [0; 5]!")
         self.write('!trigs {}'.format(int(sig)))
 
@@ -370,7 +369,7 @@ class LStepStage(MessageBasedDriver):
         disabled = '-'
 
         def is_enabled(self):
-            return self != AxisStatus.disabled
+            return self != LStepStage.AxisStatus.disabled
 
         def __repr__(self):
             return '<AxisStatus: {}>'.format({
