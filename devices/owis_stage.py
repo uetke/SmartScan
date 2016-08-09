@@ -83,7 +83,7 @@ class LStepStage(MessageBasedDriver):
     @Feat()
     def axes_status(self):
         status_string = self.query('?statusaxis')
-        return list(map(LStepStage.AxisStatus, status_string[:self.number_of_axes]))
+        return list(map(AxisStatus, status_string[:self.number_of_axes]))
 
     @DictFeat(keys='XYZA')
     def axis_status(self, axis):
@@ -225,6 +225,10 @@ class LStepStage(MessageBasedDriver):
     def speeds(self, speeds):
         self.vel = [speed / Q_(fac, 'mm/s') for speed, fac in zip(speeds, self.velocity_factors)]
 
+    def max_speed(self, axis):
+        return Q_(15 * self.velocity_factors[LStepStage._AXIS_INDICES[axis]], 'mm/s')
+    
+
     @DictFeat(keys='XYZA', units='m/s^2')
     def acceleration(self, axis):
         return self.parse_query('?accel {}'.format(axis), format='{:f}')
@@ -332,7 +336,7 @@ class LStepStage(MessageBasedDriver):
         self.write('!trigcount {}'.format(int(trigs)))
 
     def wait(self, axis, sleeptime=0.1):
-        while self.axis_status[axis] == LStepStage.AxisStatus.moving:
+        while self.axis_status[axis] == AxisStatus.moving:
             time.sleep(sleeptime)
 
     def full_calibration(self, axes=['X'], estimated_stroke_time=15):
@@ -355,36 +359,39 @@ class LStepStage(MessageBasedDriver):
             self.velocity_factors[LStepStage._AXIS_INDICES[axis]] = mm_per_r
             self.wait(axis)
 
-    class AxisStatus(Enum):
-        ready = '@'
-        moving = 'M'
-        joystick = 'J'
-        in_control = 'C'
-        limit_switch = 'S'
-        calib_ok = 'A'
-        calib_err = 'E'
-        stroke_ok = 'D'
-        setup = 'U'
-        timeout = 'T'
-        disabled = '-'
+class AxisStatus(Enum):
+    ready = '@'
+    moving = 'M'
+    joystick = 'J'
+    in_control = 'C'
+    limit_switch = 'S'
+    calib_ok = 'A'
+    calib_err = 'E'
+    stroke_ok = 'D'
+    setup = 'U'
+    timeout = 'T'
+    disabled = '-'
 
-        def is_enabled(self):
-            return self != LStepStage.AxisStatus.disabled
+    def is_enabled(self):
+        return self != AxisStatus.disabled
 
-        def __repr__(self):
-            return '<AxisStatus: {}>'.format({
-                '@': 'READY',
-                'M': 'MOVING',
-                'J': 'JOYSTICK MODE',
-                'C': 'IN CONTROL',
-                'S': 'LIMIT SWITCH ACTIVATED',
-                'A': 'CALIBRATION OK',
-                'E': 'CALIBRATION ERROR',
-                'D': 'TABLE STROKE OK',
-                'U': 'SETUP',
-                'T': 'TIMEOUT',
-                '-': 'DISABLED'
-            }[self.value])
+    def __repr__(self):
+        return '<AxisStatus: {}>'.format(self.human_readable_name())
+
+    def human_readable_name(self):
+        return {
+            '@': 'Ready',
+            'M': 'Moving',
+            'J': 'Joystick Mode',
+            'C': 'In Control',
+            'S': 'Limit Switch Activate',
+            'A': 'Calibration OK',
+            'E': 'Calibration ERROR',
+            'D': 'Table Stroke OK',
+            'U': 'Setup',
+            'T': 'Timeout',
+            '-': 'DISABLED'
+        }[self.value]
 
 
 if __name__ == '__main__':

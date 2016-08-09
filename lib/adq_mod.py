@@ -468,8 +468,8 @@ class adq(ADwin,ADwinDebug):
                 self.scan_image.append(np.squeeze(temp[i::len(detect)].reshape((pix[::-1]))/(speed*1e-3)))
             return self.scan_image
         else:
-            self.logger.error("Not all input arrays have the same length or are longer the 3")
-            raise InputError("Not all input arrays have the same length or are longer the 3")
+            self.logger.error("Not all input arrays have the same length or are longer than 3")
+            raise ValueError("Not all input arrays have the same length or are longer than 3")
             return False
 
     def scan_dynamic(self,detect,devs,center,dims,accuracy,speed=10):

@@ -9,10 +9,13 @@ def xmltodict(element):
             else:
                 obj = element.attrib
                 for i, j in obj.items():
-                    try:
-                        obj[i]=float(j)
-                    except:
-                        pass
+                    if j.isdigit():
+                        obj[i] = int(j)
+                    else:
+                        try:
+                            obj[i]=float(j)
+                        except:
+                            pass
             if result.get(element.tag):
                 if hasattr(result[element.tag], "append"):
                     result[element.tag].append(obj)

@@ -15,6 +15,7 @@ class DeviceConfig():
     def __init__(self,name=None, type='Adwin', filename='config/config_devices.xml'):
         self.logger = logging.getLogger(get_all_caller())
         tree = ET.ElementTree(file=filename)
+        self._type = type
         root = tree.getroot()
         if root.find(".//*[@Name='%s']"%name)!= None:
             self.logger.info('Loaded the data for %s in %s' %(name,filename))
@@ -27,6 +28,15 @@ class DeviceConfig():
                 self.properties.append(name)
         else:
             self.logger.error("Name of Device is not in XML-file")
+
+    def __str__(self):
+        return '{} Device: {}'.format(self._type, self.properties['Name'])
+
+    def __repr__(self):
+        return '<{}>'.format(str(self))
+
+    def __getitem__(self, key):
+        return self.properties[key]
 
 # Load the variable definition file
 

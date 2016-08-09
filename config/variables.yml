@@ -13,6 +13,7 @@ par:
   Pix_done: 79
   Case: 80
   Delay: 70
+  Scan_length: 69
 
 # "fpar"
 fpar:
