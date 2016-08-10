@@ -21,6 +21,8 @@ dim i,j,dev_type, port, m, k as integer
 dim data_Scan_params[15] as long
 dim start[3], port[3], pix_dims[3], cur_pix[3], increment[3], old_timer[4] as long 'format is [x,y,z]"
 dim pix_done, output , temp as integer
+dim ltemp as long
+dim nopcount as integer
 
 Function input(dev_type,port) as long
   if (dev_type=21314873) then '21314873 is decimal for count
@@ -121,36 +123,49 @@ event:
           dac(port[3],start[3])
         endif
         pix_done = 0
+        nopcount = 0
       else
-        for i=1 to par_Num_devs
-          data_Scan_data = input(data_dev_params[2*i-1],data_dev_params[2*i])
-        NEXT i
-        pix_done = pix_done + 1
-        par_Pix_done = pix_done
-        if (pix_done = pix_dims[1] * pix_dims[2] * pix_dims[3]) then
-          end
-        endif
-        if (cur_pix[1] < pix_dims[1]-1) then
-          cur_pix[1] = cur_pix[1] + 1
-          output = start[1] + increment[1]*cur_pix[1]
-          dac(port[1],output)
+        if (( cur_pix[1] = 0 ) and ( nopcount < NEWLINE_DELAY )) then
+          ' don't move, throw away the pixel.
+          ' we do this NEWLINE_DELAY times at the start of each line in order to
+          ' compensate for the jump.
+          for i=1 to par_Num_devs
+            ltemp = input(data_dev_params[2*i-1],data_dev_params[2*i])
+          NEXT i
+          nopcount = nopcount + 1
         else
-          if (cur_pix[2] < pix_dims[2]-1) then
-            cur_pix[2] = cur_pix[2] + 1
-            par_77 = cur_pix[1]
-            output = start[2] + increment[2]*cur_pix[2]
-            cur_pix[1] = 0
-            dac(port[1],start[1])
-            dac(port[2],output)
+          ' now we're moving normally (again). Send data to the FIFO (and so on)
+          nopcount = 0
+          for i=1 to par_Num_devs
+            data_Scan_data = input(data_dev_params[2*i-1],data_dev_params[2*i])
+          NEXT i
+          pix_done = pix_done + 1
+          par_Pix_done = pix_done
+          if (pix_done = pix_dims[1] * pix_dims[2] * pix_dims[3]) then
+            end
+          endif
+          if (cur_pix[1] < pix_dims[1]-1) then
+            cur_pix[1] = cur_pix[1] + 1
+            output = start[1] + increment[1]*cur_pix[1]
+            dac(port[1],output)
           else
-            if (cur_pix[3] < pix_dims[3]-1) then
-              cur_pix[3] = cur_pix[3] + 1
-              output = start[3] + increment[3]*cur_pix[3]
+            if (cur_pix[2] < pix_dims[2]-1) then
+              cur_pix[2] = cur_pix[2] + 1
+              par_77 = cur_pix[1]
+              output = start[2] + increment[2]*cur_pix[2]
               cur_pix[1] = 0
-              cur_pix[2] = 0
               dac(port[1],start[1])
-              dac(port[2],start[2])
-              dac(port[3],output)
+              dac(port[2],output)
+            else
+              if (cur_pix[3] < pix_dims[3]-1) then
+                cur_pix[3] = cur_pix[3] + 1
+                output = start[3] + increment[3]*cur_pix[3]
+                cur_pix[1] = 0
+                cur_pix[2] = 0
+                dac(port[1],start[1])
+                dac(port[2],start[2])
+                dac(port[3],output)
+              endif
             endif
           endif
         endif
