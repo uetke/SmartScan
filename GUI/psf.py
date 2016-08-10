@@ -20,7 +20,8 @@ import pyqtgraph as pg
 import numpy as np
 
 from lib.adq_mod import adq
-from lib.xml2dict import device,variables
+from lib.xml2dict import device
+from lib.config import VARIABLES
 
 
 # specify the use of PyQt
@@ -200,9 +201,8 @@ class MplCanvas(QtGui.QGraphicsObject):
         self._running = True
         self.autosave = session['autoSave']
         self.adw=session['adw']
-        self.fifo = variables('Fifo')
-        self.adw.adw.Fifo_Clear(self.fifo.properties['Scan_data'])
-        self.par = variables('Par')
+        self.adw.adw.Fifo_Clear(VARIABLES['fifo']['Scan_data'])
+        self.par = VARIABLES['par']
         self.continuous = False # Variable to know if starting continuous scans
         
         if MplAnimate.option[0]=='Monitor':
@@ -275,7 +275,7 @@ class MplCanvas(QtGui.QGraphicsObject):
     def get_data(self):
         final_data = []
         if self.MplAnimate.option[0]=='Monitor':
-            data = [self.adw.get_fifo(self.fifo.properties[self.fifo_name])]
+            data = [self.adw.get_fifo(VARIABLES['fifo'][self.fifo_name])]
         if self.MplAnimate.option[0]=='Scan' and self.parent.main.Scan_1st_comboBox.currentText()=='Time':
             data = self.adw.get_timetrace_dynamic(self.detector,self.duration,self.accuracy)
         elif self.MplAnimate.option[0]=='Scan' and self.parent.main.Scan_2nd_comboBox.currentText()=='None':

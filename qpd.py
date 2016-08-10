@@ -9,10 +9,10 @@ from devices.powermeter1830c import powermeter1830c as pp
 from lib.adq_mod import adq
 #from lib.xml2dict import variables
 
-#par=variables('Par','config/config_variables.xml')
-#fpar=variables('FPar','config/config_variables.xml')
-#data=variables('Data','config/config_variables.xml')
-#fifo=variables('Fifo','config/config_variables.xml')
+#par=VARIABLES['par']
+#fpar=VARIABLES['fpar']
+#data=VARIABLES['data']
+#fifo=VARIABLES['fifo']
 
 time = 5 # 1 Second acquisition
 accuracy = .00005 # Accuracy in seconds
