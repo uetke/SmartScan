@@ -61,17 +61,20 @@ class MplAnimate(QtGui.QMainWindow):
         self.menuBar().addMenu(self.help_menu)
         self._running = True
         self.key = None
-        if self.option[0]=='Monitor':
-            if self.option[1]=='Imshow':
-                self.animation = self.widget.animate_scan()
-            elif self.option[1]=='Line':
-                self.animation = self.widget.monitor()
+
+        window_type = self.widget.get_window_type()
+
+        if window_type == 'monitor':
+            self.animation = self.widget.monitor()
             self.help_menu.addAction('&About', self.about_monitor)
-        elif self.option[0]=='Scan':
-            if self.option[1]=='Imshow':
-                self.animation = self.widget.animate_scan()
-            elif self.option[1]=='Line':
-                self.animation = self.widget.animate_1dscan()
+        elif window_type == 'timetrace':
+            self.animation = self.widget.animate_plot()
+            self.help_menu.addAction('&About', self.about_scan)
+        elif window_type == '1d scan':
+            self.animation = self.widget.animate_1dscan()
+            self.help_menu.addAction('&About', self.about_scan)
+        else:
+            self.animation = self.widget.animate_scan()
             self.help_menu.addAction('&About', self.about_scan)
 
     def keyPressEvent(self, event):
@@ -267,20 +270,29 @@ class MplCanvas(QtGui.QGraphicsObject):
             self.fifo_name='scan_data'
 
 
-    def get_data(self):
-        final_data = []
+    def get_window_type(self):
         if self.MplAnimate.option[0]=='Monitor':
             window_type = 'monitor'
-            data = [self.adw.get_fifo(VARIABLES['fifo'][self.fifo_name])]
         if self.MplAnimate.option[0]=='Scan' and self.parent.main.Scan_1st_comboBox.currentText()=='Time':
             window_type = 'timetrace'
-            data = self.adw.get_timetrace_dynamic(self.detector,self.duration,self.accuracy)
         elif self.MplAnimate.option[0]=='Scan' and self.parent.main.Scan_2nd_comboBox.currentText()=='None':
             window_type = '1d scan'
-            data = copy.copy(self.adw.scan_dynamic(self.detector,self.devs,self.center,self.dims,self.accuracy,self.speed))
         elif self.MplAnimate.option[0]=='Scan':
             window_type = '2d+ scan'
-            data = copy.copy(self.adw.scan_dynamic(self.detector,self.devs,self.center,self.dims,self.accuracy,self.speed))               
+
+        return window_type
+
+    def get_data(self):
+        final_data = []
+        window_type = self.get_window_type()
+        if window_type == 'monitor':
+            data = [self.adw.get_fifo(VARIABLES['fifo'][self.fifo_name])]
+        if window_type == 'timetrace':
+            data = self.adw.get_timetrace_dynamic(self.detector,self.duration,self.accuracy)
+        elif window_type == '1d scan':
+            data = copy.copy(self.adw.scan_dynamic(self.detector,self.devs,self.center,self.dims,self.accuracy,self.speed))
+        elif window_type == '2d+ scan':
+            data = copy.copy(self.adw.scan_dynamic(self.detector,self.devs,self.center,self.dims,self.accuracy,self.speed))
                 
         if type(data)==type(False) and data==0:
             self.MplAnimate.close()
@@ -316,7 +328,7 @@ class MplCanvas(QtGui.QGraphicsObject):
                     def do_autosave():
                         self.MplAnimate.saveDialog(True)
 
-                    # autosave in a moment, when the calling function has updated the dataset!
+                    # autosave in a moment, when the calling function has updated the
                     QtCore.QTimer.singleShot(200, do_autosave)
             
         return final_data
@@ -349,7 +361,6 @@ class MplCanvas(QtGui.QGraphicsObject):
         for i in range(len(self.detector)):
             try:
                 self.xdata[i] = np.append(self.xdata[i],temp[i][0]+max(self.xdata[i])+self.delay)
-                print(self.xdata)
             except:
                 self.xdata.append(np.array([]))
                 self.ydata.append(np.array([]))
