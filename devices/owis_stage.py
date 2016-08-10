@@ -36,12 +36,15 @@ class LStepStage(MessageBasedDriver):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.velocity_factors = None
+        self._dims = None
 
     def initialize(self, *a, **kwa):
         super().initialize(*a, **kwa)
         self._number_of_axes = len(self.axes)
-        self.velocity_factors = [None] * self._number_of_axes
+        if self.velocity_factors is None:
+            self.velocity_factors = [None] * self._number_of_axes
         self.refresh('dimensions')
+        self.write('!autostatus 0')
 
     @Feat()
     def ver(self):
@@ -98,7 +101,8 @@ class LStepStage(MessageBasedDriver):
             '3': 'degree',
             '4': 'revolution'
         }
-        return [unit_codes[dim] for dim in self.query('?dim').split()]
+        self._dims = [unit_codes[dim] for dim in self.query('?dim').split()]
+        return self._dims
 
     @Feat()
     def positions(self):
@@ -119,8 +123,10 @@ class LStepStage(MessageBasedDriver):
         return self.distances[LStepStage._AXIS_INDICES[axis]]
 
     def _parse_position(self, pos_string):
+        if self._dims is None:
+            self._dims = self.dimensions
         positions = map(float, pos_string.split())
-        for pos, unit in zip(positions, self.dimensions):
+        for pos, unit in zip(positions, self._dims):
             yield self._in_unit_as_q(pos, unit)
 
     def _in_unit_as_q(self, n, unit):
@@ -409,6 +415,9 @@ if __name__ == '__main__':
                 sys.stdout.write('\r position: {}               '.format(owis_stage.position['X']))
                 sys.stdout.flush()
                 time.sleep(0.2)
+            exc = calib_future.exception()
+            if exc: 
+                raise exc
         sys.stdout.write('\r position: {}'.format(owis_stage.position['X']))
         sys.stdout.flush()
         print('\nCalibration:')

@@ -677,8 +677,8 @@ class adq(ADwin,ADwinDebug):
         self.set_par(VARIABLES['par']['Num_devs'], len(detectors))
         self.set_par(VARIABLES['par']['Scan_length'], n_pixels)
 
-        adq.start(5)
-        scan_ref = ScanFuture(self, 5)
+        self.start(5)
+        scan_ref = ScanFuture(self, 5, detectors, (n_pixels,))
         return scan_ref
 
 
@@ -959,7 +959,7 @@ class ScanFuture(concurrent.futures.Future):
     "traditional" single-controller scans as well.
     """
 
-    def __init__(self, adq, process, dimensions, detectors, shape):
+    def __init__(self, adq, process, detectors, shape):
         if isinstance(shape, int):
             shape = shape,
         self._shape = shape
@@ -1038,7 +1038,7 @@ class ScanFuture(concurrent.futures.Future):
         if pix_waiting > 0:
             myidx = self._pixels_collected * self._n_detect
             theiridx = pixels_done * self._n_detect
-            self._raw_data[myidx:theiridx] = self.get_fifo(VARIABLES['fifo']['Scan_data'])
+            self._raw_data[myidx:theiridx] = self._adq.get_fifo(VARIABLES['fifo']['Scan_data'])
             self._pixels_collected = pixels_done
             self._data_up2date = False
 

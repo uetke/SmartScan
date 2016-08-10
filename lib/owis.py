@@ -28,6 +28,7 @@ class OWISStage:
         if device_config is None:
             device_config = DeviceConfig('IR Delay', 'Serial')
 
+        self._cfg = device_config
         self._stage = owis_stage.LStepStage(device_config['Hardware']['PortID'])
         self._axis = device_config['Hardware']['Axis']
 
@@ -65,8 +66,16 @@ class OWISStage:
     def calibrate(self):
         self._stage.full_calibration()
 
+    def _from_mm(self, distance_mm):
+        return (self._cfg['Calibration']['Offset'] +
+                self._cfg['Calibration']['Slope'] * distance_mm)
+
+    def _to_mm(self, delay):
+        return ((delay - self._cfg['Calibration']['Offset'])/
+                    self._cfg['Calibration']['Slope'])
+
     @contextmanager
-    def _scan(self, start_mm,length_mm, steps, int_time_s, adq,
+    def _scan(self, start_mm, length_mm, steps, int_time_s, adq,
                     detectors, load_adw_program=True):
         """Do a scan. Blocks!"""
         stage = self._stage
@@ -103,7 +112,9 @@ class OWISStage:
 
             stage.speed[self._axis] = speed
             stage.trigger_enabled = True
-            stage.move_relative_async('X', length)
+            # overshoot by one step. This is not strictly necessary,  but it *may* be 
+            # required to compensate for rounding errors...
+            stage.move_relative_async('X', length * (1 + 1/steps))
 
             yield adwin_scan
 
@@ -113,6 +124,34 @@ class OWISStage:
 
             stage.trigger_enabled = False
             stage.speed[self._axis] = old_speed
+
+    def goto(self, position):
+        dest = Q_(self._to_mm(position), 'mm')
+        if not (Q_(0, 'mm') <= dest <= Q(155, 'mm')):
+            raise ValueError('Destination {} out of range'.format(dest))
+        return self._stage.move_absolute_async(self._axis, dest)
+
+    def scan(self, start, length, steps, delta_t, adq, detectors, *, load_adw_program=True):
+        """
+        Do a scan in coöperation with the ADwin box.
+
+        Parameters:
+        start - start position (in units of the calibration)
+        length - length of the scan (ditto)
+        steps - number of pixels to acquire
+        delta_t - (integration) time between datapoint acquisition
+        load_adw_program - do we need to load the "external scan" program into the ADwin box?
+
+        This method returns a context manager that yields an instance of adq_mod.ScanFuture.
+        If exited before the scan is done, the context manager blocks. It *should* be exited 
+        before starting a new scan or moving the stage (but this is not crucial). It MUST NOT
+        be exited while another scan is running.
+        """
+        return self._scan(self._to_mm(start), self._to_mm(length), steps,
+                          delta_t, adq, detectors, load_adw_program=load_adw_program)
+
+    def get_position(self):
+        return self._from_mm(self._stage.position[self._axis].to('mm').m)
 
 
 
