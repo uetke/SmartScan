@@ -71,7 +71,7 @@ class MplAnimate(QtGui.QMainWindow):
             if self.option[1]=='Imshow':
                 self.animation = self.widget.animate_scan()
             elif self.option[1]=='Line':
-                self.animation = self.widget.animate_plot()
+                self.animation = self.widget.animate_1dscan()
             self.help_menu.addAction('&About', self.about_scan)
 
     def keyPressEvent(self, event):
@@ -270,12 +270,16 @@ class MplCanvas(QtGui.QGraphicsObject):
     def get_data(self):
         final_data = []
         if self.MplAnimate.option[0]=='Monitor':
+            window_type = 'monitor'
             data = [self.adw.get_fifo(VARIABLES['fifo'][self.fifo_name])]
         if self.MplAnimate.option[0]=='Scan' and self.parent.main.Scan_1st_comboBox.currentText()=='Time':
+            window_type = 'timetrace'
             data = self.adw.get_timetrace_dynamic(self.detector,self.duration,self.accuracy)
         elif self.MplAnimate.option[0]=='Scan' and self.parent.main.Scan_2nd_comboBox.currentText()=='None':
+            window_type = '1d scan'
             data = copy.copy(self.adw.scan_dynamic(self.detector,self.devs,self.center,self.dims,self.accuracy,self.speed))
         elif self.MplAnimate.option[0]=='Scan':
+            window_type = '2d+ scan'
             data = copy.copy(self.adw.scan_dynamic(self.detector,self.devs,self.center,self.dims,self.accuracy,self.speed))               
                 
         if type(data)==type(False) and data==0:
@@ -287,16 +291,18 @@ class MplCanvas(QtGui.QGraphicsObject):
             data[i] = (data[i]-calibration['Offset'])/calibration['Slope']
             if self.detector[i].properties['Type']=='Counter':
                 data[i] /= self.delay
-            if self.MplAnimate.option[1]=='Line':
-                if self.MplAnimate.option[0]=='Monitor':
-                    xdata = np.arange(len(data[i]))*self.delay
-                    final_data = np.vstack((xdata,data[i]))
-                else:
-                    xdata = np.arange(len(data[i]))*self.delay
-                    final_data.append(np.vstack((xdata,data[i])))
+            if window_type == 'monitor':
+                xdata = np.arange(len(data[i]))*self.delay
+                final_data = np.vstack((xdata,data[i]))
+            elif window_type == 'timetrace':
+                xdata = np.arange(len(data[i]))*self.delay
+                final_data.append(np.vstack((xdata,data[i])))
+            elif window_type == '1d scan':
+                xdata = np.arange(0, self.dims[0], self.accuracy[0]) + self.center[0]
+                final_data.append(np.vstack((xdata,data[i])))
             else:
                 final_data.append(data[i])
-        
+
         if not bool(self.adw.adw.Process_Status(9)) and self.MplAnimate.option[0]=='Scan':
             self.adw.running = False
             self.timer.stop()
@@ -339,11 +345,19 @@ class MplCanvas(QtGui.QGraphicsObject):
         for i in range(len(self.detector)):
             try:
                 self.xdata[i] = np.append(self.xdata[i],temp[i][0]+max(self.xdata[i])+self.delay)
+                print(self.xdata)
             except:
                 self.xdata.append(np.array([]))
                 self.ydata.append(np.array([]))
                 self.xdata[i] = np.append(self.xdata[i],temp[i][0]+self.delay)
             self.ydata[i] = np.append(self.ydata[i],temp[i][1])
+            self.lineplot[i].setData(y=self.ydata[i],x=self.xdata[i])
+
+    def scan_plot1d(self):
+        data = np.array(self.get_data())
+        self.xdata = data[:,0]
+        self.ydata = data[:,1]
+        for i in range(len(self.detector)):
             self.lineplot[i].setData(y=self.ydata[i],x=self.xdata[i])
 
 
@@ -408,6 +422,24 @@ class MplCanvas(QtGui.QGraphicsObject):
         self.MplAnimate.setCentralWidget(self.form_widget)
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.func_plot)
+        self.timer.start(100)
+        return self.timer
+
+    def animate_1dscan(self):
+        self.plotwidget = []
+        self.lineplot = []
+        for i in range(len(self.detector)):
+            self.plotwidget.append(pg.PlotWidget())
+            self.plotwidget[i].getPlotItem().setTitle(title = self.detector[i].properties['Name'])
+            self.lineplot.append(self.plotwidget[i].plot())
+            labelStyle = {'color': '#FFF', 'font-size': '16px'}
+            self.plotwidget[i].plotItem.setLabel('left', self.ylabel[i], units=self.yunit[i],**labelStyle)
+            self.plotwidget[i].plotItem.setLabel('bottom', self.xlabel, units=self.xunit,**labelStyle)
+
+        self.form_widget = FormWidget(None,self.plotwidget)
+        self.MplAnimate.setCentralWidget(self.form_widget)
+        self.timer = QtCore.QTimer()
+        self.timer.timeout.connect(self.scan_plot1d)
         self.timer.start(100)
         return self.timer
 
