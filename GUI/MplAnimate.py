@@ -313,7 +313,11 @@ class MplCanvas(QtGui.QGraphicsObject):
             else:
                 self.MplAnimate.MainWindow.StopScan()
                 if self.autosave:
-                    self.MplAnimate.saveDialog(True)
+                    def do_autosave():
+                        self.MplAnimate.saveDialog(True)
+
+                    # autosave in a moment, when the calling function has updated the dataset!
+                    QtCore.QTimer.singleShot(200, do_autosave)
             
         return final_data
 
