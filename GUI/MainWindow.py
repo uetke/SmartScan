@@ -395,10 +395,10 @@ class MainWindow(QMainWindow):
 
         self.continuousStopped = True
         self.continuousScans = False
-#         self.main.Controler_Select_scan.clear()
-#         for key in self.scanwindows.keys():
-#             if not str(key).startswith('T'):
-#                 self.main.Controler_Select_scan.addItem(_translate("MainWindow", 'Window %s'%key, None))
+
+        # Jump back to the original position
+        self.ResetStagePosition()
+
 
     def CloseScans(self):
         values = list(self.scanwindows.values())
@@ -477,6 +477,11 @@ class MainWindow(QMainWindow):
             self.Controler[names[3]]['PosBox'].setValue(self.Controler[names[3]]['PosBox'].value() - self.Controler[names[3]]['IncBox'].value())
         else:
             self.adw.set_device_value(self.devices[names[3]], self.Controler[names[3]]['PosBox'].value())
+
+    def ResetStagePosition(self):
+        for (name, dev) in self.devices.items():
+            if 'Output' in dev.properties:
+                self.adw.set_device_value(dev, self.Controler[name]['PosBox'].value())
 
     def ChangeUnit(self):
         for i in sorted(self.devices):
