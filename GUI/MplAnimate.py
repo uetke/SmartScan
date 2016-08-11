@@ -310,7 +310,7 @@ class MplCanvas(QtGui.QGraphicsObject):
                 xdata = np.arange(len(data[i]))*self.delay
                 final_data.append(np.vstack((xdata,data[i])))
             elif window_type == '1d scan':
-                xdata = np.arange(0, self.dims[0], self.accuracy[0]) + self.center[0]
+                xdata = np.arange(0, self.dims[0], self.accuracy[0]) + self.center[0] - self.dims[0]/2
                 final_data.append(np.vstack((xdata,data[i])))
             else:
                 final_data.append(data[i])
