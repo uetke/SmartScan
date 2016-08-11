@@ -127,7 +127,7 @@ class MainWindow(QMainWindow):
         #self.boot_menu.addAction('&Boot', self.bootAdwin,
         #                         QtCore.Qt.CTRL + QtCore.Qt.Key_B)
         #self.main.menubar().addMenu(self.boot_menu)
-        
+
         self.adw = session['adw']
         self.scanwindows = {}
         self.scanindex = 0
@@ -136,11 +136,11 @@ class MainWindow(QMainWindow):
         self.continuousScans = False # In case a continuous scan trace is triggered
         self.continuousStopped = False
         self.update_devices() # Generates the devices listed in the configuration file
-    
+
 #     def bootAdwin(self):
 #         """ Boots the ADwin. It was moved to a method to avoid restarting measurements.
 #         """
-#         if self._session['adw'].adw.Test_Version() != 1: 
+#         if self._session['adw'].adw.Test_Version() != 1:
 #             self._session['adw'].boot()
 #             self._session['adw'].init_port7()
 #             print('Booting the ADwin...')
@@ -160,8 +160,8 @@ class MainWindow(QMainWindow):
 #             raise Exception('Model of ADwin not recognized')
 
 
-        
-        
+
+
     def update_devices(self):
         """ Updates the devices specified in the configuration file.
         It allows to update devices without restarting the UI.
@@ -244,7 +244,7 @@ class MainWindow(QMainWindow):
                 QtCore.QObject.connect(self.Controler[i['Name']]['MinButton'], QtCore.SIGNAL("clicked()"), self.ChangePos)
                 QtCore.QObject.connect(self.Controler[i['Name']]['PosBox'],QtCore.SIGNAL("valueChanged(double)"),self.ChangePos)
                 k +=1
-        
+
         self.main.Scan_3rd_comboBox.addItem(_translate("MainWindow", 'Time', None))
 
         self.connect(self.main.Monitor_pushButton, SIGNAL("clicked()"), self.Monitor)
@@ -276,7 +276,7 @@ class MainWindow(QMainWindow):
                                  QtCore.Qt.CTRL + QtCore.Qt.Key_F5)
         self.edit_menu.addAction('&Edit Defaults',self.edit_defaults,
                                  QtCore.Qt.CTRL + QtCore.Qt.Key_E)
-        
+
         self.extras_menu = QtGui.QMenu('&Extras',self)
         self.extras_menu.addAction('&Flippers', self.showFlippers)
         self.menuBar().addMenu(self.extras_menu)
@@ -309,9 +309,9 @@ class MainWindow(QMainWindow):
             self.main.Scan_Detector_comboBox.setEnabled(True)
             self.main.Scan_Dropdown.button.setEnabled(False)
             self.main.Scan_Detector_UnitLabel.setEnabled(True)
-    
+
     def showFlippers(self):
-        """ Shows the flippers GUI. 
+        """ Shows the flippers GUI.
         """
         self.flippersGUI = flippers()
         self.flippersGUI.show()
@@ -330,7 +330,7 @@ class MainWindow(QMainWindow):
         else:
             print('Cont02')
             self.StartScan()
-        
+
 
     def StartScan(self):
         print('StartScan')
@@ -354,7 +354,7 @@ class MainWindow(QMainWindow):
         else:
             if not self.continuousScans:
                 self.scanindex += 1
-                
+
             if self.main.Scan_2nd_comboBox.currentText()=='None':
                 self.scan = MplAnimate(self,option,['Scan','Line'],self._session,self.scanindex)
                 self.main.Controler_Select_scan.addItem(_translate("MainWindow", 'Window %s'%self.scanindex, None))
@@ -372,13 +372,13 @@ class MainWindow(QMainWindow):
                         self.scan.show()
                 else:
                     self.scan.widget.animate_scan()
-                    
+
         if not self.continuousScans:
             print(self.scanindex)
             self.scanwindows[self.scanindex].setWindowTitle("Window %s: Scan with the %s Detector with on the x-axes %s" %(tuple([self.scanindex])+tuple(option.split(';'))))
             self.scanwindows[self.scanindex].show()
-            
-            
+
+
 
     def StopScan(self):
         self.scan.animation.stop()
@@ -432,9 +432,41 @@ class MainWindow(QMainWindow):
         for key,value in ref.items():
             devs = np.append(devs,device(key))
             center = np.append(center,value)
-        new_center = self.adw.focus_full(detector,devs,center,1*np.ones(len(devs)),.05*np.ones(len(devs)))
-        for idx,dev in enumerate(devs):
-            self.Controler[dev.properties['Name']]['PosBox'].setValue(new_center[idx])
+
+        self._refocus_thread = MainWindow.RefocusThread(self, self.adw, detector, devs, center)
+        self._refocus_thread.start()
+
+    class RefocusThread(QtCore.QThread):
+        # It would be easier to use threading.Thread of course, but using a
+        # QThread gives us access to Qt signals to jump into the UI thread
+        # Qt widgets are not thread safe!!
+
+        refocus_done = QtCore.pyqtSignal()
+
+        def __init__(self, parent_window, adw, detector, devs, center):
+            super().__init__()
+            self._parent = parent_window
+            self._adw = adw
+            self._detector = detector
+            self._devs = devs
+            self._center = center
+
+        def start(self, priority=QtCore.QThread.InheritPriority):
+            self.refocus_done.connect(self.on_finished)
+            super().start(priority)
+            self._parent.main.Controler_Refocus.setEnabled(False)
+
+        def run(self):
+            self._new_center = self._adw.focus_full(self._detector,
+                                    self._devs, self._center,
+                                    1*np.ones(len(self._devs)),
+                                    .05*np.ones(len(self._devs)))
+            self.refocus_done.emit()
+
+        def on_finished(self):
+            for idx,dev in enumerate(self._devs):
+                self._parent.Controler[dev.properties['Name']]['PosBox'].setValue(self._new_center[idx])
+            self._parent.main.Controler_Refocus.setEnabled(True)
 
 
     def ChangePos(self):
