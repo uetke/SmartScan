@@ -41,7 +41,7 @@ class OWISStage:
             self._stage.ver, self._stage.sn))
 
     def close(self):
-        self._stage.finalize()
+        self._stage.finalize_async()
 
     def __enter__(self):
         self.connect()
@@ -126,8 +126,9 @@ class OWISStage:
             stage.speed[self._axis] = old_speed
 
     def goto(self, position):
+        self._stage.update_async(vel=[10, 10])
         dest = Q_(self._to_mm(position), 'mm')
-        if not (Q_(0, 'mm') <= dest <= Q(155, 'mm')):
+        if not (Q_(0, 'mm') <= dest <= Q_(155, 'mm')):
             raise ValueError('Destination {} out of range'.format(dest))
         return self._stage.move_absolute_async(self._axis, dest)
 

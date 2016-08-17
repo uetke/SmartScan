@@ -971,9 +971,11 @@ class ScanFuture(concurrent.futures.Future):
         self._cancelled = False
 
         full_shape = (self._n_detect,) + shape
+        alt_shape = shape + (self._n_detect,)
         raw_shape = self._n_pixels * self._n_detect,
 
         self._full_shape = full_shape
+        self._alt_shape = alt_shape
 
         self._raw_data = np.empty(raw_shape)
         self._raw_data.fill(np.nan)
@@ -1048,7 +1050,9 @@ class ScanFuture(concurrent.futures.Future):
         """
         self._pickup_data()
         if not self._data_up2date:
-            self._data[:] = np.reshape(self._raw_data, self._full_shape)
+            ndetect = len(self._detectors)
+            for idx in range(ndetect):
+                self._data[idx,:] = self._raw_data[idx::ndetect].reshape(self._shape)
 
         return self._data
 

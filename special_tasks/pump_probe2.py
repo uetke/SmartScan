@@ -2,6 +2,8 @@
 Pump-probe scan
 """
 
+from datetime import datetime
+import os
 import os.path
 import sys
 import time
@@ -57,6 +59,40 @@ if __name__ == '__main__':
 
         step = length / steps
         time_axis = np.arange(start, start+length, step)
+        data_x_volts = 10 * (data_x - 2**15) / 2**15
+        data_y_volts = 10 * (data_y - 2**15) / 2**15
 
-        plt.plot(time_axis, data_x)
+        r2 = data_x**2 + data_y**2
+        peakindex = np.argmax(r2)
+        peaktime = time_axis[peakindex]
+        print('Moving to {} ps'.format(peaktime))
+        owis.goto(peaktime)
+
+        now = datetime.now()
+
+        plt.plot(time_axis, data_x_volts)
+        
         plt.show()
+
+        datadir = r'd:\data\{date}'.format(date=now.strftime('%Y-%m-%d'))
+        if not os.path.exists(datadir):
+            os.mkdir(datadir)
+        elif not os.path.isdir(datadir):
+            sys.stderr.write('ERROR: {} is exists, but is not a directory!\n')
+            sys.stderr.write('       Cannot save data.\n')
+            sys.stderr.write('       Aborting!\n')
+            sys.exit(1)
+        fname = datadir + now.strftime(r'\pump_probe_%Y-%m-%d_%H%M.dat')
+
+        header = ('# Pump-probe scan\n' + 
+                  '# start {} ps | length {} ps | {:d} steps | {:.0f} ms real time per step\n'
+                        .format(start, length, steps, t_int * 1e3) + 
+                  'Time [ps]\tLock-In X [V]\tLock-In Y[V]\n')
+
+        dataarray = np.vstack([time_axis, data_x_volts, data_y_volts]).T
+        print ('dataarray has shape {}'.format(dataarray.shape))
+        np.savetxt(fname, dataarray, delimiter='\t', newline='\n', comments='', header=header)
+
+        print('Saved {}'.format(fname))
+
+
