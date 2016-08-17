@@ -1,6 +1,7 @@
 import sys, os, inspect
 from lib.adq_mod import adq
 from lib.xml2dict import device
+from lib import ScanApplication
 from _private.set_debug import debug
 
 def adding_to_path(folder):
@@ -34,8 +35,10 @@ if __name__ == "__main__":
     from GUI.MainWindow import App
     global app
 
+    scan_app = ScanApplication()
+
     ### Initialize the adwin class ###
-    session = {}
+    session = scan_app.session
     # These variables should be erased. They are being kept for legacy support.
     dev_conf = 'config/config_devices.xml'
     session['dev_conf'] = 'config/config_devices.xml'

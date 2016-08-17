@@ -4,5 +4,6 @@ from .logger import *
 from .xml2dict import *
 from ._ADwin import ADwin, ADwinDebug
 from .db_comm import db_comm
+from .app import ScanApplication
 
-__all__ = ['adq_mod' 'logbook' 'logger' 'xml2dict' '_ADwin' 'db_comm']
+__all__ = ['adq_mod' 'logbook' 'logger' 'xml2dict' '_ADwin' 'db_comm', 'ScanApplication']

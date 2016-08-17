@@ -17,6 +17,7 @@ import numpy as np
 from lib.adq_mod import adq
 from lib.xml2dict import device
 from lib.config import VARIABLES
+from lib.app import ScanApplication, LogEntry
 
 
 # specify the use of PyQt
@@ -76,6 +77,10 @@ class MplAnimate(QtGui.QMainWindow):
         else:
             self.animation = self.widget.animate_scan()
             self.help_menu.addAction('&About', self.about_scan)
+
+        self._logentry = LogEntry()
+        if window_type != 'monitor':
+            self._logentry.announce()
 
     def keyPressEvent(self, event):
         if type(event) == QtGui.QKeyEvent:
@@ -148,19 +153,19 @@ class MplAnimate(QtGui.QMainWindow):
         file_output = open(filename,'a+b')
         np.savetxt(file_output, data, '%s', ',')
 
-        entry = {}
-        entry['user'] = self._session['userId']
-        entry['setup'] = self._session['setupId']
-        entry['entry'] = 'Saved scan'
-        entry['file'] = filename
-        entry['detectors'] = detectors
-        entry['variables'] = variables
+        entry = self._logentry
+        entry.user_id = self._session['userId']
+        entry.setup_id = self._session['setupId']
+        entry.entry_type = 'Saved scan'
+        entry.file = filename
+        entry.detectors = detectors
+        entry.variables = variables
         if autosave:
-            entry['comments'] = 'Autosave'
+            entry.comments = 'Autosave'
         else:
-            entry['comments'] = 'Manually saved'
+            entry.comments = 'Manually saved'
 
-        self._session['db'].new_entry(entry)
+        entry.commit()
 
     def fileQuit(self):
         self.close()

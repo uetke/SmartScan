@@ -8,13 +8,15 @@ import time
 from contextlib import contextmanager
 
 from lantz import Q_
+from PyQt4.QtCore import QObject, SIGNAL, Qt
 
 from devices import owis_stage
 
+from .app import ScanApplication
 from .config import DeviceConfig
 from .logger import get_all_caller
 
-class OWISStage:
+class OWISStage(QObject):
     """
     Wrapper around the OWIS stage driver that supports scanning.
 
@@ -23,6 +25,8 @@ class OWISStage:
     the object is a context manager.
     """
     def __init__(self, device_config=None):
+        QObject.__init__(self)
+
         self.logger = logging.getLogger(get_all_caller())
 
         if device_config is None:
@@ -31,8 +35,11 @@ class OWISStage:
         self._cfg = device_config
         self._stage = owis_stage.LStepStage(device_config['Hardware']['PortID'])
         self._axis = device_config['Hardware']['Axis']
+        self._scanning = False
 
         self._stage.velocity_factors = [device_config['Calibration']['VelocityFactor']] * 4
+
+        self._app = ScanApplication()
 
     def connect(self):
         self.logger.info('Connecting to OWIS stage')
@@ -40,8 +47,12 @@ class OWISStage:
         self.logger.info('Connected to OWIS ({} - SN {})'.format(
             self._stage.ver, self._stage.sn))
 
+        self._app.new_logentry.connect(self._on_new_logentry, Qt.DirectConnection, no_receiver_check=True)
+
     def close(self):
         self._stage.finalize_async()
+
+        self._app.new_logentry.disconnect(self._on_new_logentry)
 
     def __enter__(self):
         self.connect()
@@ -74,10 +85,20 @@ class OWISStage:
         return ((delay - self._cfg['Calibration']['Offset'])/
                     self._cfg['Calibration']['Slope'])
 
+    @property
+    def is_scanning(self):
+        return self._scanning
+
+    def _on_new_logentry(self, entry):
+        if not self._scanning:
+            entry.add_metadatum('OWIS stage', 'position [ps]', self.get_position())
+
     @contextmanager
     def _scan(self, start_mm, length_mm, steps, int_time_s, adq,
                     detectors, load_adw_program=True):
         """Do a scan. Blocks!"""
+        self._scanning = True
+
         stage = self._stage
 
         # We want to revert to the old speed of the stage later
@@ -124,6 +145,7 @@ class OWISStage:
 
             stage.trigger_enabled = False
             stage.speed[self._axis] = old_speed
+            self._scanning = False
 
     def goto(self, position):
         self._stage.update_async(vel=[10, 10])

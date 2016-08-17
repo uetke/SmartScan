@@ -15,11 +15,10 @@ from lib.xml2dict import device
 import numpy as np
 from lib.adq_mod import adq
 from lib.logger import logger
-from lib.db_comm import db_comm
+
+from lib import ScanApplication
 
 from datetime import datetime
-
-
 
 def _fromUtf8(s):
     return s
@@ -56,7 +55,8 @@ class InitWindow(QMainWindow):
         # Select the default saving folder
         self.init.save_directory.setText('D:/Data/'+str(datetime.now().date())+'/')
 
-        self.db = db_comm('_private/logbook.db')
+        self._app = ScanApplication()
+        self.db = self._app.logbook
 
         self.users = self.db.get_users()
         self.setups = self.db.get_setups()
@@ -70,7 +70,6 @@ class InitWindow(QMainWindow):
         self._session['autoSave'] = self.init.autoSave.isChecked()
         self._session['userId'] = self.init.user_comboBox.getKey()
         self._session['setupId'] = self.init.setup_comboBox.getKey()
-        self._session['db'] = self.db
         # Create the directory before starting the program
         if not os.path.exists(self._session['directory']):
             os.makedirs(self._session['directory'])

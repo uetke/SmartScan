@@ -3,6 +3,7 @@ import sys
 import os
 import sqlite3 as lite
 from datetime import datetime
+from lib.logger import logger
 
 class db_comm():
     """ Class for adding and editing entries to a database storing information
@@ -16,27 +17,48 @@ class db_comm():
             print('Database does not exist')
         self.con = lite.connect(db)
         self.cur = self.con.cursor()
+        self.sync_schema()
     
     def create_database(self):
         """ Function for creating the database. 
             It easily deletes the previous database. Use with CARE.
         """
 
-        sql = "CREATE TABLE Users(Id INTEGER PRIMARY KEY, Name TEXT, Date TEXT)"
+        sql = "CREATE TABLE IF NOT EXISTS Users(Id INTEGER PRIMARY KEY, Name TEXT, Date TEXT)"
         self.cur.execute(sql)
         
-        sql = "CREATE TABLE Logbook (Id INTEGER PRIMARY KEY, Date TEXT, User INTEGER,\
-            Entry TEXT, File TEXT, Detectors TEXT, Variables TEXT, Setup INTEGER, Comments TEXT) "
+        sql = """CREATE TABLE IF NOT EXISTS Logbook (Id INTEGER PRIMARY KEY, Date TEXT, User INTEGER,
+            Entry TEXT, File TEXT, Detectors TEXT, Variables TEXT, Setup INTEGER, Comments TEXT)"""
         
         self.cur.execute(sql)
         
-        sql = "CREATE TABLE Setups(Id INTEGER PRIMARY KEY, Name TEXT, Date TEXT, Description TEXT, File TEXT)"
+        sql = "CREATE TABLE IF NOT EXISTS Setups(Id INTEGER PRIMARY KEY, Name TEXT, Date TEXT, Description TEXT, File TEXT)"
         self.cur.execute(sql)
         self.con.commit()
         
-        sql = "CREATE TABLE Last_Settings(Id INTEGER PRIMARY KEY, "
-        
         return True
+
+    def _update_database(self, tblmask):
+        if tblmask & 1:
+            self.cur.execute("""CREATE TABLE IF NOT EXISTS metadata (
+                entry_id INTEGER, 
+                component TEXT,
+                key TEXT,
+                value TEXT)""")
+            self.con.commit()
+
+    def sync_schema(self):
+        mylogger = logger()
+
+        tables = [row[0] for row in  self.cur.execute(
+            "SELECT name FROM sqlite_master WHERE type='table'").fetchall()]
+        if 'Users' not in tables:
+            mylogger.info('Creating database tables.')
+            self.create_database()
+        if 'metadata' not in tables:
+            mylogger.info('Upgrading database.')
+            self._update_database(1)
+
         
     def new_user(self, user):
         """ Creates a new user.
@@ -60,12 +82,29 @@ class db_comm():
         """ Creates a new entry in the logbook. 
             Returns the ID of the newly created entry. 
         """
-        sql = "INSERT INTO Logbook (DATE, User, Entry, File, Detectors, Variables, Setup, Comments) \
-            values (?,?,?,?,?,?,?,?)"
+        sql = """INSERT INTO Logbook (DATE, User, Entry, File, Detectors, Variables, Setup, Comments)
+            values (?,?,?,?,?,?,?,?)"""
         self.cur.execute(sql,(self.now(),entry['user'],entry['entry'],entry['file'],entry['detectors'],
                               entry['variables'],entry['setup'],entry['comments']))
         self.con.commit()
         return self.cur.lastrowid
+
+    def update_entry(self, rowid, entry):
+        sql = """UPDATE Logbook SET date=?, user=?, entry=?, file=?,
+                                    detectors=?, variables=?, setup=?, comments=?
+                        WHERE id=?"""
+        self.cur.execute(sql, (self.now(), entry['user'], entry['entry'], entry['file'],
+                               entry['detectors'], entry['variables'], entry['setup'],
+                               entry['comments'], rowid))
+        self.con.commit()
+        return rowid
+
+    def add_metadata_to_entry(self, entry_id, component, key, value):
+        sql = """INSERT INTO metadata (entry_id, component, key, value) VALUES (?,?,?,?)"""
+        self.cur.execute(sql,(entry_id, component, key, value))
+        self.con.commit()
+        return self.cur.lastrowid
+
     
     def get_users(self):
         """ Returns a list of all current users and their IDs. 
