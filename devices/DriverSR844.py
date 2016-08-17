@@ -23,6 +23,7 @@ display_output = OrderedDict([('X', '0'),
                               ('X/Y', '0'),
                               ('Rv', '1'),
                               ('Theta', '1'),
+                              ('Rv/Theta', '1'),
                               ('RdB', '2'),
                               ('YnoiseV', '2'),
                               ('Xnoise', '3'),
@@ -172,7 +173,7 @@ class _SR844(object):
     def display(self, channel, value):
         self.send('DDEF {}, {}'.format(channel, value))
 
-    @DictFeat(keys={1, 2}, values={'Display': 0, 'X': 1, 'Y': 1})
+    @DictFeat(keys={1, 2}, values=OrderedDict([('Display', 0), ('X', 1), ('Y', 1), ('X/Y', 1)]))
     def front_output(self, channel):
         """Front panel output source.
         """
