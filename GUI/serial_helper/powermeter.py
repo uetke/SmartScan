@@ -19,7 +19,7 @@ class PowerMeterWindow(QtGui.QMainWindow):
     def __init__(self, parent=None):
         super().__init__()
 
-        self._closing = True
+        self._closing = False
 
         self.ui = Ui_PowermeterWindow()
         self.ui.setupUi(self)
