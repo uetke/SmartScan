@@ -38,6 +38,7 @@ class OWISStage(QObject):
         self._scanning = False
 
         self._stage.velocity_factors = [device_config['Calibration']['VelocityFactor']] * 4
+        self._stage.exceptions_enabled = True
 
         self._app = ScanApplication()
 
@@ -99,11 +100,17 @@ class OWISStage(QObject):
         """Do a scan. Blocks!"""
         self._scanning = True
 
+        while not self.check_if_ready():
+            self.logger.warn('waiting for stage!')
+            time.sleep(1)
+
         stage = self._stage
 
         # We want to revert to the old speed of the stage later
         old_speed = stage.speed[self._axis]
 
+        stage.trigger_enabled = False
+        stage.vel = [10, 10]
         # Send the stage to its start position
         stage.move_absolute_async(self._axis, Q_(start_mm, 'mm'))
         self.logger.info('moving OWIS stage to start position')
@@ -126,16 +133,25 @@ class OWISStage(QObject):
             stage.trigger_distance = trig_dist
 
             # wait for the stage to come to rest
-            while stage.axis_status[self._axis] == owis_stage.AxisStatus.moving:
-                time.sleep(0.2)
+            while not self.check_if_ready():
+                time.sleep(0.5)
 
             adwin_scan = adq.scan_external(detectors, steps, load_program=load_adw_program)
 
             stage.speed[self._axis] = speed
             stage.trigger_enabled = True
+
             # overshoot by one step. This is not strictly necessary,  but it *may* be 
             # required to compensate for rounding errors...
-            stage.move_relative_async('X', length * (1 + 1/steps))
+            # wait for the stage to come to rest
+            while not self.check_if_ready():
+                time.sleep(0.5)
+            stage.move_relative('X', length * (1 + 1/steps))
+            time.sleep(0.3)
+            print('moving by {} - status is {}'.format(length * (1 + 1/steps), stage.axis_status[self._axis]))
+
+            if self.check_if_ready():
+                print('axis status ready?!, device status', stage.status)
 
             yield adwin_scan
 
@@ -143,12 +159,19 @@ class OWISStage(QObject):
 
         finally:
 
+            time.sleep(0.5)
+
             stage.trigger_enabled = False
-            stage.speed[self._axis] = old_speed
+            self._stage.speed['X'] = Q_(10, 'mm/s')
+            #stage.vel = [10, 10]
+            # Send the stage to its start position
+            stage.move_absolute_async(self._axis, Q_(start_mm, 'mm'))
+            #stage.speed[self._axis] = old_speed
             self._scanning = False
 
     def goto(self, position):
-        self._stage.update_async(vel=[10, 10])
+        #self._stage.vel = [10, 10]
+        self._stage.speed['X'] = Q_(10, 'mm/s')
         dest = Q_(self._to_mm(position), 'mm')
         if not (Q_(0, 'mm') <= dest <= Q_(155, 'mm')):
             raise ValueError('Destination {} out of range'.format(dest))

@@ -667,6 +667,10 @@ class adq(ADwin,ADwinDebug):
             self.logger.info('Loading the external scanning code.')
             self.load('lib/adbasic/external_scan.T95')
 
+        if bool(self.adw.Process_Status(5)):
+            self.stop(5)
+            self.logger.warn('external scan aborted')
+
         self.logger.info('Doing an external scan.')
         # tell ADwin which detectors to pick up
         dev_params = np.zeros(len(detectors) * 2, dtype=np.int32)
@@ -676,6 +680,7 @@ class adq(ADwin,ADwinDebug):
         self.set_datalong(dev_params, VARIABLES['data']['dev_params'])
         self.set_par(VARIABLES['par']['Num_devs'], len(detectors))
         self.set_par(VARIABLES['par']['Scan_length'], n_pixels)
+        self.set_par(VARIABLES['par']['Pix_done'], 0)
 
         self.start(5)
         scan_ref = ScanFuture(self, 5, detectors, (n_pixels,))
@@ -997,7 +1002,20 @@ class ScanFuture(concurrent.futures.Future):
         return self._cancelled
 
     def running(self):
-        return bool(self._adq.adw.Process_Status(self._proc))
+        process_running = bool(self._adq.adw.Process_Status(self._proc))
+
+        if not process_running:
+            return False
+        else:
+            pixels_done = self._adq.get_par(VARIABLES['par']['Pix_done'])
+            if pixels_done >= self._n_pixels:
+                self._adq.logger.warn('{}/{} px collected but still running?!'.format(pixels_done, self._n_pixels))
+                self.cancel()
+                return False
+            else:
+                # ok
+                return True
+
 
     def done(self):
         return not self.running()
@@ -1039,9 +1057,15 @@ class ScanFuture(concurrent.futures.Future):
 
         if pix_waiting > 0:
             myidx = self._pixels_collected * self._n_detect
-            theiridx = pixels_done * self._n_detect
-            self._raw_data[myidx:theiridx] = self._adq.get_fifo(VARIABLES['fifo']['Scan_data'])
-            self._pixels_collected = pixels_done
+            new_data = self._adq.get_fifo(VARIABLES['fifo']['Scan_data'])
+            theiridx = myidx + len(new_data)
+            if theiridx > self._n_pixels * self._n_detect:
+                excess = theiridx - self._n_pixels * self._n_detect
+                theiridx = self._n_pixels * self._n_detect
+                new_data = new_data[:theiridx-myidx]
+                self._adq.logger.warn('{} extra words in FIFO!'.format(excess))
+            self._raw_data[myidx:theiridx] = new_data
+            self._pixels_collected = theiridx // self._n_detect
             self._data_up2date = False
 
     def get_data(self):

@@ -8,12 +8,21 @@ import numbers
 import time
 import warnings
 
+from functools import update_wrapper
+
 import visa
 
 from enum import Enum
 
 from lantz import Q_, Action, Feat, DictFeat
 from lantz.messagebased import MessageBasedDriver
+
+class LStepError(EnvironmentError):
+    def __init__(self, error_no):
+        self._errno = error_no
+
+    def __str__(self):
+        return "Error no. {}".format(self._errno)
 
 
 class LStepStage(MessageBasedDriver):
@@ -37,6 +46,7 @@ class LStepStage(MessageBasedDriver):
         super().__init__(*args, **kwargs)
         self.velocity_factors = None
         self._dims = None
+        self._exceptions_enabled = True
 
     def initialize(self, *a, **kwa):
         super().initialize(*a, **kwa)
@@ -46,17 +56,45 @@ class LStepStage(MessageBasedDriver):
         self.refresh('dimensions')
         self.write('!autostatus 0')
 
+    @property
+    def exceptions_enabled(self):
+        return self._exceptions_enabled
+
+    @exceptions_enabled.setter
+    def exceptions_enabled(self, val):
+        # note: this allows 0 and 1, but not other integers.
+        if val in (True, False):
+            self._exceptions_enabled = val
+        else:
+            raise TypeError('exceptions_enabled must be a boolean')
+
+    def _raise(self):
+        if self._exceptions_enabled:
+            error_no = self.error
+            if error_no != 0:
+                raise LStepError(error_no)
+
     @Feat()
     def ver(self):
-        return self.query('?ver')
+        val = self.query('?ver')
+        self._raise()
+        return val
 
     @Feat()
     def sn(self):
-        return self.query('?readsn')
+        val = self.query('?readsn')
+        self._raise()
+        return val
 
     @Feat()
     def status(self):
-        return self.query('?status')
+        val = self.query('?status')
+        self._raise()
+        return val
+
+    @Feat()
+    def error(self):
+        return int(self.query('?err'))
 
     @Feat()
     def axes(self):
@@ -64,12 +102,14 @@ class LStepStage(MessageBasedDriver):
         tuple of bools indicating which axes are enabled
         """
         axis_string = self.query('?axis')
+        self._raise()
         return tuple(ax == '1' for ax in axis_string.split())
 
     @axes.setter
     def axes(self, axes):
         axis_string = ' '.join('1' if ax else '0' for ax in axes)
         self.write('!axis ' + axis_string)
+        self._raise()
 
     @property
     def number_of_axes(self):
@@ -77,15 +117,19 @@ class LStepStage(MessageBasedDriver):
 
     @DictFeat(keys=('X', 'Y', 'Z', 'A'))
     def axis(self, axis):
-        return '1' == self.query('?axis {}'.format(axis))
+        val = '1' == self.query('?axis {}'.format(axis))
+        self._raise()
+        return val
 
     @axis.setter
     def axis(self, axis, value):
         self.write('!axis {} {:d}'.format(axis, bool(value)))
+        self._raise()
 
     @Feat()
     def axes_status(self):
         status_string = self.query('?statusaxis')
+        self._raise()
         return list(map(AxisStatus, status_string[:self.number_of_axes]))
 
     @DictFeat(keys='XYZA')
@@ -102,17 +146,22 @@ class LStepStage(MessageBasedDriver):
             '4': 'revolution'
         }
         self._dims = [unit_codes[dim] for dim in self.query('?dim').split()]
+        self._raise()
         return self._dims
 
     @Feat()
     def positions(self):
         """The current position"""
-        return list(self._parse_position(self.query('?pos')))
+        val = list(self._parse_position(self.query('?pos')))
+        self._raise()
+        return val
 
     @Feat()
     def distances(self):
         """The total distance of the last move"""
-        return list(self._parse_position(self.query('?distance')))        
+        val = list(self._parse_position(self.query('?distance')))        
+        self._raise()
+        return val
 
     @DictFeat(keys='XYZA')
     def position(self, axis):
@@ -174,10 +223,12 @@ class LStepStage(MessageBasedDriver):
             self.write('!moc {}'.format(axis))
         else:
             raise ValueError('Unknows axis {}'.format(axis))
+        self._raise()
 
     @Action()
     def abort(self):
         self.write('!a')
+        self._raise()
 
     def _move(self, command, *args):
         units = self.recall('dimensions')
@@ -191,6 +242,7 @@ class LStepStage(MessageBasedDriver):
             raise ValueError('Invalid arguments: {}'.format(args))
 
         self.write('{} {}'.format(command, ' '.join(command_args)))
+        self._raise()
 
     def _in_unit_as_number(self, value, unit):
         if unit == 'microstep':
@@ -206,22 +258,28 @@ class LStepStage(MessageBasedDriver):
     @Feat()
     def vel(self):
         """speed in device-specific units (r/s)"""
-        return [float(s) for s in self.query('?vel').split()]
+        val = [float(s) for s in self.query('?vel').split()]
+        self._raise()
+        return val
 
     @vel.setter
     def vel(self, velocities):
         self.write('!vel {}'.format(' '.join(map(str, velocities))))
+        self._raise()
 
     @DictFeat(keys='XYZA', units='mm/s')
     def speed(self, axis):
         """The stage speed with units. Requires self.velocity_factors to be set."""
         vel = self.parse_query('?vel {}'.format(axis), format='{:f}')
-        return vel * self.velocity_factors[LStepStage._AXIS_INDICES[axis]]
+        val = vel * self.velocity_factors[LStepStage._AXIS_INDICES[axis]]
+        self._raise()
+        return val
 
     @speed.setter
     def speed(self, axis, speed):
         vel = speed / self.velocity_factors[LStepStage._AXIS_INDICES[axis]]
         self.write('!vel {} {:.2f}'.format(axis, vel))
+        self._raise()
 
     @Feat()
     def speeds(self):
@@ -237,15 +295,20 @@ class LStepStage(MessageBasedDriver):
 
     @DictFeat(keys='XYZA', units='m/s^2')
     def acceleration(self, axis):
-        return self.parse_query('?accel {}'.format(axis), format='{:f}')
+        val = self.parse_query('?accel {}'.format(axis), format='{:f}')
+        self._raise()
+        return val
 
     @acceleration.setter
     def acceleration(self, axis, accel):
         self.write('!accel {} {}'.format(axis, accel))
+        self._raise()
 
     @Feat()
     def calibration_offset_start(self):
-        return list(self._parse_position(self.query('?caliboffset')))
+        val = list(self._parse_position(self.query('?caliboffset')))
+        self._raise()
+        return val
 
     @calibration_offset_start.setter
     def calibration_offset_start(self, offsets):
@@ -253,7 +316,9 @@ class LStepStage(MessageBasedDriver):
 
     @Feat()
     def calibration_offset_end(self):
-        return list(self._parse_position(self.query('?rmoffset')))
+        val = list(self._parse_position(self.query('?rmoffset')))
+        self._raise()
+        return val
 
     @calibration_offset_end.setter
     def calibration_offset_end(self, offsets):
@@ -261,7 +326,9 @@ class LStepStage(MessageBasedDriver):
 
     @DictFeat(keys='XYZA')
     def limits(self, axis):
-        return tuple(self._parse_position(self.query('?lim {}'.format(axis))))
+        val = tuple(self._parse_position(self.query('?lim {}'.format(axis))))
+        self._raise()
+        return val
 
     @limits.setter
     def limits(self, axis, limits):
@@ -275,6 +342,7 @@ class LStepStage(MessageBasedDriver):
             self.write('!cal {}'.format(axis))
         else:
             raise ValueError('Invalid axis: {}'.format(axis))
+        self._raise()
 
     @Action()
     def calibrate_end(self, axis=None):
@@ -284,10 +352,13 @@ class LStepStage(MessageBasedDriver):
             self.write('!rm {}'.format(axis))
         else:
             raise ValueError('Invalid axis: {}'.format(axis))
+        self._raise()
 
     @Feat()
     def trigger_enabled(self):
-        return self.query('?trig') == '1'
+        val = self.query('?trig') == '1'
+        self._raise()
+        return val
 
     @trigger_enabled.setter
     def trigger_enabled(self, trig):
@@ -295,7 +366,9 @@ class LStepStage(MessageBasedDriver):
 
     @Feat()
     def trigger_axis(self):
-        return self.query('?triga').upper()
+        val = self.query('?triga').upper()
+        self._raise()
+        return val
 
     @trigger_axis.setter
     def trigger_axis(self, axis):
@@ -303,24 +376,31 @@ class LStepStage(MessageBasedDriver):
             self.write('!triga {}'.format(axis))
         else:
             raise ValueError('Invalid axis: {}'.format(axis))
+        self._raise()
 
     @Feat()
     def trigger_mode(self):
-        return int(self.query('?trigm'))
+        val = int(self.query('?trigm'))
+        self._raise()
+        return val
 
     @trigger_mode.setter
     def trigger_mode(self, mode):
         self.write('!trigm {}'.format(mode))
+        self._raise()
 
     @Feat(units='µs')
     def trigger_signal_length(self):
-        return self.parse_query('?trigs', format='{:d}')
+        val = self.parse_query('?trigs', format='{:d}')
+        self._raise()
+        return val
 
     @trigger_signal_length.setter
     def trigger_signal_length(self, sig):
         if not (0 <= sig <= 5):
             raise ValueError("trigger signal out of range [0; 5]!")
         self.write('!trigs {}'.format(int(sig)))
+        self._raise()
 
     @Feat()
     def trigger_distance(self):
@@ -331,15 +411,19 @@ class LStepStage(MessageBasedDriver):
     def trigger_distance(self, distance):
         self.write('!trigd {}'.format(self._in_unit_as_number(distance,
             self.dimensions[LStepStage._AXIS_INDICES[self.trigger_axis.upper()]])))
+        self._raise()
 
     @Feat()
     def trigger_count(self):
         """All performed triggers are counted"""
-        return self.parse_query('?trigcount', format='{:d}')
+        val = self.parse_query('?trigcount', format='{:d}')
+        self._raise()
+        return val
 
     @trigger_count.setter
     def trigger_count(self, trigs):
         self.write('!trigcount {}'.format(int(trigs)))
+        self._raise()
 
     def wait(self, axis, sleeptime=0.1):
         while self.axis_status[axis] == AxisStatus.moving:
