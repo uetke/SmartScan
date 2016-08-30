@@ -57,12 +57,14 @@ if __name__ == "__main__":
         session['adw'].start(8)
         session['adw'].wait(8)
         session['adw'].load('lib/adbasic/monitor.T90')
+        session['adw'].load('lib/adbasic/atomic_rw.T96')
         session['adw'].load('lib/adbasic/adwin.T99')
     elif model == 'goldII':
         session['adw'].load('lib/adbasic/init_adwin.TB8')
         session['adw'].start(8)
         session['adw'].wait(8)
         session['adw'].load('lib/adbasic/monitor.TB0')
+        session['adw'].load('lib/adbasic/atomic_rw.TB6')
         session['adw'].load('lib/adbasic/adwin.TB9')
     else:
         raise Exception('Model of ADwin not recognized')

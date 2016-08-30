@@ -375,10 +375,10 @@ class adq(ADwin,ADwinDebug):
         self.logger = logging.getLogger(get_all_caller())
         if 0<=port<16:
             self.logger.info('Getting data from digital port %s' %port)
-            self.set_par(VARIABLES['par']['Case'], ADWCONST['CASE_DIG_IN'])
-            self.start(9)
-            self.wait(9)
-            digin_data = self.get_par(VARIABLES['par']['Output_value'])
+            self.set_par(VARIABLES['par']['Case6'], ADWCONST['CASE_DIG_IN'])
+            self.start(6)
+            self.wait(6)
+            digin_data = self.get_par(VARIABLES['par']['Output_value6'])
             digin_data = bin(digin_data)[2:]
             digin_data = '0'*(16-len(digin_data)) + digin_data
             return int(digin_data[-port-1])
@@ -390,8 +390,8 @@ class adq(ADwin,ADwinDebug):
         self.logger = logging.getLogger(get_all_caller())
         if 0<=port<16:
             self.logger.debug('Setting digital port %s to 1' %port)
-            self.set_par(VARIABLES['par']['Case'], ADWCONST['CASE_DIG_OUT'])
-            self.set_par(VARIABLES['par']['Port'],port)
+            self.set_par(VARIABLES['par']['Case6'], ADWCONST['CASE_DIG_OUT'])
+            self.set_par(VARIABLES['par']['Port6'],port)
             self.start(9)
             self.wait(9)
         else:
@@ -403,8 +403,8 @@ class adq(ADwin,ADwinDebug):
         self.logger = logging.getLogger(get_all_caller())
         if 0<=port<16:
             self.logger.debug('Setting digital port %s to 0' %port)
-            self.set_par(VARIABLES['par']['Case'], ADWCONST['CASE_DIG_CLEAR'])
-            self.set_par(VARIABLES['par']['Port'],port)
+            self.set_par(VARIABLES['par']['Case6'], ADWCONST['CASE_DIG_CLEAR'])
+            self.set_par(VARIABLES['par']['Port6'],port)
             self.start(9)
             self.wait(9)
         else:

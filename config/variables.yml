@@ -7,11 +7,15 @@ par:
   Num_devs: 71
   Dev_type: 72
   Output_value: 73
+  Output_value6: 63
   Port: 74
+  Port6: 64
   Input_value: 75
+  Input_value6: 65
   Num_ticks: 78
   Pix_done: 79
   Case: 80
+  Case6: 60
   Delay: 70
   Scan_length: 69
 
