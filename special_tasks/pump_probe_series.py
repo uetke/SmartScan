@@ -7,6 +7,13 @@ import os
 import os.path
 import sys
 import time
+# Because Windows is a frightful steaming piece of useless crap with the
+# sorriest excuse for a POSIX layer you've ever seen, the select module
+# which any reasonable person would use to check for keypresses is
+# completely crippled. Thus, a Windows-only solution is used.
+# (As this is actually only used on Windows this has not been made
+# portable)
+import msvcrt
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -131,14 +138,35 @@ def main():
     return 0
 
 
-def wait_for_buttonpress(adw, btns):
+def wait_for_buttonpress(adw, btns, keys=[], *, accept_keyboard=True):
+    """
+    Wait for user input, either by button (connected to adw) or by keyboard.
+
+    btns is a sequence of integers that are acceptable button numbers.
+    keys is a sequence of keys that are acceptable as keyboard input, but should
+    NOT be polled for button presses (because there's no button connected)
+
+    NOTE: Button numbers are 1-indexed *here*; adwin digital inputs 0-indexed
+    """
     if isinstance(btns, int):
         btns = [btns]
+    btns_bytes = [str(b).encode('ISO-8859-15') for b in btns]
+    keys_bytes = [str(b).encode('ISO-8859-15') for b in keys]
     while True:
+        c = None
+        if accept_keyboard and msvcrt.kbhit():
+            c = msvcrt.getch()
+            if c in btns_bytes or c in keys_bytes:
+                return int(c)
+            else:
+                print('Unrecognized: {}'.format(repr(c)))
+                #msvcrt.ungetch(c)
+
         for btn in btns:
-            if adw.get_digin(btn) == 0:
+            # 
+            if adw.get_digin(btn-1) == 0:
                 # Wait for the button release event
-                while adw.get_digin(btn) == 0:
+                while adw.get_digin(btn-1) == 0:
                     time.sleep(0.01)
                 return btn
         time.sleep(0.02)
@@ -199,6 +227,7 @@ class PumpProbeSeriesThread(QThread):
         self._steps = steps
         self._t_int = t_int
         self._datadir = datadir
+        self._maxtime = None
 
         self.heating_power = 0
 
@@ -206,13 +235,19 @@ class PumpProbeSeriesThread(QThread):
         self._plot2 = None
 
     def run(self):
-        print('Please unblock the pump-probe beam!\n')
-        
         print('PRESS BUTTON 1 TO CONTINUE')
-        wait_for_buttonpress(self._adw, 0)
+        wait_for_buttonpress(self._adw, 1, accept_keyboard=False)
         print('PRESS BUTTON 2 TO CONTINUE')
-        wait_for_buttonpress(self._adw, 1)
+        wait_for_buttonpress(self._adw, 2, accept_keyboard=False)
         print('ok.\n')
+
+        while 1:
+            self.handle_input()
+
+    def find_peak(self):
+        print('Please unblock the pump-probe beam!')
+        print('Press any key to continue.\n')
+        msvcrt.getch()
 
         print('Finding the pump-probe peak')
         start1 = self._start
@@ -244,42 +279,95 @@ class PumpProbeSeriesThread(QThread):
 
         maxidx = np.argmax(self.data_x_µV)
         maxtime = start1 + maxidx * step1
-        print('Maximum is at {}. Moving there and refocussing.'.format(maxtime))
+        print('Maximum is at {}.'.format(maxtime))
         self._maxtime = maxtime
 
-        self.refocus()
-
-        while 1:
-            self.do_measurement()
-
-    def do_measurement(self):
+    def handle_input(self):
         print('Setting power meter to 532nm\n')
         self._powermeter.set_wavelength(532)
 
         
-        print('Press a button:')
+        print('Press a button or key:')
         print('(1) Measure 532nm power')
-        print('(2) Do pump probe scan\n')
+        print('(2) Do pump probe scan')
+        print('(3) Refocus')
+        print('(4) Go to position')
+        print('(5) Go to peak')
+        print('(6) Enter new position\n')
 
-        if wait_for_buttonpress(self._adw, [0,1]) == 0:
+        button = wait_for_buttonpress(self._adw, [1, 2], [1, 2, 3, 4, 5, 6])
+        if button == 1:
             self.measure_power()
-        else:
+        elif button == 2:
             self.measure_pump_probe()
+        elif button == 3:
+            print('Refocus')
+            print('Please unblock the pump-probe beam!')
+            print('Press any key to continue.\n')
+            msvcrt.getch()
+            self.refocus()
+        elif button == 4:
+            print('Current position:', self._owis.get_position())
+            try:
+                new_pos_str = input('New position: ')
+                new_pos = float(new_pos_str)
+            except ValueError:
+                print('Error parsing number.\n')
+            else:
+                self._owis.goto(new_pos)
+                time.sleep(1)
+                while not self._owis.check_if_ready():
+                    time.sleep(1)
+                    sys.stdout.write('.')
+                    sys.stdout.flush()
+                print('\nCurrent position:', self._owis.get_position())
+        elif button == 5:
+            if self._maxtime is None:
+                self.find_peak()
+            print('Moving to peak')
+            self._owis._stage.abort()
+            self._owis.goto(self._maxtime)
+            time.sleep(1)
+            while not self._owis.check_if_ready():
+                time.sleep(1)
+            print('Current position:', self._owis.get_position())
+        elif button == 6:
+            try:
+                x_str = input('x position [µm]: ')
+                x = float(x_str)
+                y_str = input('y position [µm]: ')
+                y = float(y_str)
+                z_str = input('z position [µm]: ')
+                z = float(z_str)
+                stay_put_str = input('are we in the right place [Y/n]? ')
+                stay_put = len(stay_put_str.strip()) == 0 or stay_put_str[0].lower() in ('y', 'j', '1')
+            except ValueError:
+                print('Invalid input!')
+                return
+
+            self._xyz = x, y, z
+
+            if not stay_put:
+                print("Moving the piezo stage into position")
+
+                xyzpiezo = list(map(DeviceConfig, ('x piezo', 'y piezo', 'z piezo')))
+
+                adw.go_to_position(xyzpiezo, (x,y,z))
+        else:
+            raise ValueError('Impossible button event!')
+
 
     def measure_power(self):
         print('Block the pump-probe beam and confirm when ready (btn 1)')
-        wait_for_buttonpress(self._adw, 0)
+        wait_for_buttonpress(self._adw, 1)
         power_µW = self._powermeter.power * 1e6
         self.heating_power = power_µW
         print('Heating power is {} µW\n'.format(power_µW))
 
     def measure_pump_probe(self):
         print('Unblock the pump-probe beam and confirm when ready (btn 2)')
-        wait_for_buttonpress(self._adw, 1)
+        wait_for_buttonpress(self._adw, 2)
         print('ok.')
-
-        print('Refocussing!')
-        self.refocus()
 
         print('Setting the lock-in outputs')
         self._lockin.front_output[1] = 'X'
