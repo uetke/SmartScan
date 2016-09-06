@@ -10,10 +10,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-today = 'D:\\Data\\2016-01-13\\'
+today = 'D:\\Data\\2016-09-02\\'
 
 if __name__ == '__main__':
-    name = 'keep_track_1.dat.temp'
+    name = 'stability_test.dat.temp'
     file = today+name
     data = np.loadtxt(file,dtype='bytes',skiprows=1,delimiter =', ').astype('float')
     print(data[1:,0])

@@ -47,19 +47,20 @@ time.sleep(2)
     # time.sleep(1.5)
 
 
-# while n <N:
-    # if adw.get_digin(0):
-        # plt.close()
-        # print('measuring')
-        # print('Measurement number =%s'%(n+1))
-        # Beep(840,200)
+while n <N:
+    time.sleep(0.1)
+    if adw.get_digin(0):
+        plt.close()
+        print('measuring')
+        print('Measurement number =%s'%(n+1))
+        Beep(840,200)
         
-        # n=n+1
-        # print('Waiting for signal...')
-        # fig = plt.figure()
-        # ax = fig.add_subplot(111)
-        # ax.text(0,0.5,'P ='+str(floor(pw_to_set[n]))+'uW',fontsize=55)
-        # plt.show()
-        # plt.pause(0.01)
+        n=n+1
+        print('Waiting for signal...')
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax.text(0,0.5,'P ='+str(floor(pw_to_set[n]))+'uW',fontsize=55)
+        plt.show()
+        plt.pause(0.01)
         
 print('end')

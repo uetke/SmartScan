@@ -33,7 +33,7 @@ print('sample='+sample)
 
 # particle positions
 pcle_filename = 'D:\\Data\\2016-07-04\\S1607_03_NR_PMMA_film_positions.txt' # filename with the pcle positions and global bkg.
-Zplane = '58.4' # z position of the focus [um]
+Zplane = '52.68' # z position of the focus [um]
 pcle_data = np.loadtxt(pcle_filename,dtype='bytes',delimiter =',').astype('str')#strange b in front of strings 
 num_particles = sum(pcle_data[:,0]=='particle')
 num_background = sum(pcle_data[:,0]=='background')    

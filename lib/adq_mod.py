@@ -193,7 +193,37 @@ class adq(ADwin,ADwinDebug):
             return data_t,data_c
         else:
             raise Exception('Not yet implemented for this model of ADwin')
+    
+    def lifetime(self,apd1,apd2,aom,duration=0.01,acc=0.00001,on_time=0.00005,times=10):
+        """ Acquires APD timetraces after step function sent to an AOM. 
+            For millisecond range
+        """
+        delay = m.floor(acc/self.time_high)
+        print('Process delay (adwin time units): '+str(delay))
+        self.adw.Set_Processdelay(1, delay)
+        num_ticks = int(duration / (delay * self.time_high)) # ticks in one cycle
 
+        if num_ticks*times>1000000: # this number depends on the fifo size seted in the .bas code for the adwin
+            raise Exception('Too many ticks for lifetime')
+            
+        self.set_par(par.properties['Num_ticks'],num_ticks)
+        self.set_par(par.properties['Aom'],aom.properties['Output']['Hardware']['PortID'])
+        self.set_par(par.properties['Port'],apd1.properties['Input']['Hardware']['PortID'])
+        self.set_par(par.properties['Portt'],apd2.properties['Input']['Hardware']['PortID'])
+        on_ticks = int(on_time/(delay*self.time_high))
+        self.set_par(par.properties['Square'],on_ticks)
+        self.set_par(par.properties['LifetimeIterations'],times)
+        
+        self.start(1)
+        time.sleep(duration*times+0.5)
+        
+        data1 = np.array(list(self.get_fifo(fifo.properties['Counter1'])))
+        data2 = np.array(list(self.get_fifo(fifo.properties['Counter2'])))
+        
+        return data1,data2
+        
+
+        
     def get_QPD(self,detect,duration=1,acc=.0005):
         """ Gets timetraces of 3 analog channels with high temporal accuracy.
             It uses a modified version of the routine used for acquiring a timetrace of

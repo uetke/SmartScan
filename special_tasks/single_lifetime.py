@@ -8,7 +8,7 @@ import sys
 import os
 import numpy as np
 ## stop all other processes in the adwin before running this. Done in line 28
-experiment_label = 'S1607_02_PMMA_film_with_EuComplex_1mM_770nm_Single_Lifetime'
+experiment_label = 'S1607_04_2a_770nm_278uW_Single_Lifetime_pcle_6'
 
 print('###################################### started lifetime measurement...')
 print('###################################### ')
@@ -33,10 +33,10 @@ print('Filename to save: '+ filename)
 
 # define parameters for lifetime measurement
 integration_time = 25E-6            # bin time or integration time [sec]
-detection_time=2E-3                 # detection time [sec]
-on_time=2E-3                        # Laser on time [sec]
+detection_time=3E-3                 # detection time [sec]
+on_time=3E-3                        # Laser on time [sec]
 duration = detection_time+on_time   # One run experiment time length [sec]
-times=1000                           # number of times to repeat the single cycle.
+times=3000                          # number of times to repeat the single cycle.
 # show
 print("integration_time= %e sec. duration= %f sec. on_time= %f sec. times= %i."%(integration_time,duration,on_time,times))
 print('Expected ticks = '+str(int(times*duration / (np.floor(integration_time/adw.time_high) * adw.time_high))))
