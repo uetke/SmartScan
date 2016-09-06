@@ -1,0 +1,70 @@
+%YAML 1.2
+---
+# variable names in the ADwin code
+
+# "par" registers
+par:
+  Num_devs: 71
+  Dev_type: 72
+  Output_value: 73
+  Output_value6: 63
+  Port: 74
+  Port6: 64
+  Input_value: 75
+  Input_value6: 65
+  mystery: 77
+  Num_ticks: 78
+  Pix_done: 79
+  Case: 80
+  Case6: 60
+  Delay: 70
+  Scan_length: 61
+  Aom: 69
+  Portt: 68
+  Square: 66
+  LifetimeIterations: 67
+
+# "fpar"
+fpar:
+    
+# "data" arrays
+data:
+  dev_params: 198 
+  Scan_params: 199
+  Timetrace: 177
+  QPDx: 176
+  QPDy: 175
+  QPDz: 174
+  Time: 176
+
+# "fifo" arrays
+fifo:
+  Counter1: 178
+  Counter2: 179
+  Counter3: 180
+  Counter4: 181
+  Analog1: 182
+  Analog2: 183
+  Analog3: 184
+  Analog4: 185
+  Analog5: 186
+  Analog6: 187
+  Analog7: 188
+  Analog8: 189
+  Analog9: 190
+  Analog10: 191
+  Analog11: 192
+  Analog12: 193
+  Analog13: 194
+  Analog14: 195
+  Analog15: 196
+  Analog16: 197
+  Scan_data: 200
+  Digin1: 173
+  Digin2: 172
+  Digin3: 171
+  Digin4: 170
+  Digin5: 169
+  Digin6: 168
+  Digin7: 167
+  Digin8: 166

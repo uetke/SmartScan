@@ -1,3 +1,8 @@
+"""
+    GUI Specific for displaying the PSF in real time. 
+    It is also a sandbox to start experimenting with proper MVC model. 
+"""
+
 # Python Qt4 bindings for GUI objects
 from PyQt4 import QtGui, QtCore
 from PyQt4.Qt import QGridLayout
@@ -17,7 +22,6 @@ import numpy as np
 from lib.adq_mod import adq
 from lib.xml2dict import device
 from lib.config import VARIABLES
-from lib.app import ScanApplication, LogEntry
 
 
 # specify the use of PyQt
@@ -62,25 +66,18 @@ class MplAnimate(QtGui.QMainWindow):
         self.menuBar().addMenu(self.help_menu)
         self._running = True
         self.key = None
-
-        window_type = self.widget.get_window_type()
-
-        if window_type == 'monitor':
-            self.animation = self.widget.monitor()
+        if self.option[0]=='Monitor':
+            if self.option[1]=='Imshow':
+                self.animation = self.widget.animate_scan()
+            elif self.option[1]=='Line':
+                self.animation = self.widget.monitor()
             self.help_menu.addAction('&About', self.about_monitor)
-        elif window_type == 'timetrace':
-            self.animation = self.widget.animate_plot()
+        elif self.option[0]=='Scan':
+            if self.option[1]=='Imshow':
+                self.animation = self.widget.animate_scan()
+            elif self.option[1]=='Line':
+                self.animation = self.widget.animate_plot()
             self.help_menu.addAction('&About', self.about_scan)
-        elif window_type == '1d scan':
-            self.animation = self.widget.animate_1dscan()
-            self.help_menu.addAction('&About', self.about_scan)
-        else:
-            self.animation = self.widget.animate_scan()
-            self.help_menu.addAction('&About', self.about_scan)
-
-        self._logentry = LogEntry()
-        if window_type != 'monitor':
-            self._logentry.announce()
 
     def keyPressEvent(self, event):
         if type(event) == QtGui.QKeyEvent:
@@ -153,19 +150,19 @@ class MplAnimate(QtGui.QMainWindow):
         file_output = open(filename,'a+b')
         np.savetxt(file_output, data, '%s', ',')
 
-        entry = self._logentry
-        entry.user_id = self._session['userId']
-        entry.setup_id = self._session['setupId']
-        entry.entry_type = 'Saved scan'
-        entry.file = filename
-        entry.detectors = detectors
-        entry.variables = variables
+        entry = {}
+        entry['user'] = self._session['userId']
+        entry['setup'] = self._session['setupId']
+        entry['entry'] = 'Saved scan'
+        entry['file'] = filename
+        entry['detectors'] = detectors
+        entry['variables'] = variables
         if autosave:
-            entry.comments = 'Autosave'
+            entry['comments'] = 'Autosave'
         else:
-            entry.comments = 'Manually saved'
+            entry['comments'] = 'Manually saved'
 
-        entry.commit()
+        self._session['db'].new_entry(entry)
 
     def fileQuit(self):
         self.close()
@@ -275,29 +272,16 @@ class MplCanvas(QtGui.QGraphicsObject):
             self.fifo_name='scan_data'
 
 
-    def get_window_type(self):
-        if self.MplAnimate.option[0]=='Monitor':
-            window_type = 'monitor'
-        if self.MplAnimate.option[0]=='Scan' and self.parent.main.Scan_1st_comboBox.currentText()=='Time':
-            window_type = 'timetrace'
-        elif self.MplAnimate.option[0]=='Scan' and self.parent.main.Scan_2nd_comboBox.currentText()=='None':
-            window_type = '1d scan'
-        elif self.MplAnimate.option[0]=='Scan':
-            window_type = '2d+ scan'
-
-        return window_type
-
     def get_data(self):
         final_data = []
-        window_type = self.get_window_type()
-        if window_type == 'monitor':
+        if self.MplAnimate.option[0]=='Monitor':
             data = [self.adw.get_fifo(VARIABLES['fifo'][self.fifo_name])]
-        if window_type == 'timetrace':
+        if self.MplAnimate.option[0]=='Scan' and self.parent.main.Scan_1st_comboBox.currentText()=='Time':
             data = self.adw.get_timetrace_dynamic(self.detector,self.duration,self.accuracy)
-        elif window_type == '1d scan':
+        elif self.MplAnimate.option[0]=='Scan' and self.parent.main.Scan_2nd_comboBox.currentText()=='None':
             data = copy.copy(self.adw.scan_dynamic(self.detector,self.devs,self.center,self.dims,self.accuracy,self.speed))
-        elif window_type == '2d+ scan':
-            data = copy.copy(self.adw.scan_dynamic(self.detector,self.devs,self.center,self.dims,self.accuracy,self.speed))
+        elif self.MplAnimate.option[0]=='Scan':
+            data = copy.copy(self.adw.scan_dynamic(self.detector,self.devs,self.center,self.dims,self.accuracy,self.speed))               
                 
         if type(data)==type(False) and data==0:
             self.MplAnimate.close()
@@ -308,18 +292,16 @@ class MplCanvas(QtGui.QGraphicsObject):
             data[i] = (data[i]-calibration['Offset'])/calibration['Slope']
             if self.detector[i].properties['Type']=='Counter':
                 data[i] /= self.delay
-            if window_type == 'monitor':
-                xdata = np.arange(len(data[i]))*self.delay
-                final_data = np.vstack((xdata,data[i]))
-            elif window_type == 'timetrace':
-                xdata = np.arange(len(data[i]))*self.delay
-                final_data.append(np.vstack((xdata,data[i])))
-            elif window_type == '1d scan':
-                xdata = np.arange(0, self.dims[0], self.accuracy[0]) + self.center[0] - self.dims[0]/2
-                final_data.append(np.vstack((xdata,data[i])))
+            if self.MplAnimate.option[1]=='Line':
+                if self.MplAnimate.option[0]=='Monitor':
+                    xdata = np.arange(len(data[i]))*self.delay
+                    final_data = np.vstack((xdata,data[i]))
+                else:
+                    xdata = np.arange(len(data[i]))*self.delay
+                    final_data.append(np.vstack((xdata,data[i])))
             else:
                 final_data.append(data[i])
-
+        
         if not bool(self.adw.adw.Process_Status(9)) and self.MplAnimate.option[0]=='Scan':
             self.adw.running = False
             self.timer.stop()
@@ -330,11 +312,7 @@ class MplCanvas(QtGui.QGraphicsObject):
             else:
                 self.MplAnimate.MainWindow.StopScan()
                 if self.autosave:
-                    def do_autosave():
-                        self.MplAnimate.saveDialog(True)
-
-                    # autosave in a moment, when the calling function has updated the
-                    QtCore.QTimer.singleShot(200, do_autosave)
+                    self.MplAnimate.saveDialog(True)
             
         return final_data
 
@@ -371,13 +349,6 @@ class MplCanvas(QtGui.QGraphicsObject):
                 self.ydata.append(np.array([]))
                 self.xdata[i] = np.append(self.xdata[i],temp[i][0]+self.delay)
             self.ydata[i] = np.append(self.ydata[i],temp[i][1])
-            self.lineplot[i].setData(y=self.ydata[i],x=self.xdata[i])
-
-    def scan_plot1d(self):
-        data = np.array(self.get_data())
-        self.xdata = data[:,0]
-        self.ydata = data[:,1]
-        for i in range(len(self.detector)):
             self.lineplot[i].setData(y=self.ydata[i],x=self.xdata[i])
 
 
@@ -442,24 +413,6 @@ class MplCanvas(QtGui.QGraphicsObject):
         self.MplAnimate.setCentralWidget(self.form_widget)
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.func_plot)
-        self.timer.start(100)
-        return self.timer
-
-    def animate_1dscan(self):
-        self.plotwidget = []
-        self.lineplot = []
-        for i in range(len(self.detector)):
-            self.plotwidget.append(pg.PlotWidget())
-            self.plotwidget[i].getPlotItem().setTitle(title = self.detector[i].properties['Name'])
-            self.lineplot.append(self.plotwidget[i].plot())
-            labelStyle = {'color': '#FFF', 'font-size': '16px'}
-            self.plotwidget[i].plotItem.setLabel('left', self.ylabel[i], units=self.yunit[i],**labelStyle)
-            self.plotwidget[i].plotItem.setLabel('bottom', self.xlabel, units=self.xunit,**labelStyle)
-
-        self.form_widget = FormWidget(None,self.plotwidget)
-        self.MplAnimate.setCentralWidget(self.form_widget)
-        self.timer = QtCore.QTimer()
-        self.timer.timeout.connect(self.scan_plot1d)
         self.timer.start(100)
         return self.timer
 

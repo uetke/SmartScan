@@ -12,7 +12,7 @@
 ' Info_Last_Save                 = MEETPC166  MEETPC166\LION
 '<Header End>
 #include c:\adwin\adbasic\Inc\ADwinGoldII.inc
-
+#include .\globals.inc
 init:
   globaldelay = 40000 '= 40 ms
   ' init the counters

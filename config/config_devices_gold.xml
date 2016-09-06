@@ -7,6 +7,12 @@
 			<Hardware PortID="1"/>
 		</Input>
 	</Device>
+    <Device Name='APD 2' Type='Counter' Description='a device that counts the number of photons'>
+		<Input>
+			<Calibration Unit="counts" Slope="1" Offset="0"/>
+			<Hardware PortID="2"/>
+		</Input>
+	</Device>
 	<Device Name='Lock-in' Type='Analog' Description='a lock-in amplifier'>
 		<Input>
 			<Calibration Unit="Volts" Slope="3276.8" Offset="32768"/>

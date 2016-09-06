@@ -1,6 +1,7 @@
 import sys, os, inspect
 from lib.adq_mod import adq
 from lib.xml2dict import device
+from lib import ScanApplication
 from _private.set_debug import debug
 
 def adding_to_path(folder):
@@ -34,13 +35,13 @@ if __name__ == "__main__":
     from GUI.MainWindow import App
     global app
 
+    scan_app = ScanApplication()
+
     ### Initialize the adwin class ###
-    session = {}
+    session = scan_app.session
     # These variables should be erased. They are being kept for legacy support.
     dev_conf = 'config/config_devices.xml'
     session['dev_conf'] = 'config/config_devices.xml'
-    par_conf = 'config/config_variables.xml'
-    session['par_conf'] = 'config/config_variables.xml'
     session['device_names'] = device()
     ad = device(type='',name='Adwin') # Get the Adwin model from the config file
     model = ad.properties['model']
@@ -56,12 +57,14 @@ if __name__ == "__main__":
         session['adw'].start(8)
         session['adw'].wait(8)
         session['adw'].load('lib/adbasic/monitor.T90')
+        session['adw'].load('lib/adbasic/atomic_rw.T96')
         session['adw'].load('lib/adbasic/adwin.T99')
     elif model == 'goldII':
         session['adw'].load('lib/adbasic/init_adwin.TB8')
         session['adw'].start(8)
         session['adw'].wait(8)
         session['adw'].load('lib/adbasic/monitor.TB0')
+        session['adw'].load('lib/adbasic/atomic_rw.TB6')
         session['adw'].load('lib/adbasic/adwin.TB9')
     else:
         raise Exception('Model of ADwin not recognized')

@@ -1,6 +1,4 @@
-import xml.etree.cElementTree as ET
-import logging
-from lib.logger import get_all_caller
+import warnings
 
 def xmltodict(element):
     """converts the XML-file to a dictionary"""
@@ -11,10 +9,13 @@ def xmltodict(element):
             else:
                 obj = element.attrib
                 for i, j in obj.items():
-                    try:
-                        obj[i]=float(j)
-                    except:
-                        pass
+                    if j.isdigit():
+                        obj[i] = int(j)
+                    else:
+                        try:
+                            obj[i]=float(j)
+                        except:
+                            pass
             if result.get(element.tag):
                 if hasattr(result[element.tag], "append"):
                     result[element.tag].append(obj)
@@ -27,36 +28,26 @@ def xmltodict(element):
     result=element.attrib
     return xmltodict_handler(element,result)
 
-class device():
-    def __init__(self,name=None,type='Adwin',filename='config/config_devices.xml'):
-        self.logger = logging.getLogger(get_all_caller())
-        tree = ET.ElementTree(file=filename)
-        root = tree.getroot()
-        if root.find(".//*[@Name='%s']"%name)!= None:
-            self.logger.info('Loaded the data for %s in %s' %(name,filename))
-            self.properties = xmltodict(root.find(".%s//*[@Name='%s']" %(type,name)))
-        elif name==None:
-            self.properties = []
-            self.logger.info('Loaded all the data from %s' %(filename))
-            for tags in root.find(".%s" %type):
-                name = tags.get('Name')
-                self.properties.append(name)
-        else:
-            self.logger.error("Name of Device is not in XML-file")
+from .config import DeviceConfig as device
+from .config import VARIABLES
 
 
-class variables():
-    def __init__(self,name=None, filename='config/config_variables.xml'):
-        var=device(name,'',filename)
-        self.properties=var.properties
-        for i in self.properties.keys():
-            try:
-                self.properties[i]=int(self.properties[i])
-            except:
-                pass
+class variables:
+    """
+    Transitional class to support old scripts that need access to variables
+    """
+    def __init__(self, name, filename=None):
+        self.name = name.lower()
+        warnings.warn("lib.xmltodict.variables is deprecated. Use the lib.config.VARIABLES dict!",
+                      DeprecationWarning)
+
+    @property
+    def properties(self):
+        return VARIABLES[self.name]
+
 
 if __name__ == '__main__':
-    fifo=variables('Fifo')
+    fifo=VARIABLES['fifo']
     #print(fifo.properties)
     counter = device()
     print(counter.properties)

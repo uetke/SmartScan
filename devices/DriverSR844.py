@@ -10,24 +10,25 @@
 import numpy as np
 
 from lantz import Action, Feat, DictFeat, ureg, Q_
-from lantz.serial import SerialDriver
+from lantz.drivers.legacy.serial import SerialDriver
 from lantz.errors import InstrumentError
 
 from collections import OrderedDict
 import numpy as np
-from xml2dict import device
 import logging
 from logger import get_all_caller
 
-display_output = OrderedDict([('X',0),
-                              ('Y',0),
-                              ('Rv',1),
-                              ('Theta',1),
-                              ('RdB',2),
-                              ('YnoiseV',2),
-                              ('Xnoise',3),
-                              ('YnoisedB',3),
-                              ('AUX',4)])
+display_output = OrderedDict([('X', '0'),
+                              ('Y', '0'),
+                              ('X/Y', '0'),
+                              ('Rv', '1'),
+                              ('Theta', '1'),
+                              ('Rv/Theta', '1'),
+                              ('RdB', '2'),
+                              ('YnoiseV', '2'),
+                              ('Xnoise', '3'),
+                              ('YnoisedB', '3'),
+                              ('AUX', '4')])
 
     
 class _SR844(object):
@@ -54,7 +55,7 @@ class _SR844(object):
     def reference_phase_shift(self, value):
         self.send('PHAS{:.2f}'.format(value))
 
-    @Feat(values={True: 1, False: 0})
+    @Feat(values={True: '1', False: '0'})
     def reference_internal(self):
         """Reference source.
         """
@@ -74,7 +75,7 @@ class _SR844(object):
     def frequency(self, value):
         self.send('FREQ{:.5f}'.format(value))
 
-    @Feat(values={True: 0, False: 1})
+    @Feat(values={True: '0', False: '1'})
     def harmonic(self):
         """Detection harmonic.
         (detect at F, i=0) or ON, (detect at 2F, i=1).
@@ -86,7 +87,7 @@ class _SR844(object):
         self.send('HARM {}'.format(value))
 
     # Signal input
-    @Feat(values={'High': 0, 'Normal': 1, 'Low':2})
+    @Feat(values={'High': '0', 'Normal': '1', 'Low': '2'})
     def wide_reserve_mode(self):
         return self.query('WRSV ?')
     
@@ -96,7 +97,7 @@ class _SR844(object):
         
     # GAIN and TIME CONSTANT COMMANDS.
 
-    @Feat(values={False: 0, True: 1})
+    @Feat(values={False: '0', True: '1'})
     def rel_mode(self):
         """REL mode.
         """
@@ -172,7 +173,7 @@ class _SR844(object):
     def display(self, channel, value):
         self.send('DDEF {}, {}'.format(channel, value))
 
-    @DictFeat(keys={1, 2}, values={'Display': 0, 'X': 1, 'Y': 1})
+    @DictFeat(keys={1, 2}, values=OrderedDict([('Display', 0), ('X', 1), ('Y', 1), ('X/Y', 1)]))
     def front_output(self, channel):
         """Front panel output source.
         """
@@ -215,7 +216,7 @@ class _SR844(object):
         """
         self.query('OVRM {}'.format(value))
 
-    @Feat(values={True: 1, False: 0})
+    @Feat(values={True: '1', False: '0'})
     def key_click_enabled(self):
         """Key click
         """
@@ -225,7 +226,7 @@ class _SR844(object):
     def key_click_enabled(self, value):
         return self.send('KCLK {}'.format(value))
 
-    @Feat(values={True: 1, False: 0})
+    @Feat(values={True: '1', False: '0'})
     def alarm_enabled(self):
         """Key click
         """
@@ -323,7 +324,7 @@ class _SR844(object):
     def sample_rate(self, value):
         self.send('SRAT {}'.format(value))
 
-    @Feat(values={True: 0, False: 1})
+    @Feat(values={True: '0', False: '1'})
     def single_shot(self):
         """End of buffer mode.
 
@@ -343,7 +344,7 @@ class _SR844(object):
         """
         self.send('TRIG')
 
-    @Feat(values={True: 0, False: 1})
+    @Feat(values={True: '0', False: '1'})
     def trigger_start_mode(self):
         """The TSTR command sets or queries the Trigger Scan Mode to On (1) or Off (0).
         When Trigger Scan Mode is On (i=1), an external or software trigger starts the
@@ -380,7 +381,7 @@ class _SR844(object):
 
     @DictFeat(keys={'X', 'Y', 'Rv', 'RdB', 'Theta', 1, 2})
     def analog_value(self, key):
-        i = {'X': 1, 'Y': 2, 'Rv': 3, 'RdB': 4, 'Theta': 5}
+        i = {'X': '1', 'Y': '2', 'Rv': '3', 'RdB': '4', 'Theta': '5'}
         if key in i.keys():
             return self.query('OUTP? {}'.format(i[key]))
         else:
@@ -392,11 +393,11 @@ class _SR844(object):
         instant. The SNAP? command requires at least two and at most six parameters
         """
         if 2<=len(channels)<=6:
-            d = {'X': 1, 'Y': 2, 'Rv': 3, 'RdB': 4,'Theta': 5,
-                'AUX1': 6, 'AUX2': 7, 'RefFreq': 8, 'Ch1': 9,
-                'Ch2': 10}
+            d = {'X': '1', 'Y': '2', 'Rv': '3', 'RdB': '4','Theta': '5',
+                'AUX1': '6', 'AUX2': '7', 'RefFreq': '8', 'Ch1': '9',
+                'Ch2': '10'}
             channels = ','.join(d[ch] for ch in channels)
-            self.query('SNAP? {}'.format(channels))
+            return self.query('SNAP? {}'.format(channels))
         else:
             self.logger.error('Length {} is out of range(2,7)'.format(len(channels)))
 

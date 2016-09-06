@@ -99,20 +99,32 @@ class Flipper():
 if __name__ == '__main__':
     from time import sleep
 
-    inst = Flipper(SerialNum=b'37863346')
-    print(inst.identify()) # Makes the green LED blink
+    inst1 = Flipper(SerialNum=b'37863346')
+    print(inst1.identify()) # Makes the green LED blink
+
+    # inst1 = Flipper(SerialNum=b'37864186')
+    # inst2 = Flipper(SerialNum=b'37863355')
+    print(inst1.identify()) # Makes the green LED blink
+    # print(inst2.identify()) # Makes the green LED blink
     sleep(1)
-    print('Current position is %s'%(inst.getPos()))
+    print('Current position of flipper 1 is %s'%(inst1.getPos()))
+    # print('Current position of flipper 2 is %s'%(inst2.getPos()))
     change_pos = True
     while change_pos:
-        p = int(input('Change the position [1,2,0=exit]'))
-        if p==1:
+        p = int(input('Change the position [11,12,21,22,0=exit]'))
+        if p==11:
             print('Changing position...')
-            inst.goto(p)
-        elif p==2:
+            inst1.goto(1)
+        elif p==12:
             print('Changing position...')
-            inst.goto(p)
+            inst1.goto(2)
+        # elif p==21:
+            # print('Changing position...')
+            # inst2.goto(1)
+        # elif p==22:
+            # print('Changing position...')
+            # inst2.goto(2)
         else:
             change_pos = False
-    print('The final position is %s'%inst.getPos())
-    inst.close()
+    print('The final position is %s'%inst1.getPos())
+    inst1.close()

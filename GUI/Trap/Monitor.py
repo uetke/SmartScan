@@ -17,8 +17,9 @@ from GUI.Trap.APD import APD
 from GUI.Trap.PowerSpectra import PowerSpectra
 from GUI.Trap.ConfigWindow import ConfigWindow
 from GUI.Trap.value_monitor import ValueMonitor
+from GUI.Trap.lockIn import LockIn
 from lib.xml2dict import variables
-
+import math as m
 import copy
 
 class Monitor(QtGui.QMainWindow):
@@ -34,7 +35,7 @@ class Monitor(QtGui.QMainWindow):
         self.PowerSpectra = PowerSpectra()
         self.ConfigWindow = ConfigWindow()
         self.ValueMonitor = ValueMonitor()
-
+        self.LockIn = LockIn()
         self.setCentralWidget(self.timetraces)
 
         # The devices to analize
@@ -61,18 +62,20 @@ class Monitor(QtGui.QMainWindow):
         self.vara = self.timetraces.apd1.plot(self.t[4],self.data[3],pen='y')
         self.varl = self.timetraces.lock.plot(self.t[5],self.data[3],pen='y')
 
-        self.fifo=variables('Fifo')
+        self.fifo=VARIABLES['fifo']
         self.fifo_name = ''
         self.ctimer = QtCore.QTimer()
         self.running = False
-        self.delay=400*0.1e-3 # This kind of things violate the new design of the adq_mod class
+        self.delay = m.floor(_session.monitor_timeresol/1000/_session.adw.time_low) # In Adwin units
+        self.timeDelay = _session.monitor_timeresol/1000 # In seconds
 
         QtCore.QObject.connect(self.ctimer,QtCore.SIGNAL("timeout()"),self.updateMon)
         QtCore.QObject.connect(self,QtCore.SIGNAL("TimeTraces"),self.updateTimes)
         QtCore.QObject.connect(self.PowerSpectra, QtCore.SIGNAL('Stop_Tr'),self.stop_timer)
         QtCore.QObject.connect(self.APD, QtCore.SIGNAL('Stop_Tr'),self.stop_timer)
+        QtCore.QObject.connect(self.LockIn, QtCore.SIGNAL('Stop_Tr'),self.stop_timer)
         QtCore.QObject.connect(self,QtCore.SIGNAL('MeanData'),self.ValueMonitor.UpdateValues)
-
+        QtCore.QObject.connect(self.ConfigWindow,QtCore.SIGNAL('Times'),self.updateParameters)
 
         ###################
         # Define the menu #
@@ -130,6 +133,14 @@ class Monitor(QtGui.QMainWindow):
         triggerAPD = QtGui.QAction('Trigger APD',self)
         triggerAPD.setStatusTip('Triggers time resolution APD timetrace')
         triggerAPD.triggered.connect(self.APD.start_timetrace)
+        
+        showLock = QtGui.QAction('Lock-In',self)
+        showLock.setStatusTip('Shows the Lock-In timetrace')
+        showLock.triggered.connect(self.LockIn.show)
+        
+        triggerLock = QtGui.QAction('Trigger lock in',self)
+        triggerLock.setStatusTip('Acquires Lock In signal with high temporal resolution')
+        triggerLock.triggered.connect(self.LockIn.show)
 
         self.statusBar()
         menubar = self.menuBar()
@@ -154,17 +165,26 @@ class Monitor(QtGui.QMainWindow):
         apdMenu = menubar.addMenu('&APD')
         apdMenu.addAction(showAPD)
         apdMenu.addAction(triggerAPD)
+        
+        lockMenu = menubar.addMenu('&Lock-In')
+        lockMenu.addAction(showLock)
+        lockMenu.addAction(triggerLock)
+        
+        ####
+        # Define some parameters
+        ####
+        self.runningTimeResol = _session.monitor_timeresol
 
     def updateMon(self):
         final_data = []
         mean_data = []
         for i in range(len(self.devices)):
             fifo_name = '%s%i' %(self.devices[i].properties['Type'],self.devices[i].properties['Input']['Hardware']['PortID'])
-            data = copy.copy(np.array([_session.adw.get_fifo(self.fifo.properties[fifo_name])]))
+            data = copy.copy(np.array([_session.adw.get_fifo(VARIABLES['fifo'][fifo_name])]))
             calibration = self.devices[i].properties['Input']['Calibration']
             data = np.array((data-calibration['Offset'])/calibration['Slope'])
             if self.devices[i].properties['Type']=='Counter':
-                data /= self.delay
+                data /= self.timeDelay
                 
             final_data.append(data)
             mean_data.append(np.mean(data))
@@ -177,12 +197,12 @@ class Monitor(QtGui.QMainWindow):
         #Check the sizes of the variances
         var = copy.copy(data)
         for i in range(len(var)):
-            xdata = np.arange(len(var[i][0]))*self.delay
+            xdata = np.arange(len(var[i][0]))*self.timeDelay
             old_data = self.data[i]
             old_t = self.t[i]
-            self.t[i] = np.append(self.t[i],xdata+max(self.t[i])+self.delay)
+            self.t[i] = np.append(self.t[i],xdata+max(self.t[i])+self.timeDelay)
             self.data[i] = np.append(self.data[i],var[i])
-            limit = _session.timetrace_time/self.delay
+            limit = _session.timetrace_time/self.timeDelay
             self.t[i] = self.t[i][-limit:]
             self.data[i] = self.data[i][-limit:]
             
@@ -201,8 +221,9 @@ class Monitor(QtGui.QMainWindow):
                 print('Cant update while power spectra or APD is running.')
             else:
                 # Starts the process inside the ADwin
+                _session.adw.adw.Set_Processdelay(10,self.delay)
                 _session.adw.start(10)
-                self.ctimer.start(100)
+                self.ctimer.start(_session.monitor_timeresol*1.2)
                 self.running = True
         else:
             self.stop_timer()
@@ -239,7 +260,17 @@ class Monitor(QtGui.QMainWindow):
             
         print('Data saved in %s'%(savedir+filename) )
         return
-
+        
+    def updateParameters(self):
+        """ Updates the relevant parameters for the monitor timetrace. 
+        """
+        if self.timeDelay != _session.monitor_timeresol/1000:
+            # Calculate new time resolution in ADw cycles.
+            self.delay = m.floor(_session.monitor_timeresol/1000/_session.adw.time_low)
+            self.timeDelay = _session.monitor_timeresol/1000
+            _session.adw.adw.Set_Processdelay(10,self.delay)
+        
+        
     def exit_safe(self):
         """ Exits the application.
         """

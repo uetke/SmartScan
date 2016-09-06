@@ -12,8 +12,9 @@
 ' Info_Last_Save                 = MEETPC166  MEETPC166\LION
 '<Header End>
 #include c:\adwin\adbasic\Inc\ADwinGoldII.inc
-dim data_178[1000000] as long as fifo
-dim data_179[1000000] as long as fifo 
+#include .\globals.inc
+dim data_Counter1[1000000] as long as fifo
+dim data_Counter2[1000000] as long as fifo 
 dim j, m, port, portt as integer
 dim aom, aom_ON, aom_OFF as integer
 dim new_timer, old_timer as long
@@ -29,9 +30,9 @@ init:
   cnt_enable(1111b)
   j = 0
   m = 0
-  port = par_74
-  portt = par_68
-  aom = par_69
+  port = par_Port
+  portt = par_Portt
+  aom = par_Aom
   aom_ON = 65536
   aom_OFF = 32768
   FIFO_Clear(178)
@@ -46,24 +47,24 @@ event:
   if(j=1) then
     dac(aom,aom_ON)
   else 
-    if (j=par_77) then
+    if (j=par_Square) then
       dac(aom,aom_OFF)
       old_timer = cnt_read(port)
       old_timerr = cnt_read(portt)
     else 
-      if (j>par_77) then
+      if (j>par_Square) then
         new_timer = cnt_read(port)
         new_timerr = cnt_read(portt)
-        data_178 = old_timer-new_timer
-        data_179 = old_timerr-new_timerr
+        data_Counter1 = old_timer-new_timer
+        data_Counter2 = old_timerr-new_timerr
         old_timer = new_timer
         old_timerr = new_timerr
         'Inc i
         ' Par_1 = i        
-        if(j>=par_78) then
+        if(j>=par_Num_ticks) then
           j=0
           Inc m
-          if(m>=par_67) then
+          if(m>=par_LifetimeIterations) then
             dac(aom,aom_OFF)
             end
           endif         

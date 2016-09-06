@@ -1,24 +1,26 @@
-from __future__ import division
-import numpy as np
-from lib._ADwin import ADwin, ADwinDebug
-import time
-import scipy.ndimage
-import matplotlib.pyplot as plt
-import math as m
-#from sys import stdout
-import ctypes
-#import psutil
-from lib.xml2dict import device,variables
-import logging
-from lib.logger import get_all_caller
+import concurrent.futures
 import copy
+import ctypes
+import logging
+import math as m
+import threading
+import time
 
-"""initialize the variable names"""
-config_variables = 'config/config_variables.xml'
-par=variables('Par',filename=config_variables)
-fpar=variables('FPar',filename=config_variables)
-data=variables('Data',filename=config_variables)
-fifo=variables('Fifo',filename=config_variables)
+from contextlib import contextmanager
+from functools import reduce
+from operator import __mul__
+
+import numpy as np
+import scipy.ndimage
+
+from matplotlib import pyplot as plt
+
+from ._ADwin import ADwin, ADwinDebug
+from .config import VARIABLES, CONSTANTS
+from .logger import get_all_caller
+from .xml2dict import device
+
+ADWCONST = CONSTANTS['adwin']
 
 class adq(ADwin,ADwinDebug):
     def __init__(self,device_number=1,model='gold',debug=0):
@@ -163,13 +165,13 @@ class adq(ADwin,ADwinDebug):
             Only works for a counter.
         """
         if self.model == 'gold':
-            self.load('lib/ADwinsrc/fast_timetrace.T98') # Does it need to happen here?
+            self.load('lib/adbasic/fast_timetrace.T98') # Does it need to happen here?
             delay = m.floor(acc/self.time_high)
             port = detect.properties['Input']['Hardware']['PortID']
-            self.set_par(par.properties['Port'],int(port))
+            self.set_par(VARIABLES['par']['Port'],int(port))
             num_ticks = int(duration / (delay * self.time_high))
             print(num_ticks)
-            self.set_par(par.properties['Num_ticks'],num_ticks)
+            self.set_par(VARIABLES['par']['Num_ticks'],num_ticks)
             self.adw.Set_Processdelay(8,delay)
             self.start(process=8)
             t0 = time.time()
@@ -177,11 +179,11 @@ class adq(ADwin,ADwinDebug):
                 print('Waiting %3.f more seconds... \n'%(duration-time.time()+t0))
                 time.sleep(0.25)
 
-            num_ticks = self.get_par(par.properties['Pix_done'])
+            num_ticks = self.get_par(VARIABLES['par']['Pix_done'])
             print(num_ticks)
             # Starts at 2 to remove the initial pixel that has the wrong count
-            array = self.get_data(data.properties['Timetrace'], num_ticks)
-            array2 = self.get_data(data.properties['Time'], num_ticks)
+            array = self.get_data(VARIABLES['data']['Timetrace'], num_ticks)
+            array2 = self.get_data(VARIABLES['data']['Time'], num_ticks)
 
             data_c = []
             data_t = []
@@ -206,19 +208,19 @@ class adq(ADwin,ADwinDebug):
         if num_ticks*times>1000000: # this number depends on the fifo size seted in the .bas code for the adwin
             raise Exception('Too many ticks for lifetime')
             
-        self.set_par(par.properties['Num_ticks'],num_ticks)
-        self.set_par(par.properties['Aom'],aom.properties['Output']['Hardware']['PortID'])
-        self.set_par(par.properties['Port'],apd1.properties['Input']['Hardware']['PortID'])
-        self.set_par(par.properties['Portt'],apd2.properties['Input']['Hardware']['PortID'])
+        self.set_par(VARIABLES['par']['Num_ticks'],num_ticks)
+        self.set_par(VARIABLES['par']['Aom'],aom.properties['Output']['Hardware']['PortID'])
+        self.set_par(VARIABLES['par']['Port'],apd1.properties['Input']['Hardware']['PortID'])
+        self.set_par(VARIABLES['par']['Portt'],apd2.properties['Input']['Hardware']['PortID'])
         on_ticks = int(on_time/(delay*self.time_high))
-        self.set_par(par.properties['Square'],on_ticks)
-        self.set_par(par.properties['LifetimeIterations'],times)
+        self.set_par(VARIABLES['par']['Square'],on_ticks)
+        self.set_par(VARIABLES['par']['LifetimeIterations'],times)
         
         self.start(1)
         time.sleep(duration*times+0.5)
         
-        data1 = np.array(list(self.get_fifo(fifo.properties['Counter1'])))
-        data2 = np.array(list(self.get_fifo(fifo.properties['Counter2'])))
+        data1 = np.array(list(self.get_fifo(VARIABLES['fifo']['Counter1'])))
+        data2 = np.array(list(self.get_fifo(VARIABLES['fifo']['Counter2'])))
         
         return data1,data2
         
@@ -238,13 +240,13 @@ class adq(ADwin,ADwinDebug):
             for i in detect:
                 dev_params = np.append(dev_params,[int(i.properties['Type'][:5],36),i.properties['Input']['Hardware']['PortID']])
 
-            self.set_datalong(dev_params,data.properties['dev_params'])
-            self.set_par(par.properties['Num_devs'],len(detect))
-            self.set_par(par.properties['Case'],33)
+            self.set_datalong(dev_params,VARIABLES['data']['dev_params'])
+            self.set_par(VARIABLES['par']['Num_devs'],len(detect))
+            self.set_par(VARIABLES['par']['Case'], ADWCONST['CASE_ACQ_MULTI'])
 
             delay = m.floor(acc/self.time_high)
             num_ticks = int(duration / (delay * self.time_high))
-            self.set_par(par.properties['Num_ticks'],num_ticks)
+            self.set_par(VARIABLES['par']['Num_ticks'],num_ticks)
 
             if acc!=None:
                 self.adw.Set_Processdelay(9, delay)
@@ -253,10 +255,10 @@ class adq(ADwin,ADwinDebug):
             intermediate_data = np.zeros(1)
             while bool(self.adw.Process_Status(9)):
                 time.sleep(.25)
-                intermediate_data = np.append(intermediate_data, np.array(list(self.get_fifo(fifo.properties['Scan_data']))))
+                intermediate_data = np.append(intermediate_data, np.array(list(self.get_fifo(VARIABLES['fifo']['Scan_data']))))
 
 
-            intermediate_data = np.append(intermediate_data, np.array(list(self.get_fifo(fifo.properties['Scan_data']))))
+            intermediate_data = np.append(intermediate_data, np.array(list(self.get_fifo(VARIABLES['fifo']['Scan_data']))))
             array = intermediate_data
 
             split_data = []
@@ -275,17 +277,17 @@ class adq(ADwin,ADwinDebug):
         if not type(detect)== type([]):
             detect = list(detect)
         self.logger = logging.getLogger(get_all_caller())
-        #self.set_par(par.properties['Dev_type'],int(detect.properties['Type'][:5],36))
-        #self.set_par(par.properties['Port'],detect.properties['Input']['Hardware']['PortID'])
+        #self.set_par(VARIABLES['par']['Dev_type'],int(detect.properties['Type'][:5],36))
+        #self.set_par(VARIABLES['par']['Port'],detect.properties['Input']['Hardware']['PortID'])
         dev_params = np.array([])
         for i in detect:
             dev_params = np.append(dev_params,[int(i.properties['Type'][:5],36),i.properties['Input']['Hardware']['PortID']])
-        self.set_datalong(dev_params,data.properties['dev_params'])
-        self.set_par(par.properties['Num_devs'],len(detect))
+        self.set_datalong(dev_params,VARIABLES['data']['dev_params'])
+        self.set_par(VARIABLES['par']['Num_devs'],len(detect))
         delay = m.floor(acc/self.time_high)
         num_ticks = int(duration / (delay * self.time_high))
-        self.set_par(par.properties['Num_ticks'],num_ticks)
-        self.set_par(par.properties['Case'],3)
+        self.set_par(VARIABLES['par']['Num_ticks'],num_ticks)
+        self.set_par(VARIABLES['par']['Case'], ADWCONST['CASE_ACQ'])
         if acc!=None:
             self.adw.Set_Processdelay(9, m.floor(acc/self.time_high))
         delay = self.adw.Get_Processdelay(9)
@@ -294,7 +296,7 @@ class adq(ADwin,ADwinDebug):
         self.start(9)
         #time.sleep(duration)
         self.wait(process=9)
-        array = np.array(list(self.get_fifo(fifo.properties['Scan_data'])))
+        array = np.array(list(self.get_fifo(VARIABLES['fifo']['Scan_data'])))
         split_data = []
         for i in range(len(detect)):
             split_data.append(array[i::len(detect)])
@@ -312,18 +314,18 @@ class adq(ADwin,ADwinDebug):
             self.logger.info('for %ss and precision of %ss' %(duration,acc))
             self.adw.Set_Processdelay(9, m.floor(acc/self.time_high))
             num_ticks = int(duration / (acc))
-            #self.set_par(par.properties['Dev_type'],int(detect.properties['Type'][:5],36))
-            #self.set_par(par.properties['Port'],detect.properties['Input']['Hardware']['PortID'])
+            #self.set_par(VARIABLES['par']['Dev_type'],int(detect.properties['Type'][:5],36))
+            #self.set_par(VARIABLES['par']['Port'],detect.properties['Input']['Hardware']['PortID'])
             dev_params = np.array([])
             for i in detect:
                 dev_params = np.append(dev_params,[int(i.properties['Type'][:5],36),i.properties['Input']['Hardware']['PortID']])
-            self.set_datalong(dev_params,data.properties['dev_params'])
-            self.set_par(par.properties['Num_devs'],len(detect))
-            self.set_par(par.properties['Num_ticks'],num_ticks)
-            self.set_par(par.properties['Case'],3)
+            self.set_datalong(dev_params,VARIABLES['data']['dev_params'])
+            self.set_par(VARIABLES['par']['Num_devs'],len(detect))
+            self.set_par(VARIABLES['par']['Num_ticks'],num_ticks)
+            self.set_par(VARIABLES['par']['Case'], ADWCONST['CASE_ACQ'])
             self.start(9)
             self.running = bool(self.adw.Process_Status(9))
-            self.array = np.array(list(self.get_fifo(fifo.properties['Scan_data'])))
+            self.array = np.array(list(self.get_fifo(VARIABLES['fifo']['Scan_data'])))
             split_data = []
             for i in range(len(detect)):
                 length = np.floor(len(self.array)/len(detect))*len(detect)
@@ -334,7 +336,7 @@ class adq(ADwin,ADwinDebug):
         elif self.running:
             self.logger.debug('Getting data from dynamic timetrace')
             split_data = []
-            self.array = np.array(list(self.get_fifo(fifo.properties['Scan_data'])))
+            self.array = np.array(list(self.get_fifo(VARIABLES['fifo']['Scan_data'])))
             try:
                 image = np.append(self.excess_data,image)
             except:
@@ -353,9 +355,9 @@ class adq(ADwin,ADwinDebug):
             value = int((value-3278)/6553.6)
         if 0<=value<=65536 and 0<=channel<=15:
             self.logger.debug('Dac of %s to %sV' %(value,(value-3278)/6553.6))
-            self.set_par(par.properties['Port'],channel)
-            self.set_par(par.properties['Input_value'],value)
-            self.set_par(par.properties['Case'],1)
+            self.set_par(VARIABLES['par']['Port'],channel)
+            self.set_par(VARIABLES['par']['Input_value'],value)
+            self.set_par(VARIABLES['par']['Case'], ADWCONST['CASE_DAC'])
             self.start(9)
             self.wait(9)
         elif 0<=channel<=15:
@@ -370,12 +372,12 @@ class adq(ADwin,ADwinDebug):
         channel = int(detect.properties['Input']['Hardware']['PortID'])
         if 0<=channel<=15:
             self.logger.debug('Converting analog signal from channel %s'%channel)
-            self.set_par(par.properties['Port'],channel)
-            self.set_par(par.properties['Input_value'],gain)
-            self.set_par(par.properties['Case'],2)
+            self.set_par(VARIABLES['par']['Port'],channel)
+            self.set_par(VARIABLES['par']['Input_value'],gain)
+            self.set_par(VARIABLES['par']['Case'], ADWCONST['CASE_ADC'])
             self.start(9)
             self.wait(9)
-            value = int(self.get_par(par.properties['Output_value']))
+            value = int(self.get_par(VARIABLES['par']['Output_value']))
             output = 20*(value-32768)/65536 # The gain is not yet implemented
             return output
         else:
@@ -404,10 +406,10 @@ class adq(ADwin,ADwinDebug):
         if self.model == 'gold':
             if 0<=port<16:
                 self.logger.info('Getting data from digital port %s' %port)
-                self.set_par(par.properties['Case'],5)
-                self.start(9)
-                self.wait(9)
-                digin_data = self.get_par(par.properties['Output_value'])
+                self.set_par(VARIABLES['par']['Case6'], ADWCONST['CASE_DIG_IN'])
+                self.start(6)
+                self.wait(6)
+                digin_data = self.get_par(VARIABLES['par']['Output_value6'])
                 digin_data = bin(digin_data)[2:]
                 digin_data = '0'*(16-len(digin_data)) + digin_data
                 return int(digin_data[-port-1])
@@ -416,10 +418,10 @@ class adq(ADwin,ADwinDebug):
         elif self.model == 'goldII':
             if 0<=port<32:
                 self.logger.info('Getting data from digital port %s' %port)
-                self.set_par(par.properties['Case'],5)
-                self.start(9)
-                self.wait(9)
-                digin_data = self.get_par(par.properties['Output_value']) # this need to be revised
+                self.set_par(VARIABLES['par']['Case6'], ADWCONST['CASE_DIG_IN'])
+                self.start(6)
+                self.wait(6)
+                digin_data = self.get_par(VARIABLES['par']['Output_value6']) 
                 digin_data = bin(digin_data)[2:]
                 digin_data = '0'*(32-len(digin_data)) + digin_data
                 return int(digin_data[-port-1])
@@ -432,19 +434,19 @@ class adq(ADwin,ADwinDebug):
         if self.model == 'gold':
             if 0<=port<16:
                 self.logger.debug('Setting digital port %s to 1' %port)
-                self.set_par(par.properties['Case'],6)
-                self.set_par(par.properties['Port'],port)
-                self.start(9)
-                self.wait(9)
+                self.set_par(VARIABLES['par']['Case6'], ADWCONST['CASE_DIG_OUT'])
+                self.set_par(VARIABLES['par']['Port6'],port)
+                self.start(6)
+                self.wait(6)
             else:
                 self.logger.error('The port %s is out of range(0,16)' %port)
         elif self.model == 'goldII':
             if 0<=port<32:
                 self.logger.debug('Setting digital port %s to 1' %port)
-                self.set_par(par.properties['Case'],6)
-                self.set_par(par.properties['Port'],port)
-                self.start(9)
-                self.wait(9)
+                self.set_par(VARIABLES['par']['Case6'], ADWCONST['CASE_DIG_OUT'])
+                self.set_par(VARIABLES['par']['Port6'],port)
+                self.start(6)
+                self.wait(6)
             else:
                 self.logger.error('The port %s is out of range(0,32)' %port)
 
@@ -454,19 +456,19 @@ class adq(ADwin,ADwinDebug):
         if self.model == 'gold':
             if 0<=port<16:
                 self.logger.debug('Setting digital port %s to 0' %port)
-                self.set_par(par.properties['Case'],7)
-                self.set_par(par.properties['Port'],port)
-                self.start(9)
-                self.wait(9)
+                self.set_par(VARIABLES['par']['Case6'], ADWCONST['CASE_DIG_CLEAR'])
+                self.set_par(VARIABLES['par']['Port6'],port)
+                self.start(6)
+                self.wait(6)
             else:
                 self.logger.error('The port %s is out of range(0,16)' %port)
         elif self.model == 'goldII':
             if 0<=port<32:
                 self.logger.debug('Setting digital port %s to 0' %port)
-                self.set_par(par.properties['Case'],7)
-                self.set_par(par.properties['Port'],port)
-                self.start(9)
-                self.wait(9)
+                self.set_par(VARIABLES['par']['Case6'], ADWCONST['CASE_DIG_CLEAR'])
+                self.set_par(VARIABLES['par']['Port6'],port)
+                self.start(6)
+                self.wait(6)
             else:
                 self.logger.error('The port %s is out of range(0,32)' %port)
 
@@ -484,7 +486,7 @@ class adq(ADwin,ADwinDebug):
         center = np.array(center)
         dims = np.array(dims)
         accuracy = np.array(accuracy)
-        self.adw.Fifo_Clear(fifo.properties['Scan_data'])
+        self.adw.Fifo_Clear(VARIABLES['fifo']['Scan_data'])
         if not type(detect) == type([]):
             detect = [detect]
         if len(devs)==len(center)==len(dims)==len(accuracy)<=3:
@@ -507,34 +509,34 @@ class adq(ADwin,ADwinDebug):
                 self.logger.info('Range(%s,%s) for device %s' %(center[i]-dims[i]/2,center[i]+dims[i]/2,devs[i]))
                 self.scan_settings[devs[i].properties['Name']+'_start']=center[i]-dims[i]/2
                 self.scan_settings[devs[i].properties['Name']+'_accuracy']=accuracy[i]
-            #self.set_par(par.properties['Port'],detect.properties['Input']['Hardware']['PortID'])
-            #self.set_par(par.properties['Dev_type'],int(detect.properties['Type'][:5],36))
+            #self.set_par(VARIABLES['par']['Port'],detect.properties['Input']['Hardware']['PortID'])
+            #self.set_par(VARIABLES['par']['Dev_type'],int(detect.properties['Type'][:5],36))
             dev_params = np.array([])
             for i in detect:
                 dev_params = np.append(dev_params,[int(i.properties['Type'][:5],36),i.properties['Input']['Hardware']['PortID']])
-            self.set_datalong(dev_params,data.properties['dev_params'])
-            self.set_par(par.properties['Num_devs'],len(detect))
+            self.set_datalong(dev_params,VARIABLES['data']['dev_params'])
+            self.set_par(VARIABLES['par']['Num_devs'],len(detect))
             pix=np.append(pix,np.ones(3-len(pix)))
-            self.set_datalong(np.append((port,start,pix),increment),data.properties['Scan_params'])
+            self.set_datalong(np.append((port,start,pix),increment),VARIABLES['data']['Scan_params'])
             total=int(np.prod(pix))
-            self.set_par(par.properties['Case'],4)
+            self.set_par(VARIABLES['par']['Case'], ADWCONST['CASE_SCAN'])
             self.adw.Set_Processdelay(9, int(speed*1e-3/self.time_high))
             self.start(9)
             while self.adw.Process_Status(9):
-                #number = self.get_par(par.properties['Pix_done'])
+                #number = self.get_par(VARIABLES['par']['Pix_done'])
                 #perc = int(number/total*100)
                 #stdout.write("\r{0:d}%".format(perc))
                 #stdout.flush()
                 time.sleep(0.1)
             #print("")
-            temp = np.array(list(self.get_fifo(fifo.properties['Scan_data'], total)))
+            temp = np.array(list(self.get_fifo(VARIABLES['fifo']['Scan_data'], total)))
             self.scan_image = []
             for i in range(len(detect)):
                 self.scan_image.append(np.squeeze(temp[i::len(detect)].reshape((pix[::-1]))/(speed*1e-3)))
             return self.scan_image
         else:
-            self.logger.error("Not all input arrays have the same length or are longer the 3")
-            raise InputError("Not all input arrays have the same length or are longer the 3")
+            self.logger.error("Not all input arrays have the same length or are longer than 3")
+            raise ValueError("Not all input arrays have the same length or are longer than 3")
             return False
 
     def scan_dynamic(self,detect,devs,center,dims,accuracy,speed=10):
@@ -548,7 +550,7 @@ class adq(ADwin,ADwinDebug):
         self.logger = logging.getLogger(get_all_caller())
 
         if not self.running:
-            self.adw.Fifo_Clear(fifo.properties['Scan_data'])
+            self.adw.Fifo_Clear(VARIABLES['fifo']['Scan_data'])
             devs = np.array(devs)
             center = np.array(center)
             dims = np.array(dims)
@@ -575,24 +577,24 @@ class adq(ADwin,ADwinDebug):
                     self.logger.info('Range(%s,%s) for device %s' %(center[i]-dims[i]/2,center[i]+dims[i]/2,devs[i].properties['Name']))
                     self.scan_settings[devs[i].properties['Name']+'_start']=center[i]-dims[i]/2
                     self.scan_settings[devs[i].properties['Name']+'_accuracy']=accuracy[i]
-                #self.set_par(par.properties['Port'],detect.properties['Input']['Hardware']['PortID'])
-                #self.set_par(par.properties['Dev_type'],int(detect.properties['Type'][:5],36))
+                #self.set_par(VARIABLES['par']['Port'],detect.properties['Input']['Hardware']['PortID'])
+                #self.set_par(VARIABLES['par']['Dev_type'],int(detect.properties['Type'][:5],36))
                 dev_params = np.array([])
                 for i in detect:
                     dev_params = np.append(dev_params,[int(i.properties['Type'][:5],36),i.properties['Input']['Hardware']['PortID']])
-                self.set_datalong(dev_params,data.properties['dev_params'])
-                self.set_par(par.properties['Num_devs'],len(detect))
+                self.set_datalong(dev_params,VARIABLES['data']['dev_params'])
+                self.set_par(VARIABLES['par']['Num_devs'],len(detect))
                 self.pix=np.append(pix,np.ones(3-len(pix)))
-                self.set_datalong(np.append((port,start,self.pix),increment),data.properties['Scan_params'])
+                self.set_datalong(np.append((port,start,self.pix),increment),VARIABLES['data']['Scan_params'])
                 total=int(np.prod(self.pix))
-                self.set_par(par.properties['Case'],4)
+                self.set_par(VARIABLES['par']['Case'], ADWCONST['CASE_SCAN'])
                 self.adw.Set_Processdelay(9, int(speed*1e-3/self.time_high))
                 self.start(9)
                 time.sleep(0.1)
                 self.running = bool(self.adw.Process_Status(9))
                 temp = np.zeros(total)
                 temp[:] = np.nan
-                image = self.get_fifo(fifo.properties['Scan_data'])
+                image = self.get_fifo(VARIABLES['fifo']['Scan_data'])
                 self.scan_image = []
                 for i in range(len(detect)):
                     index = np.isnan(temp).argmax()
@@ -607,11 +609,11 @@ class adq(ADwin,ADwinDebug):
             else:
                 self.logger.error("Not all input arrays have the same length or are longer the 3")
                 return False
-                
+
         elif self.running:
             self.running = bool(self.adw.Process_Status(9))
             self.logger.debug('Getting data from danamic scan')
-            image = self.get_fifo(fifo.properties['Scan_data'])
+            image = self.get_fifo(VARIABLES['fifo']['Scan_data'])
             try:
                 image = np.append(self.excess_data,image)
             except:
@@ -624,7 +626,7 @@ class adq(ADwin,ADwinDebug):
                 self.scan_image[i] = np.squeeze(temp.reshape((self.pix[::-1])))
             self.excess_data = image[length:]
             return self.scan_image
-                
+
     def start_scan_dynamic(self,detect,devs,center,dims,accuracy,speed=10):
         """a function that does a scan. The number of axes you can choose yourself.
         detect: a device(s) that does the detection of your signal
@@ -636,7 +638,7 @@ class adq(ADwin,ADwinDebug):
         self.logger = logging.getLogger(get_all_caller())
 
         if not self.running:
-            self.adw.Fifo_Clear(fifo.properties['Scan_data'])
+            self.adw.Fifo_Clear(VARIABLES['fifo']['Scan_data'])
             devs = np.array(devs)
             center = np.array(center)
             dims = np.array(dims)
@@ -663,24 +665,24 @@ class adq(ADwin,ADwinDebug):
                     self.logger.info('Range(%s,%s) for device %s' %(center[i]-dims[i]/2,center[i]+dims[i]/2,devs[i].properties['Name']))
                     self.scan_settings[devs[i].properties['Name']+'_start']=center[i]-dims[i]/2
                     self.scan_settings[devs[i].properties['Name']+'_accuracy']=accuracy[i]
-                #self.set_par(par.properties['Port'],detect.properties['Input']['Hardware']['PortID'])
-                #self.set_par(par.properties['Dev_type'],int(detect.properties['Type'][:5],36))
+                #self.set_par(VARIABLES['par']['Port'],detect.properties['Input']['Hardware']['PortID'])
+                #self.set_par(VARIABLES['par']['Dev_type'],int(detect.properties['Type'][:5],36))
                 dev_params = np.array([])
                 for i in detect:
                     dev_params = np.append(dev_params,[int(i.properties['Type'][:5],36),i.properties['Input']['Hardware']['PortID']])
-                self.set_datalong(dev_params,data.properties['dev_params'])
-                self.set_par(par.properties['Num_devs'],len(detect))
+                self.set_datalong(dev_params,VARIABLES['data']['dev_params'])
+                self.set_par(VARIABLES['par']['Num_devs'],len(detect))
                 self.pix=np.append(pix,np.ones(3-len(pix)))
-                self.set_datalong(np.append((port,start,self.pix),increment),data.properties['Scan_params'])
+                self.set_datalong(np.append((port,start,self.pix),increment),VARIABLES['data']['Scan_params'])
                 total=int(np.prod(self.pix))
-                self.set_par(par.properties['Case'],4)
+                self.set_par(VARIABLES['par']['Case'], ADWCONST['CASE_SCAN'])
                 self.adw.Set_Processdelay(9, int(speed*1e-3/self.time_high))
                 self.start(9)
                 time.sleep(0.1)
                 self.running = bool(self.adw.Process_Status(9))
                 temp = np.zeros(total)
                 temp[:] = np.nan
-                image = self.get_fifo(fifo.properties['Scan_data'])
+                image = self.get_fifo(VARIABLES['fifo']['Scan_data'])
                 self.scan_image = []
                 for i in range(len(detect)):
                     index = np.isnan(temp).argmax()
@@ -695,12 +697,12 @@ class adq(ADwin,ADwinDebug):
             else:
                 self.logger.error("Not all input arrays have the same length or are longer the 3")
                 return False
-                
+
     def get_scan_dynamic(self,detect,devs,center,dims,accuracy,speed=10):
         if self.running:
             self.running = bool(self.adw.Process_Status(9))
             self.logger.debug('Getting data from danamic scan')
-            image = self.get_fifo(fifo.properties['Scan_data'])
+            image = self.get_fifo(VARIABLES['fifo']['Scan_data'])
             try:
                 image = np.append(self.excess_data,image)
             except:
@@ -714,6 +716,37 @@ class adq(ADwin,ADwinDebug):
             self.excess_data = image[length:]
             return self.scan_image
 
+
+    def scan_external(self, detectors, n_pixels, *, load_program=False):
+        """
+        Starts up an "external" scan, i.e. one where ADwin does not do any
+        scanning, but simply acquires data upon an external trigger signal.
+
+        Returns a ScanFuture instance which tracks the progress of the scan
+        and lets you access the data.
+        """
+        if load_program:
+            self.logger.info('Loading the external scanning code.')
+            self.load('lib/adbasic/external_scan.T95')
+
+        if bool(self.adw.Process_Status(5)):
+            self.stop(5)
+            self.logger.warn('external scan aborted')
+
+        self.logger.info('Doing an external scan.')
+        # tell ADwin which detectors to pick up
+        dev_params = np.zeros(len(detectors) * 2, dtype=np.int32)
+        for idx, detector in enumerate(detectors):
+            dev_params[2*idx] = int(detector['Type'][:5], 36) # What the actual fuck, Aqui...
+            dev_params[2*idx+1] = detector['Input']['Hardware']['PortID']
+        self.set_datalong(dev_params, VARIABLES['data']['dev_params'])
+        self.set_par(VARIABLES['par']['Num_devs'], len(detectors))
+        self.set_par(VARIABLES['par']['Scan_length'], n_pixels)
+        self.set_par(VARIABLES['par']['Pix_done'], 0)
+
+        self.start(5)
+        scan_ref = ScanFuture(self, 5, detectors, (n_pixels,))
+        return scan_ref
 
 
     def find(self, image, fwhm, hmin=None, nsigma=1.5, roundlim=[-1.,1.], sharplim=[0.2,1.]):
@@ -984,3 +1017,134 @@ class inter_add_remove():
         self.plot_backg.figure.canvas.draw()
         self.plot_parti.set_data(self.particles_x, self.particles_y)
         self.plot_parti.figure.canvas.draw()
+
+
+class ScanFuture(concurrent.futures.Future):
+    """
+    This concurrent.futures.Future subclass represents a running scan. It is
+    currently only used by scan_external, but could in principle be used for
+    "traditional" single-controller scans as well.
+    """
+
+    def __init__(self, adq, process, detectors, shape):
+        if isinstance(shape, int):
+            shape = shape,
+        self._shape = shape
+        self._n_pixels = reduce(__mul__, shape, 1)
+        self._detectors = detectors
+        self._n_detect = len(detectors)
+        self._adq = adq
+        self._proc = process
+        self._cancelled = False
+
+        full_shape = (self._n_detect,) + shape
+        alt_shape = shape + (self._n_detect,)
+        raw_shape = self._n_pixels * self._n_detect,
+
+        self._full_shape = full_shape
+        self._alt_shape = alt_shape
+
+        self._raw_data = np.empty(raw_shape)
+        self._raw_data.fill(np.nan)
+        self._data = np.empty(full_shape)
+        self._data.fill(np.nan)
+        self._data_up2date = True
+
+        self._pixels_collected = 0
+
+    @property
+    def detectors(self):
+        return self._detectors
+
+    def cancel(self):
+        self._adq.stop(self._proc)
+        self._cancelled = True
+
+    def cancelled(self):
+        return self._cancelled
+
+    def running(self):
+        process_running = bool(self._adq.adw.Process_Status(self._proc))
+
+        if not process_running:
+            return False
+        else:
+            pixels_done = self._adq.get_par(VARIABLES['par']['Pix_done'])
+            if pixels_done >= self._n_pixels:
+                self._adq.logger.warn('{}/{} px collected but still running?!'.format(pixels_done, self._n_pixels))
+                self.cancel()
+                return False
+            else:
+                # ok
+                return True
+
+
+    def done(self):
+        return not self.running()
+
+    def wait(self, timeout=None):
+        t0 = time.time()
+        while self.running():
+            if timeout is not None and time.time() - t0 > timeout:
+                raise concurrent.futures.TimeoutError()
+            time.sleep(0.1)
+
+    def result(self, timeout=None):
+        if self._cancelled:
+            raise concurrent.futures.CancelledError
+
+        self.wait(timeout)
+        if self._pixels_collected != self._n_pixels:
+            raise ScanFuture.IncompleteScanError
+        else:
+            return self.get_data()
+
+    def exception(self, timeout=None):
+        self.wait(timeout)
+        if self._pixels_collected != self._n_pixels:
+            raise ScanFuture.IncompleteScanError
+
+    def add_done_callback(self, fn):
+        if self.running():
+            def wait_and_callback():
+                self.wait()
+                fn(self)
+            threading.Thread(target=wait_and_callback).start()
+        else:
+            fn(self)
+
+    def _pickup_data(self):
+        pixels_done = self._adq.get_par(VARIABLES['par']['Pix_done'])
+        pix_waiting = pixels_done - self._pixels_collected
+
+        if pix_waiting > 0:
+            myidx = self._pixels_collected * self._n_detect
+            new_data = self._adq.get_fifo(VARIABLES['fifo']['Scan_data'])
+            theiridx = myidx + len(new_data)
+            if theiridx > self._n_pixels * self._n_detect:
+                excess = theiridx - self._n_pixels * self._n_detect
+                theiridx = self._n_pixels * self._n_detect
+                new_data = new_data[:theiridx-myidx]
+                self._adq.logger.warn('{} extra words in FIFO!'.format(excess))
+            self._raw_data[myidx:theiridx] = new_data
+            self._pixels_collected = theiridx // self._n_detect
+            self._data_up2date = False
+
+    def get_data(self):
+        """
+        Get the data collected so far
+        """
+        self._pickup_data()
+        if not self._data_up2date:
+            ndetect = len(self._detectors)
+            for idx in range(ndetect):
+                self._data[idx,:] = self._raw_data[idx::ndetect].reshape(self._shape)
+
+        return self._data
+
+    @property
+    def pixels_collected(self):
+        return self._pixels_collected
+
+    class IncompleteScanError(IOError):
+        pass

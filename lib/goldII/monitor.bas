@@ -13,27 +13,28 @@
 ' Info_Last_Save                 = MEETPC166  MEETPC166\LION
 '<Header End>
 #include c:\adwin\adbasic\inc\ADwinGoldII.inc
+#include .\globals.inc
 
-dim data_178[2003] as float as fifo 'counters
-dim data_179[2003] as long as fifo
-dim data_180[2003] as long as fifo
-dim data_181[2003] as long as fifo
-dim data_182[2003] as long as fifo 'adc
-dim data_183[2003] as long as fifo
-dim data_184[2003] as long as fifo
-dim data_185[2003] as long as fifo
-dim data_186[2003] as long as fifo
-dim data_187[2003] as long as fifo
-dim data_188[2003] as long as fifo
-dim data_189[2003] as long as fifo
-dim data_190[2003] as long as fifo
-dim data_191[2003] as long as fifo
-dim data_192[2003] as long as fifo
-dim data_193[2003] as long as fifo
-dim data_194[2003] as long as fifo
-dim data_195[2003] as long as fifo
-dim data_196[2003] as long as fifo
-dim data_197[2003] as long as fifo
+dim data_Counter1[2003] as float as fifo 'counters
+dim data_Counter2[2003] as long as fifo
+dim data_Counter3[2003] as long as fifo
+dim data_Counter4[2003] as long as fifo
+dim data_Analog1[2003] as long as fifo 'adc
+dim data_Analog2[2003] as long as fifo
+dim data_Analog3[2003] as long as fifo
+dim data_Analog4[2003] as long as fifo
+dim data_Analog5[2003] as long as fifo
+dim data_Analog6[2003] as long as fifo
+dim data_Analog7[2003] as long as fifo
+dim data_Analog8[2003] as long as fifo
+dim data_Analog9[2003] as long as fifo
+dim data_Analog10[2003] as long as fifo
+dim data_Analog11[2003] as long as fifo
+dim data_Analog12[2003] as long as fifo
+dim data_Analog13[2003] as long as fifo
+dim data_Analog14[2003] as long as fifo
+dim data_Analog15[2003] as long as fifo
+dim data_Analog16[2003] as long as fifo
 dim old_timer[4], new_timer[4], count[4] as long
 dim value_adc[16], average[16] as long
 dim c,j,n as integer
@@ -62,10 +63,10 @@ event:
   
   NEXT j  
   
-  data_178 = count[1]
-  data_179 = count[2]
-  data_180 = count[3]
-  data_181 = count[4]
+  data_Counter1 = count[1]
+  data_Counter2 = count[2]
+  data_Counter3 = count[3]
+  data_Counter4 = count[4]
   
   for j = 1 to 16
     average[j] = 0
@@ -98,21 +99,21 @@ event:
   NEXT c 
   
   'maybe little overkill
-  data_182 = average[1]
-  data_183 = average[2]
-  data_184 = average[3]
-  data_185 = average[4]
-  data_186 = average[5]
-  data_187 = average[6]
-  data_188 = average[7]
-  data_189 = average[8]
-  data_190 = average[9]
-  data_191 = average[10]
-  data_192 = average[11]
-  data_193 = average[12]
-  data_194 = average[13]
-  data_195 = average[14]
-  data_196 = average[15]
-  data_197 = average[16]
+  data_Analog1 = average[1]
+  data_Analog2 = average[2]
+  data_Analog3 = average[3]
+  data_Analog4 = average[4]
+  data_Analog5 = average[5]
+  data_Analog6 = average[6]
+  data_Analog7 = average[7]
+  data_Analog8 = average[8]
+  data_Analog9 = average[9]
+  data_Analog10 = average[10]
+  data_Analog11 = average[11]
+  data_Analog12 = average[12]
+  data_Analog13 = average[13]
+  data_Analog14 = average[14]
+  data_Analog15 = average[15]
+  data_Analog16 = average[16]
 
       

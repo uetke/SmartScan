@@ -1,0 +1,15 @@
+%YAML 1.2
+---
+# Important constants
+
+# Constants used in the ADwin code:
+adwin:
+  CASE_DAC: 1
+  CASE_ADC: 2
+  CASE_ACQ: 3
+  CASE_ACQ_MULTI: 33
+  CASE_SCAN: 4
+  CASE_DIG_IN: 5
+  CASE_DIG_OUT: 6
+  CASE_DIG_CLEAR: 7
+  NEWLINE_DELAY: 4

@@ -66,12 +66,24 @@ class PowerSpectra(QtGui.QMainWindow):
         saveAction.setShortcut('Ctrl+S')
         saveAction.setStatusTip('Saves the currently displayed data to a file')
         saveAction.triggered.connect(self.fileSave)
+        
+        triggerTimetrace = QtGui.QAction('Start acquiring timetraces',self)
+        triggerTimetrace.setShortcut('Ctrl+R')
+        triggerTimetrace.setStatusTip('Click tu run the high priority ADwin process')
+        triggerTimetrace.triggered.connect(self.update)
 
+        stopTimetrace = QtGui.QAction('Stop timetrace',self)
+        stopTimetrace.setStatusTip('Stops the acquisition after the current')
+        stopTimetrace.triggered.connect(self.stop_acq)
+        
         self.statusBar()
         menubar = self.menuBar()
         fileMenu = menubar.addMenu('&File')
         fileMenu.addAction(saveAction)
         fileMenu.addAction(exitAction)
+        powerMenu = menubar.addMenu('&Power Spectra')
+        powerMenu.addAction(triggerTimetrace)
+        powerMenu.addAction(stopTimetrace)
         
     def stop_tr(self):
         """ Emmits a signal for stopping the timetraces.
@@ -135,6 +147,14 @@ class PowerSpectra(QtGui.QMainWindow):
         #     power = 0
         power = 0
         np.savetxt("%s%s"%(savedir,filename_params), [_session.time, _session.accuracy, power], header=header,fmt='%s',delimiter=',')
+        
+        # Saves the data to binary format. Sometimes (not sure why) the ascii data is not being save properly... 
+        # Only what would appear on the screen when printing self.data.
+        try:
+            np.save("%s%s" %(savedir,filename[:-4]), np.array(self.data))
+        except:
+            print('Error with Save')
+            print(sys.exc_info()[0])
         print('Data saved in %s and configuration data in %s'%(savedir+filename,filename_params) )
         return
 
@@ -209,6 +229,7 @@ class workThread(QtCore.QThread):
         """
         num_points = int(_session.time/_session.accuracy)
         freqs = np.fft.rfftfreq(num_points, _session.accuracy)
+        
         """ Need to stop the monitor?
             If the monitor changes the position of the multiplexor, then it will
             alter the timing between the measurements.
@@ -216,9 +237,14 @@ class workThread(QtCore.QThread):
         self.emit(QtCore.SIGNAL('Stop_Tr'))
 
         """ Have to assume a particular order of the devices, i.e. QPDx->QPDy->QPDz->->Diff """
-        dev = _session.devices[0:4]
+        dev = [_session.device['qpdx'], _session.device['qpdy'], _session.device['qpdz'], _session.device['diffx']]
+    
+#        dev = _session.devices[0:4]
         data_adw = _session.adw.get_QPD(dev,_session.time,_session.accuracy)
-
+        for i in range(len(data_adw)):
+                calibration = dev[i].properties['Input']['Calibration']
+                data_adw[i] = (data_adw[i]-calibration['Offset'])/calibration['Slope']
+                
         pwrx = np.abs(np.fft.rfft(data_adw[0]))**2
         pwry = np.abs(np.fft.rfft(data_adw[1]))**2
         pwrz = np.abs(np.fft.rfft(data_adw[2]))**2
