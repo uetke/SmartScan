@@ -157,7 +157,7 @@ def wait_for_buttonpress(adw, btns, keys=[], *, accept_keyboard=True):
         if accept_keyboard and msvcrt.kbhit():
             c = msvcrt.getch()
             if c in btns_bytes or c in keys_bytes:
-                return int(c)
+                return int(c) if c.isdigit() else c
             else:
                 print('Unrecognized: {}'.format(repr(c)))
                 #msvcrt.ungetch(c)
@@ -228,6 +228,8 @@ class PumpProbeSeriesThread(QThread):
         self._t_int = t_int
         self._datadir = datadir
         self._maxtime = None
+        self._autorefocus = True
+        self._quit = False
 
         self.heating_power = 0
 
@@ -241,7 +243,7 @@ class PumpProbeSeriesThread(QThread):
         wait_for_buttonpress(self._adw, 2, accept_keyboard=False)
         print('ok.\n')
 
-        while 1:
+        while not self._quit:
             self.handle_input()
 
     def find_peak(self):
@@ -283,19 +285,26 @@ class PumpProbeSeriesThread(QThread):
         self._maxtime = maxtime
 
     def handle_input(self):
-        print('Setting power meter to 532nm\n')
+        print('Setting power meter to 532nm')
         self._powermeter.set_wavelength(532)
 
-        
+        print('Auto-refocus is {}'.format(['OFF', 'ON'][self._autorefocus]))
+
         print('Press a button or key:')
         print('(1) Measure 532nm power')
         print('(2) Do pump probe scan')
         print('(3) Refocus')
-        print('(4) Go to position')
+        print('(4) Move delay line to position')
         print('(5) Go to peak')
-        print('(6) Enter new position\n')
+        print('(6) Find peak')
+        print('(7) Enter new (xyz) location')
+        if self._autorefocus:
+            print('(8) Disable auto-refocus')
+        else:
+            print('(8) Enable auto-refocus')
+        print('(q) Quit')
 
-        button = wait_for_buttonpress(self._adw, [1, 2], [1, 2, 3, 4, 5, 6])
+        button = wait_for_buttonpress(self._adw, [1, 2], [1, 2, 3, 4, 5, 6, 7, 8, 'q'])
         if button == 1:
             self.measure_power()
         elif button == 2:
@@ -332,6 +341,8 @@ class PumpProbeSeriesThread(QThread):
                 time.sleep(1)
             print('Current position:', self._owis.get_position())
         elif button == 6:
+            self.find_peak()
+        elif button == 7:
             try:
                 x_str = input('x position [µm]: ')
                 x = float(x_str)
@@ -352,7 +363,11 @@ class PumpProbeSeriesThread(QThread):
 
                 xyzpiezo = list(map(DeviceConfig, ('x piezo', 'y piezo', 'z piezo')))
 
-                adw.go_to_position(xyzpiezo, (x,y,z))
+                self._adw.go_to_position(xyzpiezo, (x,y,z))
+        elif button == 8:
+            self._autorefocus = not self._autorefocus
+        elif button == 'q':
+            self._quit = True
         else:
             raise ValueError('Impossible button event!')
 
@@ -368,6 +383,10 @@ class PumpProbeSeriesThread(QThread):
         print('Unblock the pump-probe beam and confirm when ready (btn 2)')
         wait_for_buttonpress(self._adw, 2)
         print('ok.')
+
+        if self._autorefocus:
+            print('Auto refocus!')
+            self.refocus()
 
         print('Setting the lock-in outputs')
         self._lockin.front_output[1] = 'X'
@@ -458,6 +477,8 @@ class PumpProbeSeriesThread(QThread):
 
     def refocus(self):
         self._owis._stage.abort()
+        if self._maxtime is None:
+                self.find_peak()
         self._owis.goto(self._maxtime)
         time.sleep(1)
         while not self._owis.check_if_ready():

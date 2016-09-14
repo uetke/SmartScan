@@ -148,7 +148,6 @@ class OWISStage(QObject):
                 time.sleep(0.5)
             stage.move_relative('X', length * (1 + 1/steps))
             time.sleep(0.3)
-            print('moving by {} - status is {}'.format(length * (1 + 1/steps), stage.axis_status[self._axis]))
 
             if self.check_if_ready():
                 print('axis status ready?!, device status', stage.status)
