@@ -1,7 +1,13 @@
 # -*- coding: utf-8 -*-
 """
+    make_several_spectra.py
+    -------------
+
     Acquires spectra of the defined coordinates after refocusing on them. 
     It is wise to run intermediate_scan_mod before running this script.
+    
+    AUTHOR: Aquiles Carattino
+    EMAIL: carattino@physics.leidenuniv.nl
 """
 
 from __future__ import division

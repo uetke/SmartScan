@@ -9,19 +9,16 @@ import re # For extracting the coordinates of the scan
 from lib.logger import get_all_caller,logger
 from datetime import datetime
 from start import adding_to_path
-import tkinter
+from tkinter import filedialog
 
         
 if __name__ == '__main__': 
-    logger=logger(filelevel=20)
-    adding_to_path('lib')
-    #names of the parameters
-    par=variables('Par')
-    fpar=variables('FPar')
-    data=variables('Data')
-    fifo=variables('Fifo')
+    
+    adw = adq()
 
-    filename = tkinter.filedialog.askopenfilename(initialdir="D:\\Data",title='Please select a directory')
+    filename = filedialog.askopenfilename(initialdir="D:\\Data",title='Please select a directory')
+    
+    
     
     image = np.loadtxt('%s' %(filename),dtype='bytes',delimiter =',').astype('float')
     
@@ -50,16 +47,9 @@ if __name__ == '__main__':
     plt.colorbar(imshow)
 
     plot_backg, = ax.plot([], [],markeredgecolor = 'w' ,marker='$\circ$',markersize=10,markeredgewidth=2.0,linestyle="")      
-    try:
-        particles=adw.find(image,3)  
-        plot_parti, = ax.plot(particles[0,:], particles[1,:],markeredgecolor = 'g' ,marker='$\circ$',markersize=10,markeredgewidth=2.0,linestyle="")
-        print('%i particles found automatically'%(len(particles)))
-        logger.info('%i particles found automatically'%(len(particles)))
-        inter=inter_add_remove(plot_parti,plot_backg,particles[:2,:])
-    except:
-        logger.warning('no patrticles found')
-        plot_parti, = ax.plot([], [],markeredgecolor = 'g' ,marker='$\circ$',markersize=10,markeredgewidth=2.0,linestyle="")
-        inter=inter_add_remove(plot_parti,plot_backg)
+
+    plot_parti, = ax.plot([], [],markeredgecolor = 'g' ,marker='$\circ$',markersize=10,markeredgewidth=2.0,linestyle="")
+    inter=inter_add_remove(plot_parti,plot_backg)
     ax.set_xlim(0,len(image[0,:]))
     ax.set_ylim(0,len(image[:,0]))
     plt.show()
@@ -89,7 +79,6 @@ if __name__ == '__main__':
         
     header = "type,x-pos,y-pos,z-pos,first scan time" + ",time_%s"*(len(data[0,:])-5) %tuple(range((len(data[0,:])-5)))
     np.savetxt("%s%s_good.txt" %(savedir,filename), data,fmt='%s', delimiter=",", header=header)   
-    logger.info('Coordinates file saved as %s%s_good.txt' %(savedir,filename))
     print('Coordinates file saved as %s%s_good.txt\n' %(savedir,filename))
     print('Now is time to continue with continue_scan_mod.py\n')
     print('Program finished')
