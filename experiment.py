@@ -88,13 +88,14 @@ class experiment():
                     how['type']: fixed, variable
                                   fixed is used when no change in intensity is required.
                                   variable is used when the intensity changes.
-                    how['device']: The decice to which to set a particular value.
+                    how['device']: The device to which to set a particular value.
                                     This is to keep in mind the possibility of taking spectra with
                                     two different lasers, for instance.
                     how['values']: When used a type variable, the value to set to the device
                     how['description']: Description for output to screen.
             ..spec_wl: list with the min and max wavelengths to send to the spectrometer when
-                        accumulating
+                        accumulating. 
+                        If spec_wl is set to 0, no communication with the spectrometer will be required.
         """
         self.center = particle.get_center()
         self.num_pcle = particle.get_id()
@@ -112,7 +113,8 @@ class experiment():
             raise Exception('Type of particle not recognized')
 
         self.adw.go_to_position(self.devs,self.center)
-        wavelengths = np.linspace(spec_wl[0],spec_wl[-1],self.number_of_accumulations)
+        if spec_wl != 0:
+            wavelengths = np.linspace(spec_wl[0],spec_wl[-1],self.number_of_accumulations)
         if how['type'] == 'fixed':
             self.accumulate_spectrometer(particle,wavelengths)
 
@@ -228,6 +230,9 @@ class particle():
         self.ycenter = []
         self.zcenter = []
         self.tcenter = [] # The time at which the center was updated
+        
+        self.temp = []
+        
         self.xcenter.append(coords[0])
         self.ycenter.append(coords[1])
         self.zcenter.append(coords[2])
@@ -235,7 +240,10 @@ class particle():
         self.set_type(tpe)
         self.set_id(num) # Identificator for the particle.
 
-
+    def set_temp(self,temp):
+        """ Sets the temperature of the particle.
+        """
+        self.temp.append(temp)
 
     def get_center(self):
         center = [self.xcenter[-1],self.ycenter[-1],self.zcenter[-1]]
