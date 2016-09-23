@@ -62,7 +62,7 @@ class Monitor(QtGui.QMainWindow):
         self.vara = self.timetraces.apd1.plot(self.t[4],self.data[3],pen='y')
         self.varl = self.timetraces.lock.plot(self.t[5],self.data[3],pen='y')
 
-        self.fifo=variables('Fifo')
+        self.fifo=VARIABLES['fifo']
         self.fifo_name = ''
         self.ctimer = QtCore.QTimer()
         self.running = False
@@ -180,7 +180,7 @@ class Monitor(QtGui.QMainWindow):
         mean_data = []
         for i in range(len(self.devices)):
             fifo_name = '%s%i' %(self.devices[i].properties['Type'],self.devices[i].properties['Input']['Hardware']['PortID'])
-            data = copy.copy(np.array([_session.adw.get_fifo(self.fifo.properties[fifo_name])]))
+            data = copy.copy(np.array([_session.adw.get_fifo(VARIABLES['fifo'][fifo_name])]))
             calibration = self.devices[i].properties['Input']['Calibration']
             data = np.array((data-calibration['Offset'])/calibration['Slope'])
             if self.devices[i].properties['Type']=='Counter':

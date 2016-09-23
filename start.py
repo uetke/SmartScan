@@ -39,8 +39,6 @@ if __name__ == "__main__":
     # These variables should be erased. They are being kept for legacy support.
     dev_conf = 'config/config_devices.xml'
     session['dev_conf'] = 'config/config_devices.xml'
-    par_conf = 'config/config_variables.xml'
-    session['par_conf'] = 'config/config_variables.xml'
     session['device_names'] = device()
     ad = device(type='',name='Adwin') # Get the Adwin model from the config file
     model = ad.properties['model']

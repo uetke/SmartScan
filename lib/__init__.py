@@ -1,4 +1,3 @@
-#from .adq_functions import * 
 from .adq_mod import adq
 from .logbook import *
 from .logger import *
