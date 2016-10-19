@@ -39,8 +39,6 @@ if __name__ == "__main__":
     # These variables should be erased. They are being kept for legacy support.
     dev_conf = 'config/config_devices.xml'
     session['dev_conf'] = 'config/config_devices.xml'
-    par_conf = 'config/config_variables.xml'
-    session['par_conf'] = 'config/config_variables.xml'
     session['device_names'] = device()
     ad = device(type='',name='Adwin') # Get the Adwin model from the config file
     model = ad.properties['model']
@@ -51,7 +49,7 @@ if __name__ == "__main__":
         
         print('Booting the ADwin...')
     if model == 'gold':
-        session['adw'].init_port7()
+        session['adw'].init_port7() # This comes from the UberScan era. Is it still needed?
         session['adw'].load('lib/adbasic/init_adwin.T98')
         session['adw'].start(8)
         session['adw'].wait(8)

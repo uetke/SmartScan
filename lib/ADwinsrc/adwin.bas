@@ -9,15 +9,16 @@
 ' Optimize                       = Yes
 ' Optimize_Level                 = 1
 ' Stacksize                      = 1000
-' Info_Last_Save                 = MEETPC113  MEETPC113\Aquiles
+' Info_Last_Save                 = MEETPC113  MEETPC113\LION
 '<Header End>
 #include c:\adwin\adbasic\inc\adwgcnt.inc
+#include .\globals.inc
 dim new_timer as integer
-dim data_200[500000] as long as FIFO
-dim data_198[1000] as long
+dim data_Scan_data[500000] as long as FIFO
+dim data_dev_params[1000] as long
 dim value, free, garbage as long
 dim i,j,dev_type, port, m, k as integer
-dim data_199[15] as long
+dim data_Scan_params[15] as long
 dim start[3], port[3], pix_dims[3], cur_pix[3], increment[3], old_timer[4] as long 'format is [x,y,z]"
 dim pix_done, output , temp as integer
 
@@ -54,24 +55,24 @@ init:
   'NEXT j
   pix_done = -1
   for j=1 to 3
-    port[j]=data_199[j]
-    start[j]=data_199[j+3]
-    pix_dims[j]=data_199[j+6]
+    port[j]=data_Scan_params[j]
+    start[j]=data_Scan_params[j+3]
+    pix_dims[j]=data_Scan_params[j+6]
     cur_pix[j] = 0
-    increment[j] = data_199[j+9]
+    increment[j] = data_Scan_params[j+9]
   NEXT j
   j = 1
 event:
-  SelectCase par_80
-    case 1
-      dac(par_74, par_75)
+  SelectCase par_Case
+    case CASE_DAC
+      dac(par_Port, par_Input_value)
       end
 
-    case 2
-      par_73 = adc(par_74)
+    case CASE_ADC
+      par_Output_value = adc(par_Port)
       end
 
-    case 3
+    case CASE_ACQ
       if (pix_done < 0) then
         for j=1 to 4
           old_timer[j] = input(21314873,j)
@@ -79,23 +80,23 @@ event:
         NEXT j
         pix_done = 0
       else
-        for j=1 to par_71
-          data_200 = input(data_198[2*j-1],data_198[2*j])
+        for j=1 to par_Num_devs
+          data_Scan_data = input(data_dev_params[2*j-1],data_dev_params[2*j])
         NEXT j
         pix_done = pix_done + 1
-        par_79 = pix_done
-        if (pix_done = par_78) then
+        par_Pix_done = pix_done
+        if (pix_done = par_Num_ticks) then
           end
         endif
       endif
       
-    case 33
+    case CASE_ACQ_MULTI
       'For acquiring signals of several devices, but keeping in mind higher temporal accuracy'
       'The acquisition is done in series (first one device, then another, etc.'
 
-      data_200 = input(data_198[2*j-1],data_198[2*j])
+      data_Scan_data = input(data_dev_params[2*j-1],data_dev_params[2*j])
       Inc i
-      if(i = par_78+1) then
+      if(i = par_Num_ticks+1) then
         Inc j
         i = 1
         if (j=Par_71+1) then
@@ -104,7 +105,7 @@ event:
       endif
 
 
-    case 4
+    case CASE_SCAN
       'doing a scan'
       if (pix_done < 0) then
         dac(port[1],start[1])
@@ -121,11 +122,11 @@ event:
         endif
         pix_done = 0
       else
-        for i=1 to par_71
-          data_200 = input(data_198[2*i-1],data_198[2*i])
+        for i=1 to par_Num_devs
+          data_Scan_data = input(data_dev_params[2*i-1],data_dev_params[2*i])
         NEXT i
         pix_done = pix_done + 1
-        par_79 = pix_done
+        par_Pix_done = pix_done
         if (pix_done = pix_dims[1] * pix_dims[2] * pix_dims[3]) then
           end
         endif
@@ -156,16 +157,16 @@ event:
       endif
 
 
-    case 5
-      par_73 = digin_word()
+    case CASE_DIG_IN
+      par_Output_value = digin_word()
       end
 
-    case 6
-      set_digout(par_74)
+    case CASE_DIG_OUT
+      set_digout(par_Port)
       end
 
-    case 7
-      clear_digout(par_74)
+    case CASE_DIG_CLEAR
+      clear_digout(par_Port)
       end
 
   EndSelect

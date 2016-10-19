@@ -5,13 +5,14 @@
 ' Control_long_Delays_for_Stop   = No
 ' Priority                       = High
 ' Version                        = 1
-' ADbasic_Version                = 5.0.8
+' ADbasic_Version                = 6.0.0
 ' Optimize                       = Yes
 ' Optimize_Level                 = 1
-' Info_Last_Save                 = MEETPC202  MEETPC202\monos
+' Stacksize                      = 1000
+' Info_Last_Save                 = MEETPC113  MEETPC113\LION
 '<Header End>
-
 #include c:\adwin\adbasic\inc\adwgcnt.inc
+#include .\globals.inc
 
 init:
   reset_event
