@@ -17,9 +17,7 @@ if __name__ == '__main__':
     adw = adq()
 
     filename = filedialog.askopenfilename(initialdir="D:\\Data",title='Please select a directory')
-    
-    
-    
+
     image = np.loadtxt('%s' %(filename),dtype='bytes',delimiter =',').astype('float')
     
     f = open('%s'%(filename),'r')

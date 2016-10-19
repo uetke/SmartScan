@@ -44,12 +44,12 @@ from devices.powermeter1830c import PowerMeter1830c as pp
         
 if __name__ == '__main__': 
     # Coordinates of the particle
-    xcenter = 42.38
-    ycenter = 63.85
-    zcenter = 52.65
-    
-    x_bkg = 40.77
-    y_bkg = 65.78
+    xcenter = 33.88
+    ycenter = 65.20
+    zcenter = 57.25
+  
+    x_bkg = 32.27
+    y_bkg = 67.13
     
     pcle = particle([xcenter,ycenter,zcenter],'pcle',1)
     pcle_track = particle([xcenter,ycenter,zcenter],'pcle',1)

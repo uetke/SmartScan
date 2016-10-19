@@ -124,5 +124,5 @@ if __name__ == '__main__':
             inst2.goto(2)
         else:
             change_pos = False
-    print('The fianl position is %s'%inst.getPos())
+    print('The fianl position is %s'%inst2.getPos())
     inst2.close()
