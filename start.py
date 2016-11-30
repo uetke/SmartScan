@@ -1,7 +1,9 @@
+#!/usr/bin/env python
+
 import sys, os, inspect
 from lib.adq_mod import adq
 from lib.xml2dict import device
-from lib import ScanApplication
+from scantools.app import ScanApplication
 from _private.set_debug import debug
 
 def adding_to_path(folder):

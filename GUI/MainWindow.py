@@ -16,7 +16,7 @@ import numpy as np
 from lib.adq_mod import adq
 from lib.logger import logger
 
-from lib import ScanApplication
+from scantools.app import ScanApplication
 
 from datetime import datetime
 

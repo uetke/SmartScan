@@ -17,7 +17,7 @@ import numpy as np
 from lib.adq_mod import adq
 from lib.xml2dict import device
 from lib.config import VARIABLES
-from lib.app import ScanApplication, LogEntry
+from scantools.app import ScanApplication, LogEntry
 
 
 # specify the use of PyQt

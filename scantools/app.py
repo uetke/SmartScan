@@ -1,4 +1,4 @@
-"""lib.app
+"""scantools.app
 
 A central object that binds the application together where needed.
 """
@@ -7,7 +7,7 @@ from collections import namedtuple
 
 from PyQt4.QtCore import QObject, pyqtSignal
 
-from .db_comm import db_comm
+from lib.db_comm import db_comm
 
 class LogEntry(QObject):
     """

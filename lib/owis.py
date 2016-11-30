@@ -12,7 +12,7 @@ from PyQt4.QtCore import QObject, SIGNAL, Qt
 
 from devices import owis_stage
 
-from .app import ScanApplication
+from scantools.app import ScanApplication
 from .config import DeviceConfig
 from .logger import get_all_caller
 
