@@ -2,7 +2,7 @@ numpy
 scipy
 matplotlib
 sphinx
-pyqt
+#PyQt4
 pyqtgraph
 pyserial
 pyusb
