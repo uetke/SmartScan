@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+"""
+    Acquires spectra of the defined coordinates after refocusing on them.
+    It is wise to run intermediate_scan_mod before running this script.
+"""
+
 from __future__ import division
 import numpy as np
 import time
@@ -33,42 +39,39 @@ def abort(filename):
     np.savetxt("%s%s_abort.txt" %(savedir,filename), data,fmt='%s', delimiter=",", header=header)
     logger.critical('Aborted file saved as %s%s_abort.txt' %(savedir,filename))
     sys.exit(0)
-        
-if __name__ == '__main__': 
+
+if __name__ == '__main__':
 
     #init the Adwin programm and also loading the configuration file for the devices
-    adw = adq('lib/adbasic/adwin.T99') 
+    adw = adq()
     xpiezo = device('x piezo')
     ypiezo = device('y piezo')
     zpiezo = device('z piezo')
     counter = device('APD 1')
-    aom = device('AOM')
-    adw.go_to_position([aom],[1.25])
-    
-    
+
     #Newport Power Meter
-    pmeter = pp(0)
+    pmeter = pp.via_serial(16)
     pmeter.initialize()
-    pmeter.wavelength = 532
+    pmeter.wavelength = 633
     pmeter.attenuator = True
-    pmeter.filter = 'Medium' 
+    pmeter.filter = 'Medium'
     pmeter.go = True
-    pmeter.units = 'Watts' 
-    
+    pmeter.units = 'Watts'
+
     print('The file to read will be name+_data.txt. Please verify that it exists\n')
     name = input('Give the name of the File to process without extension: ')
     cwd = os.getcwd()
     savedir = 'D:\\Data\\' + str(datetime.now().date()) + '\\'
     if not os.path.exists(savedir):
         os.makedirs(savedir)
-    filename = name    
+    filename = name
     i=1
     while os.path.exists(savedir+filename+"_SP.txt"):
         filename = '%s_%s' %(name,i)
         i += 1
     logger.info('%s\\%s.log' %(savedir,filename))
     print('Data will be saved in %s_SP.txt'%(savedir+filename))
-    
+
     xcenter = 50.0 #In um
     ycenter = 50.0
     zcenter = 50.0
@@ -80,21 +83,21 @@ if __name__ == '__main__':
     #parameters for the refocusing on the particles
     dims = [0.3,0.3,0.3]
     accuracy = [0.05,0.05,0.1]
-    
+
     adw.go_to_position(devs[:3],[xcenter,ycenter,zcenter])
     header = "type,x-pos,y-pos,z-pos,laser power..."
-    
+
     #Number of spectra to take on each particle
-    number_of_spectra = 15
-    
-    global data 
+    number_of_spectra = 1
+
+    global data
     print('Now is time to acquire spectra changing the 532nm intensity\n')
     pressing = input('Please set up the spectrometer and press enter when ready')
 
-    data = np.loadtxt('%s%s_data.txt' %(savedir, name),dtype='bytes',delimiter =',').astype('str')#strange b in front of strings 
+    data = np.loadtxt('%s%s_data.txt' %(savedir, name),dtype='bytes',delimiter =',').astype('str')#strange b in front of strings
     num_particles = sum(data[:,0]=='particle')
-    num_background = sum(data[:,0]=='background')    
-    
+    num_background = sum(data[:,0]=='background')
+
     for i in range(num_particles):
         center = data[i,1:4].astype('float')
         #center[2] = zcenter # Now the center is provided by the data file
@@ -104,61 +107,61 @@ if __name__ == '__main__':
                 print('Focusing on particle %i'%(i+1))
                 adw.go_to_position([aom],[1]) # Go to a reasonable intensity
                 data[i,1:4] = adw.focus_full(counter,devs,center,dims,accuracy).astype('str')
-                
+
             power_aom = 2.0-m*1./number_of_spectra
-            adw.go_to_position([aom],[power_aom])   
+            adw.go_to_position([aom],[power_aom])
             trigger_spectrometer(adw)
             try:
                 power = pmeter.data*1000000
             except:
                 power = 0
-       
+
             print('Acquired spectra of particle %i with %i uW'%(i,power))
             try:
                 data[i,m+4]=str(power)
             except:
                 data = np.append(data,np.zeros([len(data),1]).astype('str'),1)
                 data[i,m+4]=str(power)
-                
+
             np.savetxt("%s%s_SP.txt" %(savedir,filename), data,fmt='%s', delimiter=",", header=header)
-            
+
         print('Done with %s of %s particles' %(i+1, num_particles))
-    
+
     # Make a spectra of the selected backgrounds
-    
+
     print('Taking Spectra of Bakgrounds')
     for i in range(num_background):
         center = np.append(data[i-num_background,1:3].astype('float'),np.mean(data[:num_particles,3].astype('float')))
         adw.go_to_position(devs,center)
         for m in range(number_of_spectra):
             power_aom = 1.25-m*1.25/number_of_spectra
-            adw.go_to_position([aom],[power_aom])   
+            adw.go_to_position([aom],[power_aom])
             trigger_spectrometer(adw)
             try:
                 power = pmeter.data*1000000
             except:
                 power = 0
             print('Acquired background %i with %i uW'%(i,power))
-            data[i-num_background,m+4]=str(power)  
-            
+            data[i-num_background,m+4]=str(power)
+
             np.savetxt("%s%s_SP.txt" %(savedir,filename), data,fmt='%s', delimiter=",", header=header)
         print('Done with %s of %s backgrounds'%(i,num_background))
-    
+
 
     np.savetxt("%s%s_SP.txt" %(savedir,filename), data,fmt='%s', delimiter=",", header=header)
     logger.info('SP file saved as %s%s_SP.txt' %(savedir,filename))
     logger.info('532 SP completed')
-    
+
     print('Done with the SP\n')
     print('Now is time to repeat with the LP filter')
-    
+
     pressing = input('Please set up the spectrometer and press enter when ready')
     print('Data will be saved in %s_LP.txt'%(savedir+filename))
-    
-    data = np.loadtxt('%s%s_SP.txt' %(savedir, filename),dtype='bytes',delimiter =',').astype('str')#strange b in front of strings 
+
+    data = np.loadtxt('%s%s_SP.txt' %(savedir, filename),dtype='bytes',delimiter =',').astype('str')#strange b in front of strings
     num_particles = sum(data[:,0]=='particle')
-    num_background = sum(data[:,0]=='background')    
-    
+    num_background = sum(data[:,0]=='background')
+
     for i in range(num_particles):
         center = data[i,1:4].astype('float')
         adw.go_to_position(devs,center)
@@ -167,11 +170,11 @@ if __name__ == '__main__':
                 print('Focusing on particle %i'%(i+1))
                 adw.go_to_position([aom],[1]) # Go to a reasonable intensity
                 data[i,1:4] = adw.focus_full(counter,devs,center,dims,accuracy).astype('str')
-                
+
             power_aom = 1.25-m*1.25/number_of_spectra
-            adw.go_to_position([aom],[power_aom])   
-            adw.set_digout(0)           
-            time.sleep(0.5)    
+            adw.go_to_position([aom],[power_aom])
+            adw.set_digout(0)
+            time.sleep(0.5)
             adw.clear_digout(0)
             time.sleep(0.5)
             while adw.get_digin(1):
@@ -184,27 +187,27 @@ if __name__ == '__main__':
                 power = pmeter.data*1000000
             except:
                 power = 0
-                
+
             print('Acquired spectra of particle %i with %i uW'%(i,power))
             try:
                 data[i,m+4]=str(power)
             except:
                 data = np.append(data,np.zeros([len(data),1]).astype('str'),1)
                 data[i,m+4]=str(power)
-                
+
             np.savetxt("%s%s_LP.txt" %(savedir,filename), data,fmt='%s', delimiter=",", header=header)
         print('Done with %s of %s particles' %(i+1, num_particles))
-    
+
     # Make a spectra of the selected backgrounds
-    
+
     for i in range(num_background):
         center = np.append(data[i-num_background,1:3].astype('float'),np.mean(data[:num_particles,3].astype('float')))
         adw.go_to_position(devs,center)
         for m in range(number_of_spectra):
             power_aom = 1.25-m*1.25/number_of_spectra
-            adw.go_to_position([aom],[power_aom])   
-            adw.set_digout(0)           
-            time.sleep(0.5)    
+            adw.go_to_position([aom],[power_aom])
+            adw.set_digout(0)
+            time.sleep(0.5)
             adw.clear_digout(0)
             time.sleep(0.5)
             while adw.get_digin(1):
@@ -218,32 +221,32 @@ if __name__ == '__main__':
             except:
                 power = 0
             print('Acquired background %i with %i uW'%(i,power))
-            data[i-num_background,m+4]=str(power)  
+            data[i-num_background,m+4]=str(power)
             np.savetxt("%s%s_LP.txt" %(savedir,filename), data,fmt='%s', delimiter=",", header=header)
         print('Done with %s of %s backgrounds'%(i,num_background))
-    
+
 
     np.savetxt("%s%s_LP.txt" %(savedir,filename), data,fmt='%s', delimiter=",", header=header)
     logger.info('LP file saved as %s%s_LP.txt' %(savedir,filename))
     logger.info('633 LP completed')
-    
+
     print('Done with the LP\n')
     print('Now is time to repeat with the 532nm laser')
     pressing = input('Set the spectrometer and filters and press enter when ready')
-    
+
     print('Data will be saved in %s_532.txt'%(savedir+filename))
-    data = np.loadtxt('%s%s_LP.txt' %(savedir, filename),dtype='bytes',delimiter =',').astype('str')#strange b in front of strings 
+    data = np.loadtxt('%s%s_LP.txt' %(savedir, filename),dtype='bytes',delimiter =',').astype('str')#strange b in front of strings
     num_particles = sum(data[:,0]=='particle')
-    num_background = sum(data[:,0]=='background')    
-    
+    num_background = sum(data[:,0]=='background')
+
     for i in range(num_particles):
         center = data[i,1:4].astype('float')
         center[2] = zcenter
         adw.go_to_position(devs,center)
         #data[i,1:4] = adw.focus_full(counter,devs,center,dims,accuracy,rate=1,speed=50)
-        time.sleep(0.5) 
-        adw.set_digout(0)           
-        time.sleep(0.5)    
+        time.sleep(0.5)
+        adw.set_digout(0)
+        time.sleep(0.5)
         adw.clear_digout(0)
         time.sleep(0.5)
         while adw.get_digin(1):
@@ -253,16 +256,16 @@ if __name__ == '__main__':
                      abort(filename+'_init')
             time.sleep(0.1)
         print('Done with particle %i of %i'%(i+1,num_particles))
-        
+
         np.savetxt("%s%s_532.txt" %(savedir,filename), data,fmt='%s', delimiter=",", header=header)
     print('532nm particle spectra taken')
-    
+
     #make a spectra of the selected background
     for i in range(num_background):
         center = np.append(data[i-num_background,1:3].astype('float'),np.mean(data[:num_particles,3].astype('float')))
         adw.go_to_position(devs,center)
         adw.set_digout(0)
-        time.sleep(0.5)    
+        time.sleep(0.5)
         adw.clear_digout(0)
         while adw.get_digin(1):
             if msvcrt.kbhit(): # <--------
@@ -272,8 +275,8 @@ if __name__ == '__main__':
             time.sleep(0.1)
         print('Done with background %i of %i'%(i+1,num_background))
         np.savetxt("%s%s_532.txt" %(savedir,filename), data,fmt='%s', delimiter=",", header=header)
-    
-    np.savetxt("%s%s_532.txt" %(savedir,filename), data,fmt='%s', delimiter=",", header=header)   
+
+    np.savetxt("%s%s_532.txt" %(savedir,filename), data,fmt='%s', delimiter=",", header=header)
     logger.info('532 spectra file saved as %s%s_532.txt' %(savedir,filename))
-    logger.info('Program finished')  
+    logger.info('Program finished')
     print('Program finished')

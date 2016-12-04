@@ -9,20 +9,15 @@ import re # For extracting the coordinates of the scan
 from lib.logger import get_all_caller,logger
 from datetime import datetime
 from start import adding_to_path
-import tkinter
+from tkinter import filedialog
 
         
 if __name__ == '__main__': 
-    logger=logger(filelevel=20)
-    adding_to_path('lib')
-    #names of the parameters
-    par=variables('Par')
-    fpar=variables('FPar')
-    data=variables('Data')
-    fifo=variables('Fifo')
+    
+    adw = adq()
 
-    #filename = tkinter.filedialog.askopenfilename(initialdir="D:\\Data",title='Please select a directory')
-    filename= 'D:\\Data\\2016-08-10\\NR620nm_test_532nm_23uW_xy_15x15um_10ms_N01.dat'
+    filename = filedialog.askopenfilename(initialdir="D:\\Data",title='Please select a directory')
+
     image = np.loadtxt('%s' %(filename),dtype='bytes',delimiter =',').astype('float')
     
     f = open('%s'%(filename),'r')
@@ -83,13 +78,13 @@ if __name__ == '__main__':
         os.makedirs(savedir)
     i=1
     filename = name    
-    while os.path.exists(savedir+filename+"_positions.txt"):
+    while os.path.exists(savedir+filename+"_good.txt"):
         filename = '%s_%s' %(name,i)
         i += 1
         
     header = "type,x-pos,y-pos,z-pos,first scan time" + ",time_%s"*(len(data[0,:])-5) %tuple(range((len(data[0,:])-5)))
-    np.savetxt("%s%s_positions.txt" %(savedir,filename), data,fmt='%s', delimiter=",", header=header)   
+    np.savetxt("%s%s_good.txt" %(savedir,filename), data,fmt='%s', delimiter=",", header=header)   
     logger.info('Coordinates file saved as %s%s_good.txt' %(savedir,filename))
-    print('Coordinates file saved as %s%s_positions.txt\n' %(savedir,filename))
+    print('Coordinates file saved as %s%s_good.txt\n' %(savedir,filename))
     print('Now is time to continue with continue_scan_mod.py\n')
     print('Program finished')

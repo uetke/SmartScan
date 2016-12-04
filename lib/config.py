@@ -8,7 +8,8 @@ import xml.etree.cElementTree as ET
 
 import ruamel.yaml
 
-from .logger import get_all_caller
+from lib.xml2dict import xmltodict
+from lib.logger import get_all_caller
 
 class DeviceConfig():
     def __init__(self,name=None, type='Adwin', filename='config/config_devices.xml'):
@@ -49,4 +50,3 @@ def open_configfile(basename):
 
 VARIABLES = ruamel.yaml.load(open_configfile('variables.yml'))
 CONSTANTS = ruamel.yaml.load(open_configfile('constants.yml'))
-
