@@ -10,25 +10,51 @@ import ruamel.yaml
 
 from lib.logger import get_all_caller
 
-class DeviceConfig():
-    def __init__(self,name=None, type='Adwin', filename='config/config_devices.xml'):
-        from lib.xml2dict import xmltodict
+# Load the variable definition file
 
+def open_configfile(basename):
+    project_root = os.path.dirname(os.path.dirname(__file__))
+    config_dir = os.path.join(project_root, 'config')
+    full_name = os.path.join(config_dir, basename)
+    return open(full_name)
+
+VARIABLES = ruamel.yaml.safe_load(open_configfile('variables.yml'))
+CONSTANTS = ruamel.yaml.safe_load(open_configfile('constants.yml'))
+
+_config_devices_etree = ET.parse(open_configfile('config_devices.xml'))
+
+# Code to handle device configuration
+
+class DeviceConfig():
+    # The argument name 'type' is unfortunate for two reasons:
+    # (1) it's a keyword, and
+    # (2) the word "Type" is used in a different context in the XML files.
+    def __init__(self, name=None, type='Adwin', filename=None, type_name=None):
+        from lib.xml2dict import xmltodict
         self.logger = logging.getLogger(get_all_caller())
-        tree = ET.ElementTree(file=filename)
+
+        if filename is None:
+            tree = _config_devices_etree
+        else:
+            tree = ET.parse(filename)
+
         self._type = type
         root = tree.getroot()
-        if root.find(".//*[@Name='%s']"%name)!= None:
-            self.logger.info('Loaded the data for %s in %s' %(name,filename))
-            self.properties = xmltodict(root.find(".%s//*[@Name='%s']" %(type,name)))
-        elif name==None:
-            self.properties = []
-            self.logger.info('Loaded all the data from %s' %(filename))
-            for tags in root.find(".%s" %type):
-                name = tags.get('Name')
-                self.properties.append(name)
+
+        path = './{type_}/Device'.format(type_=self._type)
+        if name is not None:
+            path += "[@Name='{name}']".format(name=name)
+        if type_name is not None:
+            path += "[@Type='{type_name}']".format(type_name=type_name)
+
+        matches = root.findall(path)
+        properties = [xmltodict(element) for element in matches]
+        if len(properties) == 1:
+            self.properties = properties[0]
+        elif len(properties) == 0:
+            raise ValueError("Device configuration not found: {}".format(path))
         else:
-            self.logger.error("Name of Device is not in XML-file")
+            self.properties = properties
 
     def __str__(self):
         return '{} Device: {}'.format(self._type, self.properties['Name'])
@@ -39,13 +65,8 @@ class DeviceConfig():
     def __getitem__(self, key):
         return self.properties[key]
 
-# Load the variable definition file
-
-def open_configfile(basename):
-    project_root = os.path.dirname(os.path.dirname(__file__))
-    config_dir = os.path.join(project_root, 'config')
-    full_name = os.path.join(config_dir, basename)
-    return open(full_name)
-
-VARIABLES = ruamel.yaml.load(open_configfile('variables.yml'))
-CONSTANTS = ruamel.yaml.load(open_configfile('constants.yml'))
+    def __len__(self):
+        if isinstance(self.properties, list):
+            return len(self.properties)
+        else:
+            return 1

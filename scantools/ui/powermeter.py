@@ -7,7 +7,7 @@ A tool to read out the Newport 1830c power meter and display the value.
 from PyQt4 import QtGui
 
 from ._powermeter_ui import Ui_PowermeterWindow
-from ..devices.powermeter import PowerMeterHost
+from ..app import ScanApplication
 
 class PowerMeterWindow(QtGui.QMainWindow):
     def __init__(self, parent=None):
@@ -25,7 +25,9 @@ class PowerMeterWindow(QtGui.QMainWindow):
 
         self._wl = None
 
-        self._pm = PowerMeterHost()
+        self._app = ScanApplication()
+
+        self._pm = self._app.get_devices("Newport1830c")[0]
         self._pm.updated.connect(self.updateUi)
         self._pm.connected.connect(self.on_connected)
         self._pm.disconnected.connect(self.on_disconnected)
