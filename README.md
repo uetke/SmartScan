@@ -14,7 +14,7 @@ There is no script at the moment for setting up SmartScan. You need Python 3.3+ 
 
 Remember that the program runs only together with an [ADwin box](http://www.adwin.de/index-us.html). This real time controller is quite different from NI-cards.
 
-### The MVC design ### 
+### The MVC design ###
 
 Initially the program was meant to be developed following an MVC design, making the code highly re-usable even in case of exchanging the ADwin for a National Instruments card. Instrumentation software naturally leads to this kind of patterns since there is a real interaction with the world. This design was however not maintained through time and needs to be reviewed. A possible full re-write of the code may be needed to achieve this.
 
