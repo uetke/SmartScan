@@ -1,4 +1,5 @@
 import warnings
+import copy
 
 def xmltodict(element):
     """converts the XML-file to a dictionary"""
@@ -7,7 +8,7 @@ def xmltodict(element):
             if len(element):
                 obj = xmltodict_handler(element)
             else:
-                obj = element.attrib
+                obj = copy.copy(element.attrib)
                 for i, j in obj.items():
                     if j.isdigit():
                         obj[i] = int(j)
@@ -25,7 +26,7 @@ def xmltodict(element):
                 result[element.tag] = obj
         return result
 
-    result=element.attrib
+    result = copy.copy(element.attrib)
     return xmltodict_handler(element,result)
 
 from .config import DeviceConfig as device

@@ -73,7 +73,7 @@
 	</Device>
 	-->
 
-	<Device name='APD1 Shutter' Type='digital' Description='Safety shutter for the APD'>
+	<Device Name='APD1 Shutter' Type='digital' Description='Safety shutter for the APD'>
 		<Output>
 			<Hardware PortID="1"/>
 		</Output>
@@ -82,7 +82,7 @@
 		</Shutter>
 	</Device>
 
-	<Device name='532nm Shutter' Type='digital' Description='Laser: 532nm'>
+	<Device Name='532nm Shutter' Type='digital' Description='Laser: 532nm'>
 		<Output>
 			<Hardware PortID="2"/>
 		</Output>
@@ -91,7 +91,7 @@
 		</Shutter>
 	</Device>
 
-	<Device name='Ti:Sapph Shutter' Type='digital' Description='Laser: Ti:Sapph'>
+	<Device Name='Ti:Sapph Shutter' Type='digital' Description='Laser: Ti:Sapph'>
 		<Output>
 			<Hardware PortID="3"/>
 		</Output>
@@ -100,7 +100,7 @@
 		</Shutter>
 	</Device>
 
-	<Device name='OPO Shutter' Type='digital' Description='Laser: OPO'>
+	<Device Name='OPO Shutter' Type='digital' Description='Laser: OPO'>
 		<Output>
 			<Hardware PortID="4"/>
 		</Output>

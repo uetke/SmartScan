@@ -56,6 +56,20 @@ class DeviceConfig():
         else:
             self.properties = properties
 
+    @staticmethod
+    def get_adwin_info(name=None, filename=None):
+        if filename is None:
+            tree = _config_devices_etree
+        else:
+            tree = ET.parse(filename)
+
+        root = tree.getroot()
+        path = './Adwin'
+        if name is not None:
+            path += "[@Name='{name}']".format(name=name)
+
+        return root.find(path).attrib
+
     def __str__(self):
         return '{} Device: {}'.format(self._type, self.properties['Name'])
 

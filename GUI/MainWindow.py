@@ -166,9 +166,9 @@ class MainWindow(QMainWindow):
         It allows to update devices without restarting the UI.
         """
 
-        self.device_names = device(type='Adwin',filename=self.dev_conf)
+        device_names = [d['Name'] for d in device(type='Adwin',filename=self.dev_conf)]
         self.devices = {}
-        for name in self.device_names.properties:
+        for name in device_names:
             self.devices[name] = device(type='Adwin',name=name,filename=self.dev_conf)
         self.init_labels()
 
@@ -200,7 +200,7 @@ class MainWindow(QMainWindow):
                 if j==0:
                     self.main.Scan_Detector_UnitLabel.setText(_translate("MainWindow", i['Input']['Calibration']['Unit'], None))
                 j +=1
-            if 'Output' in i.keys():
+            if 'Output' in i.keys() and i['Type'].lower() == 'analog':
                 unit = i['Output']['Calibration']['Unit']
                 self.main.Scan_1st_comboBox.addItem(_translate("MainWindow", i['Name'], None))
                 self.main.Scan_2nd_comboBox.addItem(_translate("MainWindow", i['Name'], None))
@@ -295,7 +295,7 @@ class MainWindow(QMainWindow):
     def InitDevices(self):
         for i in sorted(self.devices):
             device = self.devices[i].properties
-            if 'Output' in device.keys():
+            if 'Output' in device.keys() and device['Type'].lower() == 'analog':
                 name = device['Name']
                 self.Controler[name]['PosBox'].setValue(device['Output']['Calibration']['Init'])
 
@@ -479,7 +479,7 @@ class MainWindow(QMainWindow):
 
     def ResetStagePosition(self):
         for (name, dev) in self.devices.items():
-            if 'Output' in dev.properties:
+            if 'Output' in dev.properties and dev.properties['Type'].lower() == 'analog':
                 self.adw.set_device_value(dev, self.Controler[name]['PosBox'].value())
 
     def ChangeUnit(self):

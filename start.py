@@ -45,9 +45,9 @@ if __name__ == "__main__":
     dev_conf = 'config/config_devices.xml'
     session['dev_conf'] = 'config/config_devices.xml'
     session['device_names'] = device()
-    ad = device(type='',name='Adwin') # Get the Adwin model from the config file
-    model = ad.properties['model']
-    dev_num = int(ad.properties['device_number'])
+    ad = device.get_adwin_info()
+    model = ad['model']
+    dev_num = int(ad['device_number'])
     session['adw'] = adq(dev_num,model,debug)
     if session['adw'].adw.Test_Version() != 0: 
         session['adw'].boot()
