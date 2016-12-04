@@ -8,12 +8,11 @@ import xml.etree.cElementTree as ET
 
 import ruamel.yaml
 
-from lib.xml2dict import xmltodict
 from lib.logger import get_all_caller
 
 class DeviceConfig():
     def __init__(self,name=None, type='Adwin', filename='config/config_devices.xml'):
-        from .xml2dict import xmltodict
+	from lib.xml2dict import xmltodict
 
         self.logger = logging.getLogger(get_all_caller())
         tree = ET.ElementTree(file=filename)
