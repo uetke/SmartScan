@@ -92,4 +92,4 @@ class Ui_MainWindow(object):
         self.autoSave.setText(_translate("MainWindow", "Auto Save", None))
         self.pushButton.setText(_translate("MainWindow", "Continue", None))
 
-from new_combobox import new_comboBox
+from .new_combobox import new_comboBox

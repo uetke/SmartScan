@@ -322,4 +322,4 @@ class Ui_MainWindow(object):
         self.label_19.setText(_translate("MainWindow", "1st Direction", None))
         self.label_3.setText(_translate("MainWindow", "Detector", None))
 
-from dropdown import dropdown
+from .dropdown import dropdown
