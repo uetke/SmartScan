@@ -108,6 +108,8 @@ class PowerMeterWindow(QtGui.QMainWindow):
             self.statuslabel.setText('Disconnecting from device...')
             self._closing = True
             ev.ignore()
+        else:
+            ev.accept()
 
 
 

@@ -32,7 +32,13 @@ except AttributeError:
         return QtGui.QApplication.translate(context, text, disambig)
 
 class InitWindow(QMainWindow):
-    def __init__(self,session,*args):
+    def __init__(self, *args):
+        if len(args) >= 1 and isinstance(args[0], dict):
+            session = args[0]
+            args = args[1:]
+        else:
+            session = ScanApplication().session
+
         QMainWindow.__init__(self, *args)
         self._session = session # Dictionary to store _session variables
 
@@ -127,7 +133,8 @@ class MainWindow(QMainWindow):
         #                         QtCore.Qt.CTRL + QtCore.Qt.Key_B)
         #self.main.menubar().addMenu(self.boot_menu)
 
-        self.adw = session['adw']
+        self._app = ScanApplication()
+        self.adw = self._app.get_adwin()
         self.scanwindows = {}
         self.scanindex = 0
         self.monitor = {}
@@ -135,30 +142,6 @@ class MainWindow(QMainWindow):
         self.continuousScans = False # In case a continuous scan trace is triggered
         self.continuousStopped = False
         self.update_devices() # Generates the devices listed in the configuration file
-
-#     def bootAdwin(self):
-#         """ Boots the ADwin. It was moved to a method to avoid restarting measurements.
-#         """
-#         if self._session['adw'].adw.Test_Version() != 1:
-#             self._session['adw'].boot()
-#             self._session['adw'].init_port7()
-#             print('Booting the ADwin...')
-#         if model == 'gold':
-#             self._session['adw'].load('lib/adbasic/init_adwin.T98')
-#             self._session['adw'].start(8)
-#             self._session['adw'].wait(8)
-#             self._session['adw'].load('lib/adbasic/monitor.T90')
-#             self._session['adw'].load('lib/adbasic/adwin.T99')
-#         elif model == 'goldII':
-#             self._session['adw'].load('lib/adbasic/init_adwin.TB8')
-#             self._session['adw'].start(8)
-#             self._session['adw'].wait(8)
-#             self._session['adw'].load('lib/adbasic/monitor.TB0')
-#             self._session['adw'].load('lib/adbasic/adwin.TB9')
-#         else:
-#             raise Exception('Model of ADwin not recognized')
-
-
 
 
     def update_devices(self):
@@ -521,17 +504,22 @@ class MainWindow(QMainWindow):
         self.monitor[option].show()
 
     def fileQuit(self):
+        self.close()
+
+    def askQuit(self):
         reply = QtGui.QMessageBox.question(self, 'Message',"Are you sure you want to quit?",
                                         QtGui.QMessageBox.Yes | QtGui.QMessageBox.No, QtGui.QMessageBox.No)
 
         if reply == QtGui.QMessageBox.Yes:
-            sys.exit()
+            return True
         else:
-            pass
+            return False
 
     def closeEvent(self, ce):
-        self.fileQuit()
-        ce.ignore()
+        if self.askQuit():
+            ce.accept()
+        else:
+            ce.ignore()
 
 
 class EditConfig(QtGui.QDialog):

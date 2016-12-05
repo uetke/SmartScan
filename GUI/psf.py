@@ -22,6 +22,7 @@ import numpy as np
 from lib.adq_mod import adq
 from lib.xml2dict import device
 from lib.config import VARIABLES
+from scantools.app import ScanApplication
 
 
 # specify the use of PyQt
@@ -200,7 +201,8 @@ class MplCanvas(QtGui.QGraphicsObject):
         self.MplAnimate = MplAnimate
         self._running = True
         self.autosave = session['autoSave']
-        self.adw=session['adw']
+        self._app = ScanApplication()
+        self.adw = self._app.get_adwin()
         self.adw.adw.Fifo_Clear(VARIABLES['fifo']['Scan_data'])
         self.par = VARIABLES['par']
         self.continuous = False # Variable to know if starting continuous scans

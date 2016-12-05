@@ -10,13 +10,12 @@
     <user-interfaces>
         <application name="SmartScan"
                      description="Scanning confocal tool"
-                     launch-mode="QMainWindow" class="GUI.MainWindow.InitWindow">
-            <requires-adwin/>
-        </application>
+                     launch-mode="QMainWindow" class="GUI.MainWindow.InitWindow"/>
         <application name="Monitor Trap"
                      description="Optical tweezers"
                      launch-mode="QMainWindow" class="GUI.Trap.Monitor.Monitor">
-            <requires-adwin/>
+            <requires-device group="Adwin" type="Analog" name="QPD X"/>
+            <pre-launch callable="scantools.setup_session.for_trap"/>
         </application>
         <application name="Powermeter"
                      description="Display the power meter reading on screen"

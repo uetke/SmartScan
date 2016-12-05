@@ -4,8 +4,10 @@ A central object that binds the application together where needed.
 """
 
 from collections import namedtuple
+from functools import wraps
 from importlib import import_module
 import logging
+import os.path
 import sys
 import xml.etree.ElementTree as ET
 
@@ -56,7 +58,6 @@ class LogEntry(QObject):
         signal the creation of this log entry
         """
         self._app.new_logentry.emit(self)
-        self._app.boom.emit()
         self._app.last_logentry = self
 
     def add_metadatum(self, component, key, value):
@@ -100,7 +101,6 @@ class ScanApplication(QObject):
     _INSTANCE = None
 
     new_logentry = pyqtSignal(object)
-    boom = pyqtSignal()
 
     def __new__(cls):
         if cls._INSTANCE is None:  
@@ -119,6 +119,10 @@ class ScanApplication(QObject):
         self._logbook = self.db = db_comm('_private/logbook.db')
 
         self._session['db'] = self._logbook
+
+        self._session['dev_conf'] = None
+
+        self._adwin_booted = False
 
         self.last_logentry = None
 
@@ -160,6 +164,18 @@ class ScanApplication(QObject):
                     self.logger.warn('Failed to load driver for {}'.format(type_),
                                      exc_info=sys.exc_info())
 
+        # Load UI modules
+        self.scan_tools = []
+        for app_tag in apps_root.iterfind('./user-interfaces/application'):
+            try:
+                self.scan_tools.append(ScanTool(app_tag))
+            except RuntimeError:
+                self.logger.info('Application {} is unavailable on this system.'.format(
+                    app_tag.get('name')))
+            except (ValueError, ImportError, AttributeError):
+                self.logger.info('Failed to configure application {}'.format(
+                    app_tag.get('name')))
+
     def get_devices(self, device_or_class):
         """
         Returns drivers for all available devices matching the argument.
@@ -182,6 +198,46 @@ class ScanApplication(QObject):
                 matches.append(device.get())
 
         return matches
+
+    def get_adwin(self):
+        if not self._adwin_booted:
+            self.boot_adwin()
+        return self._adwin
+
+    def boot_adwin(self, *, force=False):
+        from lib.adq_mod import adq
+        project_root = os.path.dirname(os.path.dirname(__file__))
+        adwin_sw_dir = os.path.join(project_root, 'lib', 'adbasic')
+
+        if self._adwin_booted and not force:
+            raise RuntimeError("Adwin is already booted!")
+
+        adwin_info = config.DeviceConfig.get_adwin_info()
+        model = adwin_info['model']
+        dev_num = int(adwin_info['device_number'])
+        self._adwin = adq(dev_num, model)
+        if self._adwin.adw.Test_Version() != 0: 
+            self._adwin.boot()
+            self.logger.info('Booting the ADWin...')
+        if model == 'gold':
+            self._adwin.init_port7() # This comes from the UberScan era. Is it still needed?
+            self._adwin.load(os.path.join(adwin_sw_dir, 'init_adwin.T98'))
+            self._adwin.start(8)
+            self._adwin.wait(8)
+            self._adwin.load(os.path.join(adwin_sw_dir, 'monitor.T90'))
+            self._adwin.load(os.path.join(adwin_sw_dir, 'atomic_rw.T96'))
+            self._adwin.load(os.path.join(adwin_sw_dir, 'adwin.T99'))
+        elif model == 'goldII':
+            self._adwin.load(os.path.join(adwin_sw_dir, 'init_adwin.TB8'))
+            self._adwin.start(8)
+            self._adwin.wait(8)
+            self._adwin.load(os.path.join(adwin_sw_dir, 'monitor.TB0'))
+            self._adwin.load(os.path.join(adwin_sw_dir, 'atomic_rw.TB6'))
+            self._adwin.load(os.path.join(adwin_sw_dir, 'adwin.TB9'))
+        else:
+            raise Exception('Model of ADwin not recognized')
+
+        self._adwin_booted = True
 
 class DriverHostHandler:
     def __init__(self, driver_xml, device_xml_dict):
@@ -220,3 +276,91 @@ class DriverHostHandler:
             return self._DRIVER_INSTANCE
         else:
             return self.driver_class(self.device_config)
+
+class ScanTool(QObject):
+    """
+    Class that knows how to launch utility programs
+    """
+
+    launched = pyqtSignal()
+    closed = pyqtSignal()
+
+    def __init__(self, app_xml):
+        super().__init__()
+        self.name = app_xml.get('name')
+        self.description = app_xml.get('description')
+        self.launch_mode = app_xml.get('launch-mode')
+
+        if self.launch_mode == 'QMainWindow':
+            self.class_name = app_xml.get('class')
+            module_name, class_name = self.class_name.rsplit('.', 1)
+            module = import_module(module_name)
+            self.window_class = getattr(module, class_name)
+            self._window = None
+        else:
+            raise ValueError('Unsupported launch-mode: {}'.format(self.launch_mode))
+
+        # TODO: check the requirements, boot adwin if needed.
+        # also, find a good way to configure the session...
+
+        self._pre_launch = None
+        for qualifier_elem in app_xml:
+            if qualifier_elem.tag == 'requires-device':
+                group = qualifier_elem.get('group', None)
+                type_name = qualifier_elem.get('type', None)
+                name = qualifier_elem.get('name', None)
+                try:
+                    config.DeviceConfig(name=name, type=group, type_name=type_name)
+                except ValueError:
+                    raise RuntimeError('Required device is not configured')
+            elif qualifier_elem.tag == 'requires-test':
+                test_name = qualifier_elem.get('callable')
+                module_name, fn_name = test_name.rsplit('.', 1)
+                module = import_module(module_name)
+                test_fn = getattr(module, fn_name)
+                try:
+                    ok = test_fn()
+                except:
+                    self.logger.warn('Error running test {}!'.format(test_name),
+                                     exc_info=sys.exc_info())
+                    ok = False
+                if not ok:
+                    raise RuntimeError('Test failed')
+            elif qualifier_elem.tag == 'pre-launch':
+                # function to call before launching
+                full_fn_name = qualifier_elem.get('callable')
+                module_name, fn_name = full_fn_name.rsplit('.', 1)
+                module = import_module(module_name)
+                self._pre_launch = getattr(module, fn_name)
+            else:
+                raise ValueError('Unknown qualifier: <{}/>'.format(qualifier_elem.tag))
+
+    def _show_qmainwindow(self):
+        if self._window is None:
+            self._window = self.window_class()
+
+        closeEventMethod = self._window.closeEvent
+        @wraps(closeEventMethod)
+        def closeEventPatch(ev):
+            closeEventMethod(ev)
+            if ev.isAccepted():
+                self.closed.emit()
+                self._window = None
+
+        self._window.closeEvent = closeEventPatch
+        self._window.show()
+        self.launched.emit()
+
+    def launch(self):
+        if self.launch_mode == 'QMainWindow':
+            self._show_qmainwindow()
+
+    def is_running(self):
+        if self.launch_mode == 'QMainWindow':
+            return self._window is not None
+
+    def __str__(self):
+        return 'ScanTool: {}'.format(self.name)
+
+    def __repr__(self):
+        return '<{}>'.format(str(self))

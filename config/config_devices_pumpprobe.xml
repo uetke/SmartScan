@@ -41,21 +41,21 @@
 		</Input>
 	</Device>
 	
-	<Device Name='x piezo' Type='analog' Description='the x axis of the piezo'>
+	<Device Name='x piezo' Type='Analog' Description='the x axis of the piezo'>
 		<Output>
 			<Calibration Init="50" Unit="μm" Slope="0.0030518" Offset="-100"/>
 			<Limits Step="1" Min="32000" Max="65000"/>
 			<Hardware PortID="8"/>
 		</Output>
 	</Device>
-	<Device Name='y piezo' Type='analog' Description='the y axis of the piezo'>
+	<Device Name='y piezo' Type='Analog' Description='the y axis of the piezo'>
 		<Output>
 			<Calibration Init="50" Unit="μm" Slope="0.0030518" Offset="-100"/>
 			<Limits Step="1" Min="32000" Max="65000"/>
 			<Hardware PortID="7"/>
 		</Output>
 	</Device>
-	<Device Name='z piezo' Type='analog' Description='the z axis of the piezo'>
+	<Device Name='z piezo' Type='Analog' Description='the z axis of the piezo'>
 		<Output>
 			<Calibration Init="50" Unit="μm" Slope="0.0030518" Offset="-100"/>
 			<Limits Step="1" Min="32000" Max="65000"/>
@@ -64,7 +64,7 @@
 	</Device>
 
 	<!--
-	<Device Name='AOM' Type='analog' Description='Controling Laser Power'>
+	<Device Name='AOM' Type='Analog' Description='Controling Laser Power'>
 	<Output>
 	<Calibration Init="1.25" Unit="V" Slope="0.00030518" Offset="-10"/>
 	<Limits Step="1" Min="14849" Max="49151"/>
@@ -73,7 +73,7 @@
 	</Device>
 	-->
 
-	<Device Name='APD1 Shutter' Type='digital' Description='Safety shutter for the APD'>
+	<Device Name='APD1 Shutter' Type='Digital' Description='Safety shutter for the APD'>
 		<Output>
 			<Hardware PortID="1"/>
 		</Output>
@@ -82,7 +82,7 @@
 		</Shutter>
 	</Device>
 
-	<Device Name='532nm Shutter' Type='digital' Description='Laser: 532nm'>
+	<Device Name='532nm Shutter' Type='Digital' Description='Laser: 532nm'>
 		<Output>
 			<Hardware PortID="2"/>
 		</Output>
@@ -91,7 +91,7 @@
 		</Shutter>
 	</Device>
 
-	<Device Name='Ti:Sapph Shutter' Type='digital' Description='Laser: Ti:Sapph'>
+	<Device Name='Ti:Sapph Shutter' Type='Digital' Description='Laser: Ti:Sapph'>
 		<Output>
 			<Hardware PortID="3"/>
 		</Output>
@@ -100,7 +100,7 @@
 		</Shutter>
 	</Device>
 
-	<Device Name='OPO Shutter' Type='digital' Description='Laser: OPO'>
+	<Device Name='OPO Shutter' Type='Digital' Description='Laser: OPO'>
 		<Output>
 			<Hardware PortID="4"/>
 		</Output>
