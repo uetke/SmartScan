@@ -17,7 +17,6 @@ from matplotlib import pyplot as plt
 
 from ._ADwin import ADwin, ADwinDebug
 from .config import VARIABLES, CONSTANTS
-from .logger import get_all_caller
 from .xml2dict import device
 
 ADWCONST = CONSTANTS['adwin']
@@ -52,12 +51,11 @@ class adq(ADwin,ADwinDebug):
         else:
             raise Exception('Model not yet implemented')
 
-        self.logger = logging.getLogger(get_all_caller())
+        self.logger = logging.getLogger('lib.adq_mod.adq')
         self.logger.info('Init the class')
 
     def boot(self):
         """ Boots the ADwin. """
-        self.logger = logging.getLogger(get_all_caller())
         self.logger.info('Booted the Adwin')
         self.adw.Boot(self.boot_program)
 
@@ -66,7 +64,6 @@ class adq(ADwin,ADwinDebug):
 
         # Stores the process name and number in variables
         self.adw.Load_Process(process)
-        self.logger = logging.getLogger(get_all_caller())
         self.logger.info("Loaded process %s" %process)
 
     def start(self,process):
@@ -74,7 +71,6 @@ class adq(ADwin,ADwinDebug):
             :Process = integer from 1 to 10
                       if None, uses the last known process to be loaded
         """
-        self.logger = logging.getLogger(get_all_caller())
         self.adw.Start_Process(process)
         self.logger.info("Started process %s" %process)
 
@@ -83,12 +79,10 @@ class adq(ADwin,ADwinDebug):
         if process == None:
             process = self.proc_num
         self.adw.Stop_Process(process)
-        self.logger = logging.getLogger(get_all_caller())
         self.logger.info("Stopped process %s" %process)
 
     def wait(self,process=9,ref_time=0.1):
         """ Waits until the process is finished"""
-        self.logger = logging.getLogger(get_all_caller())
         self.logger.info("Waiting")
         while self.adw.Process_Status(process):
             time.sleep(ref_time)
@@ -96,7 +90,6 @@ class adq(ADwin,ADwinDebug):
     def set_par(self,index,value):
         """sets a parameter value"""
         if 0<index<=80:
-            self.logger = logging.getLogger(get_all_caller())
             self.logger.debug("Setting Par %s to %s" %(int(index),int(value)))
             self.adw.Set_Par(int(index),int(value))
         else:
@@ -109,7 +102,6 @@ class adq(ADwin,ADwinDebug):
             array=array.astype('int')
             for i in range(len(array)):
                 c_array[i]=array[i]
-            self.logger = logging.getLogger(get_all_caller())
             self.logger.debug("Set data array %s with length %s" %(arr_num,len(array)))
             self.logger.debug("Set data array %s to %s" %(arr_num,array))
             self.adw.SetData_Long(c_array, int(arr_num), int(start_index), len(array))
@@ -118,14 +110,12 @@ class adq(ADwin,ADwinDebug):
 
     def get_par_all(self):
         """gets all the parameter from adwin"""
-        self.logger = logging.getLogger(get_all_caller())
         self.logger.debug("Getting all Pars")
         return self.adw.Get_Par_All()
 
     def get_par(self,index):
         """gets a parameter from adwin"""
         if 0<index<=80:
-            self.logger = logging.getLogger(get_all_caller())
             self.logger.debug("Getting Par %s" %int(index))
             return self.adw.Get_Par(int(index))
         else:
@@ -135,7 +125,6 @@ class adq(ADwin,ADwinDebug):
     def get_data(self,number,length,start=1):
         """gets a array from adwin"""
         if 0<number<=200:
-            self.logger = logging.getLogger(get_all_caller())
             self.logger.debug("Getting Data %s from index %s to %s" %(number,start,start+length))
             return self.adw.GetData_Long(number,start,length)
         else:
@@ -143,7 +132,6 @@ class adq(ADwin,ADwinDebug):
 
     def get_fifo(self,number,length='all'):
         """gets a fifo array from adwin"""
-        self.logger = logging.getLogger(get_all_caller())
         if 0<number<=200:
             if length=='all':
                 length = self.adw.Fifo_Full(number)
@@ -276,7 +264,6 @@ class adq(ADwin,ADwinDebug):
             and the accuracy in seconds"""
         if not type(detect)== type([]):
             detect = list(detect)
-        self.logger = logging.getLogger(get_all_caller())
         #self.set_par(VARIABLES['par']['Dev_type'],int(detect.properties['Type'][:5],36))
         #self.set_par(VARIABLES['par']['Port'],detect.properties['Input']['Hardware']['PortID'])
         dev_params = np.array([])
@@ -308,7 +295,6 @@ class adq(ADwin,ADwinDebug):
             and the accuracy in seconds"""
         if not type(detect) == type([]):
             detect = list(detect)
-        self.logger = logging.getLogger(get_all_caller())
         if not self.running:
             self.logger.info('Making dynamic timetrace with %s' %', '.join([ i.properties['Name'] for i in detect ]))
             self.logger.info('for %ss and precision of %ss' %(duration,acc))
@@ -350,7 +336,6 @@ class adq(ADwin,ADwinDebug):
     def dac(self,channel,value,unit=None):
         """uses dac to convert the value into a voltage
         0 = -10V, 32768= 0V     and 65536 = 9.999695V"""
-        self.logger = logging.getLogger(get_all_caller())
         if not unit==None:
             value = int((value-3278)/6553.6)
         if 0<=value<=65536 and 0<=channel<=15:
@@ -368,7 +353,6 @@ class adq(ADwin,ADwinDebug):
     def adc(self,detect,gain=1):
         """uses adc to convert a voltage into a value
            0  = -10V/gain, 32768= 0V  and 65536 = 9.999695V/gain """
-        self.logger = logging.getLogger(get_all_caller())
         channel = int(detect.properties['Input']['Hardware']['PortID'])
         if 0<=channel<=15:
             self.logger.debug('Converting analog signal from channel %s'%channel)
@@ -386,7 +370,6 @@ class adq(ADwin,ADwinDebug):
 
     def set_device_value(self,dev,value):
         """sets a value to the device"""
-        self.logger = logging.getLogger(get_all_caller())
         self.dev_value[dev.properties['Name']] = value
         calibration=dev.properties['Output']['Calibration']
         port = dev.properties['Output']['Hardware']['PortID']
@@ -402,7 +385,6 @@ class adq(ADwin,ADwinDebug):
 
     def get_digin(self,port):
         """ Gets the value of the digin port"""
-        self.logger = logging.getLogger(get_all_caller())
         if self.model == 'gold':
             if 0<=port<16:
                 self.logger.info('Getting data from digital port %s' %port)
@@ -430,7 +412,6 @@ class adq(ADwin,ADwinDebug):
                 
     def set_digout(self,port):
         """ Sets the digout port to 1"""
-        self.logger = logging.getLogger(get_all_caller())
         if self.model == 'gold':
             if 0<=port<16:
                 self.logger.debug('Setting digital port %s to 1' %port)
@@ -452,7 +433,6 @@ class adq(ADwin,ADwinDebug):
 
     def clear_digout(self,port):
         """ Sets the digout port to 0"""
-        self.logger = logging.getLogger(get_all_caller())
         if self.model == 'gold':
             if 0<=port<16:
                 self.logger.debug('Setting digital port %s to 0' %port)
@@ -481,7 +461,6 @@ class adq(ADwin,ADwinDebug):
         accuracy: array of accuracy value (unit of the device),
         speed: the duration of one pixel (ms)
         """
-        self.logger = logging.getLogger(get_all_caller())
         devs = np.array(devs)
         center = np.array(center)
         dims = np.array(dims)
@@ -547,7 +526,6 @@ class adq(ADwin,ADwinDebug):
         dims: array of the dimensions (unit of the device),
         accuracy: array of accuracy value (unit of the device),
         speed: the duration of one pixel (ms)"""
-        self.logger = logging.getLogger(get_all_caller())
 
         if not self.running:
             self.adw.Fifo_Clear(VARIABLES['fifo']['Scan_data'])
@@ -635,7 +613,6 @@ class adq(ADwin,ADwinDebug):
         dims: array of the dimensions (unit of the device),
         accuracy: array of accuracy value (unit of the device),
         speed: the duration of one pixel (ms)"""
-        self.logger = logging.getLogger(get_all_caller())
 
         if not self.running:
             self.adw.Fifo_Clear(VARIABLES['fifo']['Scan_data'])
@@ -783,7 +760,6 @@ class adq(ADwin,ADwinDebug):
         ###
         # Setting the convolution kernel
         ###
-        self.logger = logging.getLogger(get_all_caller())
 
         if hmin==None:
             std = np.std(image)
@@ -914,7 +890,6 @@ class adq(ADwin,ADwinDebug):
         return np.array([x, y, flux, sharpness, roundness])
 
     def focus_full(self, detect, devs, center, dims_default, accuracy_default, rate=1, steps=2, speed=50):
-        self.logger = logging.getLogger(get_all_caller())
         devs = np.array(devs)
         center = np.array(center)
         dims = copy.copy(dims_default)
@@ -941,7 +916,6 @@ class adq(ADwin,ADwinDebug):
             return np.array([])
 
     def go_to_position(self, devs, center):
-        self.logger = logging.getLogger(get_all_caller())
         devs = np.array(devs)
         center = np.array(center)
         if len(devs)==len(center):
@@ -957,7 +931,6 @@ class adq(ADwin,ADwinDebug):
         if not then we need to initialize port 7. Otherwise port 7 will change its output
         to ~ -1.7V as soon as we set a other port."""
         if self.model == 'gold':
-            self.logger = logging.getLogger(get_all_caller())
             self.load('lib/adbasic/init_port7.T99')
             self.start(9)
             self.wait(9)
@@ -968,7 +941,7 @@ class adq(ADwin,ADwinDebug):
 
 class inter_add_remove():
     def __init__(self,plot_parti,plot_backg,particles=None):
-        self.logger = logging.getLogger(get_all_caller())
+        self.logger = logging.getLogger('lib.adq_mod.inter_add_remove')
         self.logger.info('Starting intecactive add/remove particles')
         self.plot_parti=plot_parti
         self.plot_backg=plot_backg

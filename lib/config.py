@@ -8,8 +8,6 @@ import xml.etree.cElementTree as ET
 
 import ruamel.yaml
 
-from lib.logger import get_all_caller
-
 # Load the variable definition file
 
 def open_configfile(basename):
@@ -31,7 +29,7 @@ class DeviceConfig():
     # (2) the word "Type" is used in a different context in the XML files.
     def __init__(self, name=None, type='Adwin', filename=None, type_name=None):
         from lib.xml2dict import xmltodict
-        self.logger = logging.getLogger(get_all_caller())
+        self.logger = logging.getLogger('lib.config.DeviceConfig')
 
         if filename is None:
             tree = _config_devices_etree

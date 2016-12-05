@@ -113,7 +113,7 @@ class ScanApplication(QObject):
 
     def _init(self):
         QObject.__init__(self)
-        self.logger = logging.getLogger(get_all_caller())
+        self.logger = logging.getLogger('scantools.app.ScanApplication')
 
         self._session = {}
         self._logbook = self.db = db_comm('_private/logbook.db')
