@@ -185,6 +185,8 @@ class MplAnimate(QtGui.QMainWindow):
             if not str(key).startswith('T'):
                 self.MainWindow.main.Controler_Select_scan.addItem(_translate("MainWindow", 'Window %s'%key, None))
 
+        ce.accept()
+
     def about_scan(self):
         print(tuple(self.name.split('-')))
         QtGui.QMessageBox.about(self, "About","""Scan with the %s Detector with on the x-axes %s""" %tuple(self.name.split(';')))
