@@ -47,14 +47,14 @@ class AppLaunchButon(QtGui.QPushButton):
         txt.setHtml("<p align=center><b><big>{}</big></b><br>{}</p>".format(
             self._scan_tool.name, self._scan_tool.description))
         txt.setTextWidth(txt.size().width())
-        self.pixmap = QtGui.QPixmap(txt.size().width(), txt.size().height())
-        self.pixmap.fill(Qt.transparent)
-        painter = QtGui.QPainter(self.pixmap)
+        self._pixmap = QtGui.QPixmap(txt.size().width(), txt.size().height())
+        self._pixmap.fill(Qt.transparent)
+        painter = QtGui.QPainter(self._pixmap)
         txt.drawContents(painter)
-        icon = QtGui.QIcon(self.pixmap)
+        self._icon = QtGui.QIcon(self._pixmap)
 
-        self.setIconSize(self.pixmap.size())
-        self.setIcon(icon)
+        self.setIconSize(self._pixmap.size())
+        self.setIcon(self._icon)
 
         self.clicked.connect(self._on_clicked)
         self._scan_tool.launched.connect(self._on_launched)

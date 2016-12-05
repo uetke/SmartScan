@@ -132,4 +132,24 @@
 	</Device>
 </Serial>
 
+<USB>
+	<Device Name="Filter Flipper" Type="ThorlabsFlipper" Description="Filter selection">
+		<Hardware SerialNum="37864186"/>
+		<Flipper>
+			<State Position="1" Name="532 + 785 notch"/>
+			<State Position="2" Name="OD Filters"/>
+			<While-Switching>
+				<Shutter-Conflict Name="APD1 Shutter"/>
+			</While-Switching>
+		</Flipper>
+	</Device>
+	<Device Name="Spec Flipper" Type="ThorlabsFlipper" Description="Spectrometer or APD">
+		<Hardware SerialNum="37863355"/>
+		<Flipper>
+			<State Position="1" Name="APD"/>
+			<State Position="2" Name="Spectrometer"/>
+		</Flipper>
+	</Device>
+</USB>
+
 </Data>
