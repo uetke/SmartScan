@@ -251,6 +251,7 @@ class MainWindow(QMainWindow):
         self.file_menu.addAction('&Quit', self.fileQuit,
                                  QtCore.Qt.CTRL + QtCore.Qt.Key_Q)
         self.file_menu.addAction('&Close all scan windows', self.CloseScans)
+        self.file_menu.addAction('&Close all monitors', self.CloseMonitorWindows)
         self.menuBar().addMenu(self.file_menu)
 
         self.edit_menu = QtGui.QMenu('&Edit', self)
@@ -383,12 +384,15 @@ class MainWindow(QMainWindow):
 
 
     def CloseScans(self):
-        values = list(self.scanwindows.values())
-        for i in values:
-            if i.isRunning():
-                i.fileQuit()
+        for scanwindow in list(self.scanwindows.values()):
+            scanwindow.close()
         self.scanwindows = {}
         self.scanindex = 0
+
+    def CloseMonitorWindows(self):
+        for monitor_window in list(self.monitor.values()):
+            monitor_window.close()
+        self.monitor = {}
 
     def Go2Pos(self):
         index = int(self.main.Controler_Select_scan.currentText().split()[-1])
@@ -498,7 +502,7 @@ class MainWindow(QMainWindow):
         option = self.main.Monitor_comboBox.currentText()
         if option in self.monitor.keys():
             if self.monitor[option].isRunning():
-                self.monitor[option].fileQuit()
+                self.monitor[option].close()
         self.monitor[option]=MplAnimate(self,option,['Monitor','Line'],self._session)
         self.monitor[option].setWindowTitle(option)
         self.monitor[option].show()
@@ -518,6 +522,8 @@ class MainWindow(QMainWindow):
     def closeEvent(self, ce):
         if self.askQuit():
             ce.accept()
+            self.CloseScans()
+            self.CloseMonitorWindows()
         else:
             ce.ignore()
 
