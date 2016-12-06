@@ -23,13 +23,8 @@ from datetime import datetime
 def _fromUtf8(s):
     return s
 
-try:
-    _encoding = QtGui.QApplication.UnicodeUTF8
-    def _translate(context, text, disambig):
-        return QtGui.QApplication.translate(context, text, disambig, _encoding)
-except AttributeError:
-    def _translate(context, text, disambig):
-        return QtGui.QApplication.translate(context, text, disambig)
+def _translate(context, text, disambig):
+    return QtGui.QApplication.translate(context, text, disambig)
 
 class InitWindow(QMainWindow):
     def __init__(self, *args):
@@ -175,32 +170,32 @@ class MainWindow(QMainWindow):
             i = self.devices[i].properties
             if 'Input' in i.keys():
                 self.main.Scan_Detector_comboBox.addItem(_fromUtf8(""))
-                self.main.Scan_Detector_comboBox.setItemText(j, _translate("MainWindow", i['Name'], None))
+                self.main.Scan_Detector_comboBox.setItemText(j, i['Name'])
                 self.main.Monitor_comboBox.addItem(_fromUtf8(""))
-                self.main.Monitor_comboBox.setItemText(j, _translate("MainWindow", i['Name'], None))
+                self.main.Monitor_comboBox.setItemText(j, i['Name'])
                 self.main.Controler_Detector_comboBox.addItem(_fromUtf8(""))
-                self.main.Controler_Detector_comboBox.setItemText(j, _translate("MainWindow", i['Name'], None))
+                self.main.Controler_Detector_comboBox.setItemText(j, i['Name'])
                 item = QStandardItem(i['Name'])
                 item.setCheckable(True)
                 item.setEditable(False)
                 self.main.Scan_Dropdown.model.appendRow(item)
                 if j==0:
-                    self.main.Scan_Detector_UnitLabel.setText(_translate("MainWindow", i['Input']['Calibration']['Unit'], None))
+                    self.main.Scan_Detector_UnitLabel.setText(i['Input']['Calibration']['Unit'])
                 j +=1
             if 'Output' in i.keys() and i['Type'].lower() == 'analog':
                 unit = i['Output']['Calibration']['Unit']
-                self.main.Scan_1st_comboBox.addItem(_translate("MainWindow", i['Name'], None))
-                self.main.Scan_2nd_comboBox.addItem(_translate("MainWindow", i['Name'], None))
-                self.main.Scan_3rd_comboBox.addItem(_translate("MainWindow", i['Name'], None))
-                self.main.Controler_1st_comboBox.addItem(_translate("MainWindow", i['Name'], None))
-                self.main.Controler_2nd_comboBox.addItem(_translate("MainWindow", i['Name'], None))
-                self.main.Controler_3rd_comboBox.addItem(_translate("MainWindow", i['Name'], None))
+                self.main.Scan_1st_comboBox.addItem(i['Name'])
+                self.main.Scan_2nd_comboBox.addItem(i['Name'])
+                self.main.Scan_3rd_comboBox.addItem(i['Name'])
+                self.main.Controler_1st_comboBox.addItem(i['Name'])
+                self.main.Controler_2nd_comboBox.addItem(i['Name'])
+                self.main.Controler_3rd_comboBox.addItem(i['Name'])
                 self.Controler[i['Name']] = {'NameLabel': None,'PosBox': None,'IncBox': None
                                             ,'UnitLabel': None,'AddButton': None,'MinButton': None}
                 self.Controler[i['Name']]['NameLabel'] = QtGui.QLabel(self.main.gridLayoutWidget_2)
                 self.Controler[i['Name']]['NameLabel'].setObjectName(_fromUtf8("Controler_NameLabeln_%s" %i['Name']))
                 self.main.Controler_gridLayout.addWidget(self.Controler[i['Name']]['NameLabel'], k+5, 0, 1, 1)
-                self.Controler[i['Name']]['NameLabel'].setText(_translate("MainWindow", i['Name'], None))
+                self.Controler[i['Name']]['NameLabel'].setText(i['Name'])
 
                 self.Controler[i['Name']]['PosBox'] = QtGui.QDoubleSpinBox(self.main.gridLayoutWidget_2)
                 self.Controler[i['Name']]['PosBox'].setObjectName(_fromUtf8("Controler_Pos_doubleSpinBoxn_%s" %i['Name']))

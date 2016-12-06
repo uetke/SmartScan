@@ -14,7 +14,7 @@ def open_configfile(basename):
     project_root = os.path.dirname(os.path.dirname(__file__))
     config_dir = os.path.join(project_root, 'config')
     full_name = os.path.join(config_dir, basename)
-    return open(full_name)
+    return open(full_name, 'rb')
 
 VARIABLES = ruamel.yaml.safe_load(open_configfile('variables.yml'))
 CONSTANTS = ruamel.yaml.safe_load(open_configfile('constants.yml'))
@@ -30,7 +30,7 @@ class DeviceConfig():
     def __init__(self, name=None, type='Adwin', filename=None, *, type_name=None, force_reload=False):
         from lib.xml2dict import xmltodict
         global _config_devices_etree
-        
+
         self.logger = logging.getLogger('lib.config.DeviceConfig')
 
         if filename is None:
