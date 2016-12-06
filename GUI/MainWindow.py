@@ -98,6 +98,10 @@ class InitWindow(QMainWindow):
 
         self.main = MainWindow(self._session, self.parentWidget())
         self.main.setWindowTitle('Main')
+        scan_tool = ScanApplication().get_scantool(InitWindow)
+        if scan_tool is not None:
+            # Launched via the scantools launcher; we should tell it about the main window!
+            scan_tool.set_qmainwindow(self.main)
         self.main.show()
 
     def start(self):

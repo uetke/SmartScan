@@ -199,6 +199,16 @@ class ScanApplication(QObject):
 
         return matches
 
+    def get_scantool(self, name_or_class):
+        """
+        Returns the ScanTool identified by the argument
+        """
+        for st in self.scan_tools:
+            if (name_or_class == st.name or 
+                (hasattr(st, "class_name") and name_or_class == st.class_name) or
+                (hasattr(st, "window_class") and name_or_class == st.window_class)):
+                return st
+
     def get_adwin(self):
         if not self._adwin_booted:
             self.boot_adwin()
@@ -337,19 +347,25 @@ class ScanTool(QObject):
 
     def _show_qmainwindow(self, **kwargs):
         if self._window is None:
-            self._window = self.window_class(kwargs.get('parent_window', None))
+            self.set_qmainwindow(self.window_class(kwargs.get('parent_window', None)))
+        
+            self._window.show()
+            self.launched.emit()
+
+    def set_qmainwindow(self, window):
+        assert self.launch_mode == 'QMainWindow'
+
+        self._window = window
 
         closeEventMethod = self._window.closeEvent
         @wraps(closeEventMethod)
         def closeEventPatch(ev):
             closeEventMethod(ev)
-            if ev.isAccepted():
+            if self._window is window and ev.isAccepted():
                 self.closed.emit()
                 self._window = None
 
         self._window.closeEvent = closeEventPatch
-        self._window.show()
-        self.launched.emit()
 
     def launch(self, **kwargs):
         if self.launch_mode == 'QMainWindow':
