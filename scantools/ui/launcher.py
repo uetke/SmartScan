@@ -19,9 +19,11 @@ class LauncherWindow(QtGui.QMainWindow):
 
         app = ScanApplication()
 
+        self._buttons = []
         for scan_tool in app.scan_tools:
-            btn = AppLaunchButon(self, scan_tool)
+            btn = AppLaunchButon(self, scan_tool, self)
             self._vlayout.addWidget(btn)
+            self._buttons.append(btn)
 
         self.setCentralWidget(self._centralWidget)
         self.setWindowTitle("SmartScan Launcher")
@@ -39,9 +41,10 @@ class LauncherWindow(QtGui.QMainWindow):
 
 
 class AppLaunchButon(QtGui.QPushButton):
-    def __init__(self, parent, scan_tool):
+    def __init__(self, parent, scan_tool, window):
         super().__init__(parent)
         self._scan_tool = scan_tool
+        self._window = window
 
         txt = QtGui.QTextDocument()
         txt.setHtml("<p align=center><b><big>{}</big></b><br>{}</p>".format(
@@ -51,6 +54,7 @@ class AppLaunchButon(QtGui.QPushButton):
         self._pixmap.fill(Qt.transparent)
         painter = QtGui.QPainter(self._pixmap)
         txt.drawContents(painter)
+        painter.end()
         self._icon = QtGui.QIcon(self._pixmap)
 
         self.setIconSize(self._pixmap.size())
@@ -61,7 +65,7 @@ class AppLaunchButon(QtGui.QPushButton):
         self._scan_tool.closed.connect(self._on_closed)
 
     def _on_clicked(self):
-        self._scan_tool.launch()
+        self._scan_tool.launch(parent_window=self._window)
 
     def _on_launched(self):
         self.setEnabled(False)

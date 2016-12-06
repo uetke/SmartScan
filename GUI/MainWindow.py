@@ -96,7 +96,7 @@ class InitWindow(QMainWindow):
         entry['comments'] = 'Starting the program'
         self.db.new_entry(entry)
 
-        self.main = MainWindow(self._session)
+        self.main = MainWindow(self._session, self.parentWidget())
         self.main.setWindowTitle('Main')
         self.main.show()
 

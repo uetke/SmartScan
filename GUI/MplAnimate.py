@@ -37,8 +37,8 @@ except AttributeError:
         return QtGui.QApplication.translate(context, text, disambig)
 
 class MplAnimate(QtGui.QMainWindow):
-    def __init__(self, MainWindow, name, option, session, scanindex=-1, parent=None):
-        super(MplAnimate, self).__init__(parent)
+    def __init__(self, MainWindow, name, option, session, scanindex=-1):
+        super(MplAnimate, self).__init__(MainWindow)
         #self.ui = Ui_MainWindow()
         #QtGui.QGraphicsObject.__init__(self)
         self.MainWindow = MainWindow
@@ -417,7 +417,7 @@ class MplCanvas(QtGui.QGraphicsObject):
 
 
     def monitor(self):
-        self.plotwidget = pg.PlotWidget()
+        self.plotwidget = pg.PlotWidget(self.MplAnimate)
         self.lineplot = self.plotwidget.plot()
         labelStyle = {'color': '#FFF', 'font-size': '16px'}
         self.plotwidget.plotItem.setLabel('left', self.ylabel, units=self.yunit,**labelStyle)
@@ -434,7 +434,7 @@ class MplCanvas(QtGui.QGraphicsObject):
         self.plotwidget = []
         self.lineplot = []
         for i in range(len(self.detector)):
-            self.plotwidget.append(pg.PlotWidget())
+            self.plotwidget.append(pg.PlotWidget(self.MplAnimate))
             self.plotwidget[i].getPlotItem().setTitle(title = self.detector[i].properties['Name'])
             self.lineplot.append(self.plotwidget[i].plot())
             labelStyle = {'color': '#FFF', 'font-size': '16px'}
@@ -452,7 +452,7 @@ class MplCanvas(QtGui.QGraphicsObject):
         self.plotwidget = []
         self.lineplot = []
         for i in range(len(self.detector)):
-            self.plotwidget.append(pg.PlotWidget())
+            self.plotwidget.append(pg.PlotWidget(self.MplAnimate))
             self.plotwidget[i].getPlotItem().setTitle(title = self.detector[i].properties['Name'])
             self.lineplot.append(self.plotwidget[i].plot())
             labelStyle = {'color': '#FFF', 'font-size': '16px'}

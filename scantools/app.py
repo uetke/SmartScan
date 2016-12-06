@@ -335,9 +335,9 @@ class ScanTool(QObject):
             else:
                 raise ValueError('Unknown qualifier: <{}/>'.format(qualifier_elem.tag))
 
-    def _show_qmainwindow(self):
+    def _show_qmainwindow(self, **kwargs):
         if self._window is None:
-            self._window = self.window_class()
+            self._window = self.window_class(kwargs.get('parent_window', None))
 
         closeEventMethod = self._window.closeEvent
         @wraps(closeEventMethod)
@@ -351,9 +351,9 @@ class ScanTool(QObject):
         self._window.show()
         self.launched.emit()
 
-    def launch(self):
+    def launch(self, **kwargs):
         if self.launch_mode == 'QMainWindow':
-            self._show_qmainwindow()
+            self._show_qmainwindow(**kwargs)
 
     def is_running(self):
         if self.launch_mode == 'QMainWindow':
