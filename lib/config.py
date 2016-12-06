@@ -19,7 +19,7 @@ def open_configfile(basename):
 VARIABLES = ruamel.yaml.safe_load(open_configfile('variables.yml'))
 CONSTANTS = ruamel.yaml.safe_load(open_configfile('constants.yml'))
 
-_config_devices_etree = ET.parse(open_configfile('config_devices.xml'))
+_config_devices_etree = None
 
 # Code to handle device configuration
 
@@ -27,11 +27,15 @@ class DeviceConfig():
     # The argument name 'type' is unfortunate for two reasons:
     # (1) it's a keyword, and
     # (2) the word "Type" is used in a different context in the XML files.
-    def __init__(self, name=None, type='Adwin', filename=None, type_name=None):
+    def __init__(self, name=None, type='Adwin', filename=None, *, type_name=None, force_reload=False):
         from lib.xml2dict import xmltodict
+        global _config_devices_etree
+        
         self.logger = logging.getLogger('lib.config.DeviceConfig')
 
         if filename is None:
+            if force_reload or _config_devices_etree is None:
+                _config_devices_etree = ET.parse(open_configfile('config_devices.xml'))
             tree = _config_devices_etree
         else:
             tree = ET.parse(filename)

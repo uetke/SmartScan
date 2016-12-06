@@ -153,10 +153,10 @@ class MainWindow(QMainWindow):
         It allows to update devices without restarting the UI.
         """
 
-        device_names = [d['Name'] for d in device(type='Adwin',filename=self.dev_conf)]
+        device_names = [d['Name'] for d in device(type='Adwin', force_reload=True)]
         self.devices = {}
         for name in device_names:
-            self.devices[name] = device(type='Adwin',name=name,filename=self.dev_conf)
+            self.devices[name] = device(type='Adwin', name=name)
         self.init_labels()
 
     def init_labels(self):
