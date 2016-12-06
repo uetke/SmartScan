@@ -423,7 +423,7 @@ class MplCanvas(QtGui.QGraphicsObject):
         self.plotwidget.plotItem.addItem(self.text)
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.monitor_plot)
-        self.timer.start(100)
+        self.timer.start(50)
         return self.timer
 
     def animate_plot(self):

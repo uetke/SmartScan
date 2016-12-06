@@ -11,8 +11,9 @@ from ..app import ScanApplication
 import sys
 
 class LauncherWindow(QtGui.QMainWindow):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, no_exit=False):
         super().__init__(parent)
+        self._no_exit = no_exit
 
         self._centralWidget = QtGui.QWidget(self)
         self._vlayout = QtGui.QVBoxLayout(self._centralWidget)
@@ -35,7 +36,12 @@ class LauncherWindow(QtGui.QMainWindow):
 
         if reply == QtGui.QMessageBox.Yes:
             ce.accept()
-            sys.exit(0)
+            if self._no_exit:
+                for w in self.children():
+                    if isinstance(w, QtGui.QMainWindow):
+                        w.close()
+            else:
+                sys.exit(0)
         else:
             ce.ignore()
 

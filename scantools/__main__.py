@@ -7,6 +7,6 @@ project_root = os.path.dirname(os.path.dirname(__file__))
 os.chdir(project_root)
 
 app = QApplication(sys.argv)
-window = LauncherWindow()
+window = LauncherWindow(no_exit=('--no-exit' in sys.argv))
 window.show()
 sys.exit(app.exec_())
