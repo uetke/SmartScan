@@ -38,7 +38,7 @@ except AttributeError:
 
 class MplAnimate(QtGui.QMainWindow):
     def __init__(self, MainWindow, name, option, session, scanindex=-1):
-        super(MplAnimate, self).__init__(MainWindow)
+        super(MplAnimate, self).__init__(None)
         #self.ui = Ui_MainWindow()
         #QtGui.QGraphicsObject.__init__(self)
         self.MainWindow = MainWindow

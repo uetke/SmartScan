@@ -41,7 +41,7 @@ class LauncherWindow(QtGui.QMainWindow):
                     if isinstance(w, QtGui.QMainWindow):
                         w.close()
             else:
-                sys.exit(0)
+                QtGui.QApplication.quit()
         else:
             ce.ignore()
 
@@ -71,7 +71,7 @@ class AppLaunchButon(QtGui.QPushButton):
         self._scan_tool.closed.connect(self._on_closed)
 
     def _on_clicked(self):
-        self._scan_tool.launch(parent_window=self._window)
+        self._scan_tool.launch()
 
     def _on_launched(self):
         self.setEnabled(False)
