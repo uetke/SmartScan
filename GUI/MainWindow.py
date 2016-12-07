@@ -14,6 +14,7 @@ from GUI.flipperGUI import flippers
 from lib.xml2dict import device
 import numpy as np
 from lib.adq_mod import adq
+from lib._ADwin import ADwinError
 from lib.logger import logger
 
 from scantools.app import ScanApplication
@@ -91,7 +92,17 @@ class InitWindow(QMainWindow):
         entry['comments'] = 'Starting the program'
         self.db.new_entry(entry)
 
-        self.main = MainWindow(self._session, self.parentWidget())
+        try:
+            self.main = MainWindow(self._session, self.parentWidget())
+        except ADwinError as e:
+            import traceback
+            traceback.print_exc()
+            errmsg = QtGui.QErrorMessage()
+            errmsg.showMessage("{}\n{}".format(self.tr("Error loading ADwin:"), str(e)))
+            errmsg.setWindowTitle(self.tr("ADwin error"))
+            errmsg.exec_()
+            return False
+
         self.main.setWindowTitle('Main')
         scan_tool = ScanApplication().get_scantool(InitWindow)
         if scan_tool is not None:
@@ -99,9 +110,11 @@ class InitWindow(QMainWindow):
             scan_tool.set_qmainwindow(self.main)
         self.main.show()
 
+        return True
+
     def start(self):
-        self.MainWindow()
-        self.fileQuit()
+        if self.MainWindow():
+            self.fileQuit()
 
     def search_directory(self):
         self.save_dir = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
@@ -134,6 +147,7 @@ class MainWindow(QMainWindow):
 
         self._app = ScanApplication()
         self.adw = self._app.get_adwin()
+
         self.scanwindows = {}
         self.scanindex = 0
         self.monitor = {}

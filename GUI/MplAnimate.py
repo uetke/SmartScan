@@ -348,7 +348,7 @@ class MplCanvas(QtGui.QGraphicsObject):
             self.ydata = np.array([])
             self.xdata = np.append(self.xdata,temp[0]+self.delay)
         self.ydata = np.append(self.ydata,temp[1])
-        if self.MplAnimate.option[0]=='Monitor':
+        if self.get_window_type() == 'monitor':
             self.xdata = self.xdata[-500:]
             self.ydata = self.ydata[-500:]
         self.lineplot.setData(y=self.ydata,x=self.xdata)
