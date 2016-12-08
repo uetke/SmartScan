@@ -401,6 +401,7 @@ class MainWindow(QMainWindow):
             scanwindow.close()
         self.scanwindows = {}
         self.scanindex = 0
+        self.main.Controler_Select_scan.clear()
 
     def CloseMonitorWindows(self):
         for monitor_window in list(self.monitor.values()):

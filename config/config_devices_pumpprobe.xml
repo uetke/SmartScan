@@ -136,10 +136,12 @@
 	<Device Name="Filter Flipper" Type="ThorlabsFlipper" Description="Filter selection">
 		<Hardware SerialNum="37864186"/>
 		<Flipper>
-			<State Position="1" Name="532 + 785 notch"/>
+			<State Position="1" Name="532 + 785 notch">
+				<Conflict Type="Shutter" Name="OPO Shutter"/>
+			</State>
 			<State Position="2" Name="OD Filters"/>
 			<While-Switching>
-				<Shutter-Conflict Name="APD1 Shutter"/>
+				<Conflict Type="Shutter" Name="APD1 Shutter"/>
 			</While-Switching>
 		</Flipper>
 	</Device>
