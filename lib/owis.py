@@ -196,7 +196,7 @@ class OWISStage(QObject):
                           delta_t, adq, detectors, load_adw_program=load_adw_program)
 
     def get_position(self):
-        return self._from_mm(self._stage.position[self._axis].to('mm').m)
+        return self._from_mm(self._stage.position[self._axis].to('mm').magnitude)
 
 
 

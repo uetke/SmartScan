@@ -248,7 +248,7 @@ class LStepStage(MessageBasedDriver):
         if unit == 'microstep':
             return float(value)
         elif isinstance(value, Q_):
-            return value.to(unit).m
+            return value.to(unit).magnitude
         elif isinstance(value, numbers.Real):
             warnings.warn('position or distance supplied without units, assuming correct!')
             return value
