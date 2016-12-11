@@ -9,7 +9,7 @@
 ' Optimize                       = Yes
 ' Optimize_Level                 = 1
 ' Stacksize                      = 1000
-' Info_Last_Save                 = MEETPC166  MEETPC166\LION
+' Info_Last_Save                 = MEETPC113  MEETPC113\LION
 '<Header End>
 #include c:\adwin\adbasic\Inc\ADwinGoldII.inc
 #include .\globals.inc
@@ -25,6 +25,7 @@ init:
   cnt_enable(1111b)
   
   Conf_DIO(1100b)
+  par_digout_status = 0
   FIFO_Clear(200)
   
 event:

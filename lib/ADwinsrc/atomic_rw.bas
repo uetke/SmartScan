@@ -43,10 +43,14 @@ event:
 
     case CASE_DIG_OUT
       set_digout(par_Port6)
+      par_Output_value6 = Peek(204000C0h)
+      par_digout_status = Peek(204000C0h)
       end
 
     case CASE_DIG_CLEAR
       clear_digout(par_Port6)
+      par_Output_value6 = Peek(204000C0h)
+      par_digout_status = Peek(204000C0h)
       end
 
   EndSelect

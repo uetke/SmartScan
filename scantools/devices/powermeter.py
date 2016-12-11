@@ -11,7 +11,7 @@ from pyvisa.errors import VisaIOError, VI_ERROR_TMO
 
 from devices import powermeter1830c
 from lib.config import DeviceConfig
-
+from ..app import ScanApplication
 
 class PowerMeterHost(QtCore.QObject):
 
@@ -29,6 +29,8 @@ class PowerMeterHost(QtCore.QObject):
         self._device_cfg = powermeter_cfg
         self._device = None
         self._worker = None
+
+        ScanApplication().shutting_down.connect(self.disconnect_from_device)
 
     def connect_to_device(self):
         self._device = powermeter1830c.PowerMeter1830c(self._device_cfg['Hardware']['PortID'])

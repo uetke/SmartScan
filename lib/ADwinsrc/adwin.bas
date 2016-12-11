@@ -9,7 +9,7 @@
 ' Optimize                       = Yes
 ' Optimize_Level                 = 1
 ' Stacksize                      = 1000
-' Info_Last_Save                 = MEETPC166  MEETPC166\LION
+' Info_Last_Save                 = MEETPC113  MEETPC113\LION
 '<Header End>
 #include c:\adwin\adbasic\inc\adwgcnt.inc
 #include .\globals.inc
@@ -178,10 +178,12 @@ event:
 
     case CASE_DIG_OUT
       set_digout(par_Port)
+      par_digout_status = Peek(204000C0h)
       end
 
     case CASE_DIG_CLEAR
       clear_digout(par_Port)
+      par_digout_status = Peek(204000C0h)
       end
 
   EndSelect

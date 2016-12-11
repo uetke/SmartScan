@@ -9,7 +9,7 @@
 ' Optimize                       = Yes
 ' Optimize_Level                 = 1
 ' Stacksize                      = 1000
-' Info_Last_Save                 = MEETPC166  MEETPC166\LION
+' Info_Last_Save                 = MEETPC113  MEETPC113\LION
 '<Header End>
 #include c:\adwin\adbasic\Inc\ADwinGoldII.inc
 #include .\globals.inc
@@ -81,7 +81,7 @@ event:
       endif
       i = i + 1
 
-    case CASE_ACQ3
+    case CASE_ACQ_MULTI
       'For acquiring signals of several devices, but keeping in mind higher temporal accuracy'
       'The acquisition is done in series (first one device, then another, etc.'
 
@@ -148,11 +148,15 @@ event:
       end
 
     case CASE_DIG_OUT
-      Digout(par_Port,1)
+      par_digout_status = par_digout_status Or Shift_Left(1, par_Port)
+      digout_word2(par_digout_status)
+      'Digout(par_Port,1)
       end
 
     case CASE_DIG_CLEAR
-      Digout(par_Port,0)
+      par_digout_status = par_digout_status And Not(Shift_Left(1, par_Port))
+      digout_word2(par_digout_status)
+      'Digout(par_Port,0)
       end
 
   EndSelect

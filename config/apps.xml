@@ -7,6 +7,10 @@
                      object-mode="one-per-device"
                      class="scantools.devices.powermeter.PowerMeterHost"/>
     </hosts>
+    <services>
+        <service class="scantools.devices.shutters.ShutterService"
+                 autostart="true"/>
+    </services>
     <user-interfaces>
         <application name="SmartScan"
                      description="Scanning confocal tool"
@@ -23,10 +27,9 @@
             <requires-device group="Serial" type="Newport1830c"/>
         </application>
         <application name="Shutters"
-                     description="Control shutters."
-                     launch-mode="QMainWindow" class="scantools.ui.shutters.ShuttersWindow">
-            <requires-adwin/>
-            <requires-test callable="scantools.devices.shutters.check_for_shutters"/>
+                     description="Control shutters and flippers"
+                     launch-mode="flask" blueprint="scantools.ui.shutters.shutters_webapp">
+            <requires-service class="scantools.devices.shutters.ShutterService"/>
         </application>
         <!--<application name="Special Tasks"
                      description="Launch special task within this process"

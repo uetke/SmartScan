@@ -1,0 +1,108 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Shutter Control</title>
+        <link rel=stylesheet type="text/css" href="{{ url_for('.static', filename='shutters.css') }}">
+        <meta name=viewport content="width=360, initial-scale=1.0">
+        <script src="{{ url_for('.static', filename='jquery-3.1.1.js') }}"></script>
+        <script>
+        var event_timestamp = {{ timestamp }};
+
+        function process_event(event) {
+            var $elem = $("." + event.type + "[name='" + event.name + "']");
+            $elem.find("button.state-button").removeClass("active");
+            if (event.type == "shutter") {
+                if (event.state == 1) {
+                    $elem.find(".open-button").addClass("active");
+                } else {
+                    $elem.find(".closed-button").addClass("active");
+                }
+            } else if (event.type == "flipper") {
+                $elem.find(".state-button[pos='" + event.state + "']").addClass("active");
+            }
+        }
+
+        function query_events() {
+            $.ajax({
+                url: "{{ url_for('.get_events') }}",
+                type: "get",
+                data: { timestamp: event_timestamp }
+            }).done(function(data) {
+                event_timestamp = data.timestamp;
+                for (var i=0; i<data.events.length; ++i) {
+                    process_event(data.events[i]);
+                }
+                query_events();
+            });
+        }
+
+        function set_state(type, name, state) {
+            $.ajax({
+                url: "{{ url_for('.set_state') }}",
+                type: "post",
+                data: { type: type,
+                        name: name,
+                        state: state }
+            }).done(function(data) {
+                if (data.status == "error") {
+                    alert(data.error);
+                }
+            });
+            $("." + type + "[name='" + name + "'] .state-button").removeClass("active");
+        }
+
+        $(document).ready(function() {
+            query_events();
+            
+            // add event handlers
+            $(".shutter").each(function(i, elem) {
+                $(elem).find(".open-button").click(function(){
+                    if (!$(elem).find(".open-button").hasClass("active"))
+                        set_state("shutter", $(elem).attr("name"), 1);
+                });
+                $(elem).find(".closed-button").click(function(){
+                    if (!$(elem).find(".closed-button").hasClass("active"))
+                        set_state("shutter", $(elem).attr("name"), 0);
+                });
+            });
+            $(".flipper").each(function(i, elem) {
+                $(elem).find(".state-button").each(function(j, btn) {
+                    $(btn).click(function() {
+                        if (!$(btn).hasClass("active"))
+                            set_state("flipper", $(elem).attr("name"), $(btn).attr("pos"));
+                    })
+                });
+            });
+        });
+        </script>
+    </head>
+    <body>
+        <table>
+        {% for shutter in shutters %}
+            <tr class="shutter" name="{{ shutter.name }}">
+                <td class="device-info" width="100%">
+                    <div class="device-name">{{ shutter.name }}</div>
+                    <p class="device-description">{{ shutter.description }}</p>
+                </td>
+                <td class="state-buttons">
+                    <button class="state-button open-button {% if shutter.state %}active{% endif %}">open</button>
+                    <button class="state-button closed-button {% if not shutter.state %}active{% endif %}">closed</button>
+                </td>
+            </tr>
+        {% endfor %}
+        {% for flipper in flippers %}
+            <tr class="flipper" name="{{ flipper.name }}">
+                <td class="device-info" width="100%">
+                    <div class="device-name">{{ flipper.name }}</div>
+                    <p class="device-description">{{ flipper.description }}</p>
+                </td>
+                <td class="state-buttons">
+                    {% for state in flipper.states %}
+                    <button class="state-button {% if flipper.state == state %}active{% endif %}" pos="{{ state|int }}">{{ state.name }}</button>
+                    {% endfor %}
+                </td>
+            </tr>
+        {% endfor %}
+        </table>
+    </body>
+</html>

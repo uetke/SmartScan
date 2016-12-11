@@ -17,11 +17,9 @@ class Flipper():
         self.SerialNum = SerialNum
         dllname = 'Thorlabs.MotionControl.FilterFlipper.dll'
         self.aptdll = windll.LoadLibrary('Thorlabs.MotionControl.FilterFlipper.dll')
-        if self.initializeHardwareDevice():
-            print('Flipper initialized')
-        else:
-            print('Flipper not initialized')
-        # TODO : Error reporting to know if initialisation went sucessfully or not.
+        
+        # This is called by the user!
+        #self.initializeHardwareDevice()
 
 
     def initializeHardwareDevice(self):
@@ -33,15 +31,15 @@ class Flipper():
         try:
             result = self.aptdll.FF_Open(self.SerialNum)
         except:
-            raise Exception('Could not open the device identified as %s'.format(self.SerialNum))
+            raise IOError('Could not open the device identified as %s'.format(self.SerialNum))
 
         if result == 0:
+            self.aptdll.FF_RequestStatus(self.SerialNum)
             self.aptdll.FF_StartPolling(self.SerialNum,c_long(200))
             self.connected = True
-            return True
         else:
             self.connected = False
-            return False
+            raise IOError('Could not open the device identified as %s'.format(self.SerialNum))
 
     def identify(self):
         '''
@@ -55,8 +53,9 @@ class Flipper():
         Releases the APT object
         Use when exiting the program
         '''
-        self.aptdll.FF_ClearMessageQueue()
-        self.aptdll.FF_Close()
+        self.aptdll.FF_StopPolling(self.SerialNum)
+        self.aptdll.FF_ClearMessageQueue(self.SerialNum)
+        self.aptdll.FF_Close(self.SerialNum)
         self.Connected = False
 
 

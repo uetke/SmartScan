@@ -101,6 +101,7 @@ class ScanApplication(QObject):
     _INSTANCE = None
 
     new_logentry = pyqtSignal(object)
+    shutting_down = pyqtSignal()
 
     def __new__(cls):
         if cls._INSTANCE is None:  
@@ -165,6 +166,23 @@ class ScanApplication(QObject):
                     self.logger.warn('Failed to load driver for {}'.format(type_),
                                      exc_info=sys.exc_info())
 
+        # Load non-driver services
+        self._available_services = {}
+        self._active_services = {}
+        for service_tag in apps_root.iterfind('./services/service'):
+            class_name = service_tag.get('class')
+            try:
+                module_name, class_basename = class_name.rsplit('.', 1)
+                module = import_module(module_name)
+                service_class = getattr(module, class_basename)
+                self._available_services[class_name] = service_class
+                if service_tag.get('autostart') in {'true', 'True', 'yes', '1'}:
+                    self._active_services[class_name] = service_class()
+                    self.logger.info('Autostarted service {}'.format(class_name))
+            except:
+                self.logger.warn('Failed to load service {}'.format(class_name),
+                                 exc_info=sys.exc_info())
+
         # Load UI modules
         self.scan_tools = []
         for app_tag in apps_root.iterfind('./user-interfaces/application'):
@@ -199,6 +217,42 @@ class ScanApplication(QObject):
                 matches.append(device.get())
 
         return matches
+
+    def get_service(self, name_or_class):
+        """
+        Returns an instance of the requested service. Raises RuntimeError if the
+        service is not known, or for non-autostart services any error occurring
+        during service startup.
+
+        The argument can be:
+         * The service class
+         * The full name of the service class (including module)
+         * The name of the service class (not including the module)
+        """
+        if name_or_class in self._active_services:
+            return self._active_services[name_or_class]
+
+        for name, obj in self._active_services.items():
+            basename = name.rsplit('.', 1)[-1]
+            if name_or_class in (basename, type(obj)):
+                return obj
+
+        service_class = self._available_services.get(name_or_class)
+        if service_class is None:
+            for name, cls in self._available_services.items():
+                basename = name.rsplit('.', 1)[-1]
+                if name_or_class in (basename, cls):
+                    service_class = cls
+                    class_name = name
+                    break
+            else:
+                raise RuntimeError("No such service: {}".format(name_or_class))
+        else:
+            class_name = name_or_class
+
+        self._active_services[class_name] = service_class()
+        self.logger.info('Started service {}'.format(class_name))
+        return self._active_services[class_name]
 
     def get_scantool(self, name_or_class):
         """
@@ -238,6 +292,7 @@ class ScanApplication(QObject):
         self._adwin.load_portable('adwin.Tx9')
 
         self._adwin_booted = True
+
 
 class DriverHostHandler:
     def __init__(self, driver_xml, device_xml_dict):
@@ -290,6 +345,7 @@ class ScanTool(QObject):
         self.name = app_xml.get('name')
         self.description = app_xml.get('description')
         self.launch_mode = app_xml.get('launch-mode')
+        self.logger = logging.getLogger('scantools.app.ScanTool')
 
         if self.launch_mode == 'QMainWindow':
             self.class_name = app_xml.get('class')
@@ -297,6 +353,12 @@ class ScanTool(QObject):
             module = import_module(module_name)
             self.window_class = getattr(module, class_name)
             self._window = None
+        elif self.launch_mode == 'flask':
+            self.blueprint_name = app_xml.get('blueprint')
+            module_name, blueprint_name = self.blueprint_name.rsplit('.', 1)
+            module = import_module(module_name)
+            self.blueprint = getattr(module, blueprint_name)
+            self._flask_app_host = None
         else:
             raise ValueError('Unsupported launch-mode: {}'.format(self.launch_mode))
 
@@ -332,6 +394,11 @@ class ScanTool(QObject):
                 module_name, fn_name = full_fn_name.rsplit('.', 1)
                 module = import_module(module_name)
                 self._pre_launch = getattr(module, fn_name)
+            elif qualifier_elem.tag == 'requires-service':
+                app = ScanApplication()
+                service_class_name = qualifier_elem.get('class')
+                if service_class_name not in app._available_services:
+                    raise RuntimeError('Required service not configured')
             else:
                 raise ValueError('Unknown qualifier: <{}/>'.format(qualifier_elem.tag))
 
@@ -360,10 +427,23 @@ class ScanTool(QObject):
     def launch(self, **kwargs):
         if self.launch_mode == 'QMainWindow':
             self._show_qmainwindow(**kwargs)
+        elif self.launch_mode == 'flask':
+            from .ui import flaskapp
+            self._flask_app_host = flaskapp.launch_app(self.name, self.blueprint)
+            def on_closed():
+                self._flask_app_host = None
+                self.closed.emit()
+            self._flask_app_host.closed.connect(on_closed)
+            self.launched.emit()
+            self.logger.info('Started {} tool at {}'.format(self.name, 
+                             self._flask_app_host.public_url))
+
 
     def is_running(self):
         if self.launch_mode == 'QMainWindow':
             return self._window is not None
+        elif self.launch_mode == 'flask':
+            return self._flask_app_host is not None
 
     def __str__(self):
         return 'ScanTool: {}'.format(self.name)

@@ -23,6 +23,7 @@ par:
   Portt: 68
   Square: 66
   LifetimeIterations: 67
+  digout_status: 51
 
 # "fpar"
 fpar:
