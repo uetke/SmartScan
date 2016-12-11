@@ -4,9 +4,10 @@ import logging
 import logging.config
 
 
-def logger(name='logfile.log',filelevel=logging.INFO, streamlevel=logging.WARNING):
+def logger(logger_name='__main__', name='logfile.log',
+           filelevel=logging.INFO, streamlevel=logging.WARNING):
     # create logger with 'spam_application'
-    logger = logging.getLogger('__main__')
+    logger = logging.getLogger(logger_name)
     logger.setLevel(logging.DEBUG)
     # create file handler which logs even debug messages
     fh = logging.FileHandler(name)
@@ -25,8 +26,6 @@ def logger(name='logfile.log',filelevel=logging.INFO, streamlevel=logging.WARNIN
     logger.addHandler(fh)
     logger.addHandler(ch)
     return logger
-
-
 
 
 def get_all_caller():
