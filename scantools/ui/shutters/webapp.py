@@ -38,8 +38,9 @@ def get_events():
         _event_tracker = EventTracker()
 
     timestamp = float(request.args['timestamp'])
+    events = _event_tracker.get_since(timestamp)
     return jsonify(timestamp=time.time(),
-                   events=_event_tracker.get_since(timestamp))
+                   events=events)
 
 @shutters_webapp.route('/set-state', methods=['POST'])
 def set_state():
@@ -58,7 +59,6 @@ def set_state():
         return jsonify(error='bad request'), 400
 
     try:
-        print('setting {} to {}'.format(device, new_state))
         device.state = new_state
         return jsonify(status='ok')
     except ShutterConflict.Violation as err:
