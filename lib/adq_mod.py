@@ -3,6 +3,8 @@ import copy
 import ctypes
 import logging
 import math as m
+import os.path
+import re
 import threading
 import time
 
@@ -17,7 +19,6 @@ from matplotlib import pyplot as plt
 
 from ._ADwin import ADwin, ADwinDebug
 from .config import VARIABLES, CONSTANTS
-from .xml2dict import device
 
 ADWCONST = CONSTANTS['adwin']
 
@@ -49,7 +50,11 @@ class adq(ADwin,ADwinDebug):
             self.time_low = 3.3333333e-9 # Timing low priority process
             self.boot_program = 'c:\\adwin\\ADwin11.btl'
         else:
-            raise Exception('Model not yet implemented')
+            raise RuntimeError('Model not yet implemented')
+
+        from scantools import ScanApplication
+        self._adwin_code_path = os.path.join(ScanApplication().project_root,
+                                              'lib', 'adbasic')
 
         self.logger = logging.getLogger('lib.adq_mod.adq')
         self.logger.info('Init the class')
@@ -65,6 +70,23 @@ class adq(ADwin,ADwinDebug):
         # Stores the process name and number in variables
         self.adw.Load_Process(process)
         self.logger.info("Loaded process %s" %process)
+
+    def load_portable(self, process):
+        """ Load a process from the right directory, replacing the file ending as needed.
+
+        e.g.: load_portable("init_adwin.T98") translates to load("lib/goldII/init_adwin.TB8")
+        on a goldII system.
+        """
+        if self.model == 'gold':
+            process_file = os.path.join(self._adwin_code_path,
+                                         re.sub(r'\.[Tt].([0-9])$', r'.T9\1', process))
+            self.load(process_file)
+        elif self.model == 'goldII':
+            process_file = os.path.join(self._adwin_code_path,
+                                         re.sub(r'\.[Tt].([0-9])$', r'.TB\1', process))
+            self.load(process_file)
+        else:
+            raise RuntimeError('Model not yet implemented')
 
     def start(self,process):
         """ Starts the process.
@@ -153,7 +175,7 @@ class adq(ADwin,ADwinDebug):
             Only works for a counter.
         """
         if self.model == 'gold':
-            self.load('lib/adbasic/fast_timetrace.T98') # Does it need to happen here?
+            self.load_portable('fast_timetrace.T98') # Does it need to happen here?
             delay = m.floor(acc/self.time_high)
             port = detect.properties['Input']['Hardware']['PortID']
             self.set_par(VARIABLES['par']['Port'],int(port))
@@ -704,7 +726,7 @@ class adq(ADwin,ADwinDebug):
         """
         if load_program:
             self.logger.info('Loading the external scanning code.')
-            self.load('lib/adbasic/external_scan.T95')
+            self.load_portable('external_scan.T95')
 
         if bool(self.adw.Process_Status(5)):
             self.stop(5)

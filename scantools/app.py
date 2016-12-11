@@ -117,6 +117,7 @@ class ScanApplication(QObject):
 
         self._session = {}
         self._logbook = self.db = db_comm('_private/logbook.db')
+        self.project_root = os.path.dirname(os.path.dirname(__file__))
 
         self._session['db'] = self._logbook
 
@@ -216,8 +217,6 @@ class ScanApplication(QObject):
 
     def boot_adwin(self, *, force=False):
         from lib.adq_mod import adq
-        project_root = os.path.dirname(os.path.dirname(__file__))
-        adwin_sw_dir = os.path.join(project_root, 'lib', 'adbasic')
 
         if self._adwin_booted and not force:
             raise RuntimeError("Adwin is already booted!")
@@ -231,21 +230,12 @@ class ScanApplication(QObject):
             self.logger.info('Booting the ADWin...')
         if model == 'gold':
             self._adwin.init_port7() # This comes from the UberScan era. Is it still needed?
-            self._adwin.load(os.path.join(adwin_sw_dir, 'init_adwin.T98'))
-            self._adwin.start(8)
-            self._adwin.wait(8)
-            self._adwin.load(os.path.join(adwin_sw_dir, 'monitor.T90'))
-            self._adwin.load(os.path.join(adwin_sw_dir, 'atomic_rw.T96'))
-            self._adwin.load(os.path.join(adwin_sw_dir, 'adwin.T99'))
-        elif model == 'goldII':
-            self._adwin.load(os.path.join(adwin_sw_dir, 'init_adwin.TB8'))
-            self._adwin.start(8)
-            self._adwin.wait(8)
-            self._adwin.load(os.path.join(adwin_sw_dir, 'monitor.TB0'))
-            self._adwin.load(os.path.join(adwin_sw_dir, 'atomic_rw.TB6'))
-            self._adwin.load(os.path.join(adwin_sw_dir, 'adwin.TB9'))
-        else:
-            raise Exception('Model of ADwin not recognized')
+        self._adwin.load_portable('init_adwin.Tx8')
+        self._adwin.start(8)
+        self._adwin.wait(8)
+        self._adwin.load_portable('monitor.Tx0')
+        self._adwin.load_portable('atomic_rw.Tx6')
+        self._adwin.load_portable('adwin.Tx9')
 
         self._adwin_booted = True
 
