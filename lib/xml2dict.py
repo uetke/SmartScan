@@ -3,20 +3,28 @@ import copy
 
 def xmltodict(element):
     """converts the XML-file to a dictionary"""
-    def xmltodict_handler(parent_element,result={}):
+    def xmltodict_handler(parent_element, result=None):
+        # initialize a new dict if needed
+        if result is None:
+            result = {}
+
         for element in parent_element:
+            # get attributes
+            obj = copy.copy(element.attrib)
+            for i, j in obj.items():
+                if j.isdigit():
+                    obj[i] = int(j)
+                else:
+                    try:
+                        obj[i]=float(j)
+                    except:
+                        pass
+
+            # if there are child elements, iterate through them!
             if len(element):
-                obj = xmltodict_handler(element)
-            else:
-                obj = copy.copy(element.attrib)
-                for i, j in obj.items():
-                    if j.isdigit():
-                        obj[i] = int(j)
-                    else:
-                        try:
-                            obj[i]=float(j)
-                        except:
-                            pass
+                obj = xmltodict_handler(element, obj)
+
+            # Now add the result to the parent element's description.
             if result.get(element.tag):
                 if hasattr(result[element.tag], "append"):
                     result[element.tag].append(obj)
@@ -24,6 +32,7 @@ def xmltodict(element):
                     result[element.tag] = [result[element.tag], obj]
             else:
                 result[element.tag] = obj
+                
         return result
 
     result = copy.copy(element.attrib)

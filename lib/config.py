@@ -73,7 +73,10 @@ class DeviceConfig():
         return root.find(path).attrib
 
     def __str__(self):
-        return '{} Device: {}'.format(self._type, self.properties['Name'])
+        if isinstance(self.properties, list):
+            return 'DeviceConfig for {} {} devices'.format(len(self.properties), self._type)
+        else:
+            return '{} Device: {}'.format(self._type, self.properties['Name'])
 
     def __repr__(self):
         return '<{}>'.format(str(self))
