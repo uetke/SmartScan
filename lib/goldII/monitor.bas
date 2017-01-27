@@ -10,12 +10,12 @@
 ' Optimize                       = Yes
 ' Optimize_Level                 = 2
 ' Stacksize                      = 1000
-' Info_Last_Save                 = MEETPC166  MEETPC166\LION
+' Info_Last_Save                 = MEETPC113  MEETPC113\LION
 '<Header End>
 #include c:\adwin\adbasic\inc\ADwinGoldII.inc
 #include .\globals.inc
 
-dim data_Counter1[2003] as float as fifo 'counters
+dim data_Counter1[2003] as long as fifo 'counters
 dim data_Counter2[2003] as long as fifo
 dim data_Counter3[2003] as long as fifo
 dim data_Counter4[2003] as long as fifo

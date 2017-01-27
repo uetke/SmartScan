@@ -15,7 +15,7 @@
 #include c:\adwin\adbasic\inc\adwgcnt.inc
 #include .\globals.inc
 
-dim data_Counter1[2003] as float as fifo 'counters
+dim data_Counter1[2003] as long as fifo 'counters
 dim data_Counter2[2003] as long as fifo
 dim data_Counter3[2003] as long as fifo
 dim data_Counter4[2003] as long as fifo
