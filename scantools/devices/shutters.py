@@ -79,7 +79,6 @@ class ShutterService(QtCore.QObject):
         if (self._adwin.get_par(VARIABLES['par']['shutter_button_mask']) or
             self._adwin.get_data(VARIABLES['data']['protection_shutter_params'], 48)[0] > 0):
 
-            self._adwin.load_portable('shutters.Tx4')
             self._adwin.start(4)  # shutter process
             self._adwin.start(10) # monitor process, required by shutters
 
@@ -210,7 +209,7 @@ class Shutter(QtCore.QObject):
             my_bit = 1 << self._port
             mask = service._adwin.get_par(VARIABLES['par']['shutter_button_mask'])
             mask |= my_bit
-            self._adwin.set_par(VARIABLES['par']['shutter_button_mask'], mask)
+            service._adwin.set_par(VARIABLES['par']['shutter_button_mask'], mask)
 
         self._last_known_state = self.state
 

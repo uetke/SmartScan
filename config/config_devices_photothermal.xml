@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Data>
+<Adwin Name='Adwin' model='gold' device_number="150">
+	<Device Name='APD 1' Type='Counter' Description='a device that counts the number of photons'>
+		<Input>
+			<Calibration Unit="counts" Slope="1" Offset="0"/>
+			<Hardware PortID="1"/>
+		</Input>
+	</Device>
+	<!--
+    <Device Name='APD 2' Type='Counter' Description='a device that counts the number of photons'>
+		<Input>
+			<Calibration Unit="counts" Slope="1" Offset="0"/>
+			<Hardware PortID="3"/>
+		</Input>
+	</Device>
+	-->
+	<Device Name='Lock-in X' Type='Analog' Description='SR844 lock-in channel 1 (raw)'>
+		<Input>
+			<Calibration Unit="Volts" Slope="3276.8" Offset="32768"/>
+			<Hardware PortID="5"/>
+		</Input>
+	</Device>
+	<Device Name='Lock-in Y' Type='Analog' Description='SR844 lock-in channel 2 (raw)'>
+		<Input>
+			<Calibration Unit="Volts" Slope="3276.8" Offset="32768"/>
+			<Hardware PortID="4"/>
+		</Input>
+	</Device>
+	
+	<!--
+	<Device Name='Photodiode' Type='Analog' Description='Photodiode'>
+		<Input>
+			<Calibration Unit="Volts" Slope="3276.8" Offset="32768"/>
+			<Hardware PortID="3"/>
+		</Input>
+	</Device>
+-->
+	<Device Name='Power Meter' Type='Analog' Description='Power Meter'>
+		<Input>
+			<Calibration Unit="Volts" Slope="3276.8" Offset="32768"/>
+			<Hardware PortID="1"/>
+		</Input>
+	</Device>
+	
+	<Device Name='x piezo' Type='Analog' Description='the x axis of the piezo'>
+		<Output>
+			<Calibration Init="50" Unit="μm" Slope="0.0030518" Offset="-100"/>
+			<Limits Step="1" Min="32000" Max="65000"/>
+			<Hardware PortID="1"/>
+		</Output>
+	</Device>
+	<Device Name='y piezo' Type='Analog' Description='the y axis of the piezo'>
+		<Output>
+			<Calibration Init="50" Unit="μm" Slope="0.0030518" Offset="-100"/>
+			<Limits Step="1" Min="32000" Max="65000"/>
+			<Hardware PortID="2"/>
+		</Output>
+	</Device>
+	<Device Name='z piezo' Type='Analog' Description='the z axis of the piezo'>
+		<Output>
+			<Calibration Init="50" Unit="μm" Slope="0.0030518" Offset="-100"/>
+			<Limits Step="1" Min="32000" Max="65000"/>
+			<Hardware PortID="3"/>
+		</Output>
+	</Device>
+
+	<!--
+	<Device Name='AOM' Type='Analog' Description='Controling Laser Power'>
+	<Output>
+	<Calibration Init="1.25" Unit="V" Slope="0.00030518" Offset="-10"/>
+	<Limits Step="1" Min="14849" Max="49151"/>
+	<Hardware PortID="3"/>
+	</Output>
+	</Device>
+	-->
+
+	<Device Name='532nm Shutter' Type='Digital' Description='Laser: 532nm'>
+		<Output>
+			<Hardware PortID="1"/>
+		</Output>
+		<Shutter open-state="1" has-button="true">
+			<Laser name="532" wavelength="532"/>
+		</Shutter>
+	</Device>
+	
+	<Device Name='488nm Shutter' Type='Digital' Description='Laser: 488nm'>
+		<Output>
+			<Hardware PortID="2"/>
+		</Output>
+		<Shutter open-state="1" has-button="true">
+			<Laser name="488" wavelength="488"/>
+		</Shutter>
+	</Device>
+	
+	<Device Name='815nm Shutter' Type='Digital' Description='Laser: 815nm'>
+		<Output>
+			<Hardware PortID="3"/>
+		</Output>
+		<Shutter open-state="1" has-button="true">
+			<Laser name="Ti:Sapph" wavelength="815"/>
+		</Shutter>
+	</Device>	
+
+</Adwin>
+
+<Serial>
+	<!--<Device Name='Lock-In' Type='SR844' Description='SR844 lock-in amplifier'>
+		<Hardware PortID="COM18"/>
+	</Device>
+	-->
+	<!--<Device Name="Powermeter" Type="Newport1830c" Description="Power meter before the objective">
+		<Hardware PortID="COM16" Attenuator="1"/>
+	</Device>-->
+</Serial>
+
+<USB>
+</USB>
+
+</Data>

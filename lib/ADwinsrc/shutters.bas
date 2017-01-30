@@ -10,7 +10,7 @@
 ' Optimize                       = Yes
 ' Optimize_Level                 = 1
 ' Stacksize                      = 1000
-' Info_Last_Save                 = MEETPC113  MEETPC113\LION
+' Info_Last_Save                 = MEETPC197  MEETPC197\LION
 '<Header End>
 #include c:\adwin\adbasic\inc\adwgcnt.inc
 #include .\globals.inc
@@ -56,13 +56,14 @@ event:
     if (i >= 49) then
       stoploop = 1
     endif
-    until (stoploop = 1)
+  until (stoploop = 1)
   
   
-    ' Check the buttons
-    button_bits = digin_word()
-    buttons_pressed = button_bits AND (button_bits XOR old_button_bits)
-    to_be_changed = buttons_pressed AND par_shutter_button_mask
-    digout_word(par_digout_status XOR to_be_changed)
-    par_digout_status = Peek(204000C0h)
+  ' Check the buttons
+  button_bits = digin_word()
+  buttons_pressed = NOT(button_bits) AND (button_bits XOR old_button_bits)
+  to_be_changed = buttons_pressed AND par_shutter_button_mask
+  digout_word(par_digout_status XOR to_be_changed)
+  par_digout_status = Peek(204000C0h)
+  old_button_bits = button_bits
   
