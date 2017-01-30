@@ -9,6 +9,7 @@ import logging
 #import threading
 import time
 
+import numpy as np
 from PyQt4 import QtCore
 
 import devices.flipper
@@ -62,11 +63,21 @@ class ShutterService(QtCore.QObject):
 
         self._adwin = self._app.get_adwin()
 
+        self._adwin.set_par(VARIABLES['par']['shutter_button_mask'], 0)
+        self._adwin.set_datalong(np.array([-1]), VARIABLES['data']['protection_shutter_params'])
         self._shutters = [Shutter(self, p) for p in shutter_properties]
         for s in self._shutters:
             def shutter_changed_slot(shutter=s):
                 self.any_state_changed.emit(shutter)
             s.changed_state.connect(shutter_changed_slot)
+
+        # Check if the shutter monitoring process is needed
+        if (self._adwin.get_par(VARIABLES['par']['shutter_button_mask']) or
+            self._adwin.get_data(VARIABLES['data']['protection_shutter_params'], 1)[0] > 0):
+
+            self._adwin.load_portable('shutters.Tx4')
+            self._adwin.start(4)  # shutter process
+            self._adwin.start(10) # monitor process, required by shutters
 
     def init_thorlabs_flippers(self):
         try:
@@ -174,7 +185,28 @@ class Shutter(QtCore.QObject):
 
         if 'Protection' in shutter_props['Shutter']:
             self.shutter_type = 'Protective Shutter'
-            # TODO: APD protection code in ADwin
+            # configure the ADwin process
+            dev_name = shutter_props['Shutter']['Protection']['device-name']
+            threshold = shutter_props['Shutter']['Protection']['threshold']
+            dev_port = DeviceConfig(dev_name)['Input']['Hardware']['PortID']
+
+            cfg_array = service._adwin.get_data(VARIABLES['data']['protection_shutter_params'], 48)
+            for i in range(0, 16*3, 3):
+                if cfg_array[i] <= 0:
+                    cfg_array[i] = dev_port
+                    cfg_array[i+1] = int(threshold)
+                    cfg_array[i+2] = self._port
+                    cfg_array[i+3] = -1
+                    break
+                else:
+                    continue
+            service._adwin.set_datalong(cfg_array, VARIABLES['data']['protection_shutter_params'], 48)
+
+        if shutter_props['Shutter'].get('has-button', False):
+            my_bit = 1 << self._port
+            mask = service._adwin.get_par(VARIABLES['par']['shutter_button_mask'])
+            mask |= my_bit
+            self._adwin.set_par(VARIABLES['par']['shutter_button_mask'], mask)
 
         self._last_known_state = self.state
 

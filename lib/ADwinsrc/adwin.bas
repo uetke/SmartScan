@@ -26,7 +26,10 @@ dim nopcount as integer
 
 Function input(dev_type,port) as long
   if (dev_type=21314873) then '21314873 is decimal for count
-    CNT_LATCH(port)
+    'CNT_LATCH(port)
+    ltemp = shift_left(1, port-1)
+    cnt_latch(ltemp)
+    
     new_timer = cnt_readlatch(port)
     temp =  old_timer[port] - new_timer
     old_timer[port] = new_timer

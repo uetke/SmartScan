@@ -24,6 +24,7 @@ par:
   Square: 66
   LifetimeIterations: 67
   digout_status: 51
+  shutter_button_mask: 52
 
 # "fpar"
 fpar:
@@ -37,6 +38,8 @@ data:
   QPDy: 175
   QPDz: 174
   Time: 176
+  protection_shutter_params: 170
+  current_count: 171
 
 # "fifo" arrays
 fifo:

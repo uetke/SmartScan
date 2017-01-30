@@ -35,7 +35,8 @@ dim data_Analog13[2003] as long as fifo
 dim data_Analog14[2003] as long as fifo
 dim data_Analog15[2003] as long as fifo
 dim data_Analog16[2003] as long as fifo
-dim old_timer[4], new_timer[4], count[4] as long
+dim old_timer[4], new_timer[4] as long
+dim data_current_count[4] as long
 dim value_adc[16], average[16] as long
 dim c,j,n as integer
 
@@ -55,17 +56,17 @@ init:
   'NEXT j
   
 event:
+  CNT_LATCH(15)
   for j=1 to 4
-    CNT_LATCH(j)
     new_timer[j] = cnt_readlatch(j)
-    count[j] = old_timer[j] - new_timer[j]
+    data_current_count[j] = old_timer[j] - new_timer[j]
     old_timer[j] = new_timer[j]
   NEXT j  
   
-  data_Counter1 = count[1]
-  data_Counter2 = count[2]
-  data_Counter3 = count[3]
-  data_Counter4 = count[4]
+  data_Counter1 = data_current_count[1]
+  data_Counter2 = data_current_count[2]
+  data_Counter3 = data_current_count[3]
+  data_Counter4 = data_current_count[4]
   ' data_Digin1 = digin(0)
   ' data_Digin2 = digin(1)
   ' data_Digin3 = digin(2)
