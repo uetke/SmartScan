@@ -277,7 +277,7 @@ class ScanApplication(QObject):
 
         adwin_info = config.DeviceConfig.get_adwin_info()
         model = adwin_info['model']
-        dev_num = int(adwin_info['device_number'])
+        dev_num = int(adwin_info['device_number'], 16)
         self._adwin = adq(dev_num, model)
         if self._adwin.adw.Test_Version() != 0: 
             self._adwin.boot()

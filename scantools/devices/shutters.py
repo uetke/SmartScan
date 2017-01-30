@@ -32,6 +32,9 @@ class ShutterService(QtCore.QObject):
         super().__init__()
 
         self._app = ScanApplication()
+        
+        self._shutters = []
+        self._flippers = []
 
         self.init_adwin_shutters()
         self.init_thorlabs_flippers()
@@ -62,9 +65,10 @@ class ShutterService(QtCore.QObject):
             return
 
         self._adwin = self._app.get_adwin()
+        self._adwin.load_portable('shutters.Tx4')
 
         self._adwin.set_par(VARIABLES['par']['shutter_button_mask'], 0)
-        self._adwin.set_datalong(np.array([-1]), VARIABLES['data']['protection_shutter_params'])
+        self._adwin.set_datalong((-1)*np.ones(48), VARIABLES['data']['protection_shutter_params'])
         self._shutters = [Shutter(self, p) for p in shutter_properties]
         for s in self._shutters:
             def shutter_changed_slot(shutter=s):
@@ -73,7 +77,7 @@ class ShutterService(QtCore.QObject):
 
         # Check if the shutter monitoring process is needed
         if (self._adwin.get_par(VARIABLES['par']['shutter_button_mask']) or
-            self._adwin.get_data(VARIABLES['data']['protection_shutter_params'], 1)[0] > 0):
+            self._adwin.get_data(VARIABLES['data']['protection_shutter_params'], 48)[0] > 0):
 
             self._adwin.load_portable('shutters.Tx4')
             self._adwin.start(4)  # shutter process
