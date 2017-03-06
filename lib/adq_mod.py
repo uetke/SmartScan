@@ -121,7 +121,7 @@ class adq(ADwin,ADwinDebug):
         """sets a data array"""
         if 0<arr_num<=200:
             #c_array=(ctypes.c_long * len(array))(0)
-            np_array = np.asarray(array)
+            np_array = np.asarray(array, dtype='int32')
             c_array = np_array.ctypes.data_as(ctypes.POINTER(ctypes.c_int32))
             self.logger.debug("Set data array %s with length %s" %(arr_num,len(array)))
             self.logger.debug("Set data array %s to %s" %(arr_num,array))
