@@ -203,7 +203,7 @@ class Shutter(QtCore.QObject):
                     break
                 else:
                     continue
-            service._adwin.set_datalong(cfg_array, VARIABLES['data']['protection_shutter_params'], 48)
+            service._adwin.set_datalong(cfg_array, VARIABLES['data']['protection_shutter_params'])
 
         if shutter_props['Shutter'].get('has-button', False):
             my_bit = 1 << self._port

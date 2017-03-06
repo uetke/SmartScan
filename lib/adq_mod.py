@@ -120,10 +120,9 @@ class adq(ADwin,ADwinDebug):
     def set_datalong(self,array,arr_num,start_index=1):
         """sets a data array"""
         if 0<arr_num<=200:
-            c_array=(ctypes.c_long * len(array))(0)
-            array=array.astype('int')
-            for i in range(len(array)):
-                c_array[i]=array[i]
+            #c_array=(ctypes.c_long * len(array))(0)
+            np_array = np.asarray(array)
+            c_array = np_array.ctypes.data_as(ctypes.POINTER(ctypes.c_int32))
             self.logger.debug("Set data array %s with length %s" %(arr_num,len(array)))
             self.logger.debug("Set data array %s to %s" %(arr_num,array))
             self.adw.SetData_Long(c_array, int(arr_num), int(start_index), len(array))
