@@ -16,7 +16,7 @@ from lantz.errors import InstrumentError
 from collections import OrderedDict
 import numpy as np
 import logging
-from logger import get_all_caller
+from lib.logger import get_all_caller
 
 display_output = OrderedDict([('X', '0'),
                               ('Y', '0'),

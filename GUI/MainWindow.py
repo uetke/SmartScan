@@ -364,14 +364,12 @@ class MainWindow(QMainWindow):
                         self.continuousScans = True
                         self.continuousStopped = False
                         QtCore.QObject.connect(self.scan.widget, QtCore.SIGNAL("ContinuousFinish"), self.continuousScan)
-                        self.scan.setWindowTitle("Window %s: Scan with the %s Detector with on the x-axes %s" %(tuple([self.scanindex])+tuple(option.split(';'))))
                         self.scan.show()
                 else:
                     self.scan.widget.animate_scan()
 
         if not self.continuousScans:
             print(self.scanindex)
-            self.scanwindows[self.scanindex].setWindowTitle("Window %s: Scan with the %s Detector with on the x-axes %s" %(tuple([self.scanindex])+tuple(option.split(';'))))
             self.scanwindows[self.scanindex].show()
 
 
@@ -518,7 +516,6 @@ class MainWindow(QMainWindow):
             if self.monitor[option].isRunning():
                 self.monitor[option].close()
         self.monitor[option]=MplAnimate(self,option,['Monitor','Line'],self._session)
-        self.monitor[option].setWindowTitle(option)
         self.monitor[option].show()
 
     def fileQuit(self):

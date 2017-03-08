@@ -49,6 +49,7 @@ class MplAnimate(QtGui.QMainWindow):
         self.widget = MplCanvas(self,self._session,MainWindow)
         self.resize(700,450)
         self.setWindowTitle('pyqtgraph example: ImageView')
+
         #self.ui.setupUi(self,MplCanvas,MainWindow)
         self.file_menu = QtGui.QMenu('&File', self)
         self.file_menu.addAction('&Save', self.saveDialog,
@@ -65,18 +66,24 @@ class MplAnimate(QtGui.QMainWindow):
 
         window_type = self.widget.get_window_type()
 
+        self._scan_name = datetime.now().strftime('%y%m%d%H%M')
+
         if window_type == 'monitor':
             self.animation = self.widget.monitor()
             self.help_menu.addAction('&About', self.about_monitor)
+            self.setWindowTitle(name)
         elif window_type == 'timetrace':
             self.animation = self.widget.animate_plot()
             self.help_menu.addAction('&About', self.about_scan)
+            self.setWindowTitle('Window {}: {} Timetrace - {}'.format(scanindex, name, self._scan_name))
         elif window_type == '1d scan':
             self.animation = self.widget.animate_1dscan()
             self.help_menu.addAction('&About', self.about_scan)
+            self.setWindowTitle('Window {}: {} 1D scan - {}'.format(scanindex, name, self._scan_name))
         else:
             self.animation = self.widget.animate_scan()
             self.help_menu.addAction('&About', self.about_scan)
+            self.setWindowTitle('Window {}: {} 2D scan - {}'.format(scanindex, name, self._scan_name))
 
         self._logentry = LogEntry()
         if window_type != 'monitor':
@@ -109,9 +116,8 @@ class MplAnimate(QtGui.QMainWindow):
         """
 
         directory = self._session['directory']
-        now = datetime.now()
         i = 1
-        name = now.strftime('%y%m%d%H%M')
+        name = self._scan_name
         detectors = self.widget.detector[0].properties['Name']
         variables = ''
         filename = name
