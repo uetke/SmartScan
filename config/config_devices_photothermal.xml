@@ -28,14 +28,13 @@
 		</Input>
 	</Device>
 	
-	<!--
-	<Device Name='Photodiode' Type='Analog' Description='Photodiode'>
+	<Device Name='heating' Type='Analog' Description='Heating (FEMTO DC)'>
 		<Input>
 			<Calibration Unit="Volts" Slope="3276.8" Offset="32768"/>
-			<Hardware PortID="3"/>
+			<Hardware PortID="10"/>
 		</Input>
 	</Device>
--->
+	
 	<Device Name='Power Meter' Type='Analog' Description='Power Meter'>
 		<Input>
 			<Calibration Unit="Volts" Slope="3276.8" Offset="32768"/>
@@ -105,13 +104,12 @@
 </Adwin>
 
 <Serial>
-	<!--<Device Name='Lock-In' Type='SR844' Description='SR844 lock-in amplifier'>
-		<Hardware PortID="COM18"/>
+	<Device Name='Lock-In' Type='SR844' Description='SR844 lock-in amplifier'>
+		<Hardware PortID="COM7"/>
 	</Device>
-	-->
-	<!--<Device Name="Powermeter" Type="Newport1830c" Description="Power meter before the objective">
-		<Hardware PortID="COM16" Attenuator="1"/>
-	</Device>-->
+	<Device Name="Powermeter" Type="Newport1830c" Description="Power meter before the microscope body">
+		<Hardware PortID="COM1" Attenuator="1"/>
+	</Device>
 </Serial>
 
 <USB>
